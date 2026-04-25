@@ -16,7 +16,6 @@ final class AntibodiesController extends Controller
     #[Get('/api/antibodies')]
     public function index(Request $request): Response
     {
-        try {
         $type = $this->normalize($request->query('type'));
         $status = $this->normalize($request->query('status'));
         $search = $this->normalize($request->query('q'));
@@ -34,12 +33,6 @@ final class AntibodiesController extends Controller
             'next_cursor' => $items === [] ? null : end($items)->id,
             'items'    => $items,
         ])->withHeader('Cache-Control', 'public, max-age=10, stale-while-revalidate=20');
-        } catch (\Throwable $e) {
-            return Response::json([
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile() . ':' . $e->getLine(),
-            ], 500);
-        }
     }
 
     private function normalize(mixed $v): ?string
