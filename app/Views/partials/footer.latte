@@ -1,14 +1,100 @@
-<footer class="border-t border-ink-line/70 mt-24">
-    <div class="max-w-[1400px] mx-auto px-7 py-7 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-[11.5px] text-fg-tertiary">
-        <div class="flex items-center gap-5 font-mono uppercase tracking-widest2">
-            <span class="text-fg-dim">Immunity v0.1</span>
-            <a href="https://github.com/ophelios-studio/immunity-app" rel="noopener" class="hover:text-fg-secondary transition-colors">github</a>
-            <a href="/feed/antibodies.json" class="hover:text-fg-secondary transition-colors">json</a>
-            <a href="/feed/antibodies.rss" class="hover:text-fg-secondary transition-colors">rss</a>
-            <a href="https://status.immunity.xyz" rel="noopener" class="hover:text-fg-secondary transition-colors">status</a>
+<footer class="relative bg-ink-sunken border-t border-ink-line/70 mt-0 overflow-hidden">
+
+    {* Large faded watermark on the right *}
+    <div class="absolute -right-32 top-12 w-[480px] h-[480px] opacity-[0.025] pointer-events-none hidden md:block"
+         style="background: var(--fg-primary); -webkit-mask: url(/assets/images/immunity-mark.png) center/contain no-repeat; mask: url(/assets/images/immunity-mark.png) center/contain no-repeat;"
+         aria-hidden="true"></div>
+
+    <div class="relative max-w-[1400px] mx-auto px-7 pt-16 pb-7">
+
+        {* Five columns: brand + 4 link directories *}
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-x-8 gap-y-12 pb-12 border-b border-ink-line/40">
+
+            {* Column 1: Brand *}
+            <div class="col-span-2 md:col-span-1">
+                <a href="/" class="flex items-center gap-2 mb-4 group" aria-label="Immunity home">
+                    <span class="block h-8 w-8 bg-fg-primary group-hover:bg-accent transition-colors"
+                          style="-webkit-mask: url(/assets/images/immunity-mark.png) center/contain no-repeat; mask: url(/assets/images/immunity-mark.png) center/contain no-repeat;"
+                          aria-hidden="true"></span>
+                    <span class="font-display text-[19px] font-light tracking-tighter text-fg-primary leading-none">Immunity</span>
+                </a>
+                <p class="font-display italic text-fg-tertiary text-[13px] mb-6">A vaccine for AI agents.</p>
+                <div class="flex items-center gap-3">
+                    <a href="https://twitter.com/immunity_xyz" rel="noopener" aria-label="Twitter" class="inline-flex h-8 w-8 items-center justify-center border border-ink-line/60 rounded-sm text-fg-tertiary hover:text-accent hover:border-fg-tertiary transition-colors">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M22 5.8a8.4 8.4 0 0 1-2.4.7 4.2 4.2 0 0 0 1.8-2.3 8.4 8.4 0 0 1-2.7 1A4.2 4.2 0 0 0 11.4 9 11.9 11.9 0 0 1 3 4.4a4.2 4.2 0 0 0 1.3 5.6 4.2 4.2 0 0 1-1.9-.5v.05a4.2 4.2 0 0 0 3.4 4.1 4.2 4.2 0 0 1-1.9.07 4.2 4.2 0 0 0 3.9 2.9A8.5 8.5 0 0 1 2 18.4 12 12 0 0 0 8.5 20c7.8 0 12-6.4 12-12v-.55A8.6 8.6 0 0 0 22 5.8z"/></svg>
+                    </a>
+                    <a href="https://github.com/ophelios-studio/immunity-app" rel="noopener" aria-label="GitHub" class="inline-flex h-8 w-8 items-center justify-center border border-ink-line/60 rounded-sm text-fg-tertiary hover:text-accent hover:border-fg-tertiary transition-colors">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 19c-4 1.5-4-2-6-2.5M15 22v-3.5a3 3 0 0 0-.8-2.4c2.7-.3 5.5-1.4 5.5-6 .1-1.2-.3-2.4-1.1-3.3.4-1.1.3-2.3-.1-3.3 0 0-1-.3-3.4 1.3a11.5 11.5 0 0 0-6.2 0C6.5 2.2 5.5 2.5 5.5 2.5c-.5 1-.5 2.2-.1 3.3-.8.9-1.2 2.1-1.1 3.3 0 4.6 2.8 5.7 5.5 6a3 3 0 0 0-.8 2.4V22"/></svg>
+                    </a>
+                    <a href="#" rel="noopener" aria-label="Discord" class="inline-flex h-8 w-8 items-center justify-center border border-ink-line/60 rounded-sm text-fg-tertiary hover:text-accent hover:border-fg-tertiary transition-colors">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M19 5a16 16 0 0 0-4-1l-.2.4a13 13 0 0 0-5.6 0L9 4a16 16 0 0 0-4 1 17 17 0 0 0-3 11s2 2 5 2l1-2c-2-1-3-2-3-2 3 2 7 2 9 2s6 0 9-2c0 0-1 1-3 2l1 2c3 0 5-2 5-2A17 17 0 0 0 19 5zM10 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            {* Column 2: Product *}
+            <nav aria-label="Product">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Product</div>
+                <ul class="space-y-2.5 text-[13px]">
+                    <li><a href="/antibodies" class="text-fg-secondary hover:text-fg-primary transition-colors">Antibodies</a></li>
+                    <li><a href="/dashboard" class="text-fg-secondary hover:text-fg-primary transition-colors">Dashboard</a></li>
+                    <li><a href="https://docs.immunity.xyz/sdk" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">SDK</a></li>
+                    <li><a href="https://docs.immunity.xyz/hook" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Hook</a></li>
+                    <li><a href="/feed/antibodies.rss" class="text-fg-secondary hover:text-fg-primary transition-colors">Public feed</a></li>
+                </ul>
+            </nav>
+
+            {* Column 3: Documentation *}
+            <nav aria-label="Documentation">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Documentation</div>
+                <ul class="space-y-2.5 text-[13px]">
+                    <li><a href="https://docs.immunity.xyz/quickstart" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Quickstart</a></li>
+                    <li><a href="https://docs.immunity.xyz/concepts" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Concepts</a></li>
+                    <li><a href="https://docs.immunity.xyz/tokenomics" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Tokenomics</a></li>
+                    <li><a href="https://docs.immunity.xyz/antibody-types" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Antibody types</a></li>
+                    <li><a href="https://docs.immunity.xyz/spec" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Protocol spec</a></li>
+                    <li><a href="https://docs.immunity.xyz/api" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">API reference</a></li>
+                </ul>
+            </nav>
+
+            {* Column 4: Network *}
+            <nav aria-label="Network">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Network</div>
+                <ul class="space-y-2.5 text-[13px]">
+                    <li><a href="https://status.immunity.xyz" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Status page</a></li>
+                    <li><a href="https://docs.immunity.xyz/genesis" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Genesis seed sources</a></li>
+                    <li><a href="/publishers" class="text-fg-secondary hover:text-fg-primary transition-colors">Publisher leaderboard</a></li>
+                    <li><a href="/antibodies?status=challenged" class="text-fg-secondary hover:text-fg-primary transition-colors">Recent challenges</a></li>
+                    <li><a href="/dashboard" class="text-fg-secondary hover:text-fg-primary transition-colors">Block events</a></li>
+                </ul>
+            </nav>
+
+            {* Column 5: Project *}
+            <nav aria-label="Project">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Project</div>
+                <ul class="space-y-2.5 text-[13px]">
+                    <li><a href="https://docs.immunity.xyz/manifesto" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">About / manifesto</a></li>
+                    <li><a href="https://github.com/ophelios-studio" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">GitHub org</a></li>
+                    <li><a href="https://github.com/ophelios-studio/immunity-app/blob/main/LICENSE" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">License (MIT)</a></li>
+                    <li><a href="#built-on" class="text-fg-secondary hover:text-fg-primary transition-colors">Sponsor stack</a></li>
+                    <li><a href="https://ethglobal.com/showcase/immunity" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Hackathon submission</a></li>
+                </ul>
+            </nav>
         </div>
-        <div class="text-fg-dim">
-            Open infrastructure. MIT licensed.
+
+        {* Bottom strip *}
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-6 text-[11.5px] text-fg-tertiary font-mono uppercase tracking-widest2">
+            <span class="text-fg-dim">© 2026 Immunity Network. Open infrastructure. MIT licensed.</span>
+            <span class="inline-flex items-center gap-2">
+                <span class="inline-flex h-1 w-1 rounded-full bg-accent" aria-hidden="true"></span>
+                <span class="text-fg-tertiary">Built for ETHGlobal Open Agents 2026</span>
+            </span>
+            <span class="text-fg-dim inline-flex items-center gap-3">
+                <span>v0.1.0</span>
+                <span class="inline-block h-3 w-px bg-ink-line"></span>
+                <span class="normal-case tracking-normal text-[11px]">main</span>
+            </span>
         </div>
+
     </div>
 </footer>
