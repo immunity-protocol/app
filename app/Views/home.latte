@@ -3,14 +3,22 @@
 {block title}Immunity, decentralized threat intelligence for AI agents{/block}
 
 {block head}
-<script defer src="{asset('/javascripts/propagation-map.js')}"></script>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
-  const el = document.getElementById('prop-map');
-  if (el && window.PropagationMap) {
-    window.__propMap = new window.PropagationMap(el);
-    window.__propMap.start();
-  }
+  document.querySelectorAll('[data-copy-btn]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-copy-btn');
+      const text = btn.getAttribute('data-copy-value') || (document.querySelector(target)?.innerText ?? '');
+      navigator.clipboard?.writeText(text);
+      const label = btn.querySelector('[data-copy-label]');
+      if (label) {
+        const prev = label.innerText;
+        label.innerText = 'Copied';
+        btn.classList.add('copy-flash');
+        setTimeout(() => { label.innerText = prev; btn.classList.remove('copy-flash'); }, 1400);
+      }
+    });
+  });
 });
 </script>
 {/block}
@@ -18,269 +26,67 @@ window.addEventListener('DOMContentLoaded', () => {
 {block content}
 
 {* ============================================================ HERO ===== *}
-<section class="relative">
-    <div class="absolute inset-0 dot-bg opacity-60 pointer-events-none"></div>
-    <div class="absolute inset-x-0 top-0 h-[420px] vignette-radial pointer-events-none"></div>
+<section class="relative overflow-hidden bg-ink-base">
 
-    <div class="relative max-w-[1400px] mx-auto px-7 pt-24 pb-20">
+    {* Ambient background: warm radial glow, dot pattern, large faded mark *}
+    <div class="absolute inset-0 hero-glow pointer-events-none" aria-hidden="true"></div>
+    <div class="absolute inset-0 dot-bg opacity-50 pointer-events-none" aria-hidden="true"></div>
 
-        {* Eyebrow *}
-        <div class="flex items-center gap-3 mb-8">
-            <span class="inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">
-                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent pulse-soft"></span>
-                Live network / mock data
-            </span>
-            <span class="h-px w-10 bg-ink-line"></span>
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">v0.1.0</span>
-        </div>
+    {* Large faded watermark on the right *}
+    <div class="absolute -right-24 top-1/2 -translate-y-1/2 w-[640px] h-[640px] opacity-[0.035] pointer-events-none hidden lg:block"
+         style="background: var(--fg-primary); -webkit-mask: url(/assets/images/immunity-mark.png) center/contain no-repeat; mask: url(/assets/images/immunity-mark.png) center/contain no-repeat;"
+         aria-hidden="true"></div>
 
-        {* Headline *}
-        <h1 class="font-display display-xl font-light tracking-tightest text-fg-primary text-[64px] sm:text-[80px] md:text-[104px] leading-[0.92] mb-10 max-w-[1080px]">
-            Decentralized threat<br>intelligence for
-            <span class="italic font-light text-accent">AI agents</span>.
+    {* Bottom gradient for text legibility on long pages *}
+    <div class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink-base pointer-events-none" aria-hidden="true"></div>
+
+    <div class="relative max-w-[1400px] mx-auto px-7 pt-24 pb-28 min-h-[80vh] flex flex-col justify-center">
+
+        {* Kicker, italic, almost a whisper *}
+        <p class="font-display italic text-fg-tertiary text-[15px] mb-5 tracking-tight">
+            A vaccine for AI agents.
+        </p>
+
+        {* Headline, large, restrained *}
+        <h1 class="font-display display-xl font-light tracking-tightest text-fg-primary text-[56px] sm:text-[76px] md:text-[96px] leading-[0.95] mb-9 max-w-[1100px]">
+            Decentralized threat<br>intelligence that
+            <span class="italic font-light text-accent">propagates in seconds</span>.
         </h1>
 
         {* Lede *}
-        <p class="text-fg-secondary text-[17px] leading-[1.65] max-w-[560px] mb-12">
+        <p class="text-fg-secondary text-[18px] leading-[1.6] max-w-[640px] mb-10">
             When one agent encounters a malicious actor, every other agent learns within seconds. Antibodies are signed by their publisher, staked on chain, and globally addressable by a stable CVE-style identifier.
         </p>
 
+        {* Install command block, the centerpiece *}
+        <div class="max-w-[640px] mb-7">
+            <div class="group relative flex items-stretch border border-ink-line/80 rounded-sm bg-ink-elevated/60 backdrop-blur-sm hover:border-fg-tertiary transition-colors overflow-hidden">
+                <span class="inline-flex items-center px-4 py-3.5 font-mono text-[12px] text-fg-dim border-r border-ink-line/60 select-none" aria-hidden="true">$</span>
+                <code id="install-cmd" class="flex-1 px-4 py-3.5 font-mono text-[14.5px] text-fg-primary bg-transparent overflow-x-auto whitespace-nowrap">npm install @immunity/sdk</code>
+                <button data-copy-btn="#install-cmd" data-copy-value="npm install @immunity/sdk"
+                        class="inline-flex items-center gap-2 px-4 py-3.5 border-l border-ink-line/60 text-fg-tertiary hover:text-accent hover:bg-ink-elevated transition-colors font-mono text-[10.5px] uppercase tracking-widest2"
+                        aria-label="Copy install command">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span data-copy-label>Copy</span>
+                </button>
+            </div>
+            <p class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim mt-2.5">
+                Drop-in. No config. Works on any chain.
+            </p>
+        </div>
+
         {* CTAs *}
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/antibodies" class="group inline-flex items-center gap-2 px-5 py-3 text-[13px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
-                Explore antibodies
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="opacity-60 group-hover:translate-x-0.5 transition-transform"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <a href="https://docs.immunity.xyz" rel="noopener" class="group inline-flex items-center gap-2 px-5 py-3 text-[13px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
+                Read the protocol
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="opacity-60 group-hover:translate-x-0.5 transition-transform" aria-hidden="true"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </a>
-            <a href="/dashboard" class="inline-flex items-center gap-2 px-5 py-3 text-[13px] tracking-wide border border-ink-line text-fg-secondary hover:text-fg-primary hover:border-fg-tertiary transition-colors rounded-sm">
+            <a href="/dashboard" class="group inline-flex items-center gap-2 px-5 py-3 text-[13px] tracking-wide border border-ink-line text-fg-secondary hover:text-fg-primary hover:border-fg-tertiary transition-colors rounded-sm">
                 View live dashboard
-            </a>
-            <span class="ml-2 text-[12px] text-fg-tertiary font-mono">
-                or read the <a href="https://docs.immunity.xyz" rel="noopener" class="text-fg-secondary hover:text-fg-primary underline underline-offset-4 decoration-fg-dim">protocol brief</a>
-            </span>
-        </div>
-
-    </div>
-</section>
-
-{* ================================================== PROPAGATION MAP ===== *}
-<section class="relative border-y border-ink-line/70 bg-ink-sunken/40">
-    <div class="absolute inset-0 grid-bg opacity-30 pointer-events-none"></div>
-    <div class="relative max-w-[1400px] mx-auto px-7 py-16">
-        <div class="flex items-end justify-between mb-8">
-            <div>
-                <div class="flex items-center gap-3 mb-2">
-                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network</span>
-                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-                </div>
-                <h2 class="font-display text-[28px] font-light tracking-tighter text-fg-primary">
-                    60 agents, gossiping antibodies in real time
-                </h2>
-            </div>
-            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary text-right">
-                <div>Tip: click a node to take it offline</div>
-                <div class="text-fg-dim">propagation continues regardless</div>
-            </div>
-        </div>
-
-        <div id="prop-map" class="w-full max-w-[760px] mx-auto aspect-square"></div>
-    </div>
-</section>
-
-{* ====================================================== STAT STRIP ===== *}
-<section class="border-y border-ink-line/70 bg-ink-sunken/60 relative">
-    <div class="absolute inset-0 dot-bg opacity-30 pointer-events-none"></div>
-    <div class="relative max-w-[1400px] mx-auto px-7 py-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-y-10 md:gap-0">
-
-        {* Antibodies active *}
-        <div class="md:px-7 md:first:pl-0 md:border-r md:border-ink-line/60 md:last:border-r-0 md:last:pr-0">
-            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3 flex items-center gap-2">
-                <span>Antibodies active</span>
-                <span class="inline-flex h-1 w-1 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-            </div>
-            <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">312</div>
-            <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
-                <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                +14 in 1h
-            </div>
-        </div>
-
-        {* Agents online *}
-        <div class="md:px-7 md:border-r md:border-ink-line/60">
-            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Agents online</div>
-            <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">1,247</div>
-            <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
-                <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                +8 in 1h
-            </div>
-        </div>
-
-        {* Cache hits / hour *}
-        <div class="md:px-7 md:border-r md:border-ink-line/60">
-            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Cache hits / hr</div>
-            <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">18,492</div>
-            <div class="font-mono text-[11px] text-fg-tertiary mt-3">
-                avg 5.1 / agent
-            </div>
-        </div>
-
-        {* LLM calls saved *}
-        <div class="md:px-7 md:border-r md:border-ink-line/60">
-            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">LLM calls saved</div>
-            <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">4,217</div>
-            <div class="font-mono text-[11px] text-fg-tertiary mt-3">
-                <span class="text-immune-500">≈ $8,920</span> in compute
-            </div>
-        </div>
-
-        {* Value protected *}
-        <div class="md:px-7 md:last:pr-0">
-            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Value protected</div>
-            <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">$248,300</div>
-            <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
-                <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                +$4,200 in 1h
-            </div>
-        </div>
-
-    </div>
-</section>
-
-{* ===================================================== LIVE FEED ===== *}
-<section class="relative">
-    <div class="max-w-[1400px] mx-auto px-7 pt-20 pb-12">
-
-        <div class="flex items-end justify-between mb-7">
-            <div>
-                <div class="flex items-center gap-3 mb-2">
-                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Live activity</span>
-                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-                </div>
-                <h2 class="font-display text-[28px] font-light tracking-tighter text-fg-primary">
-                    Recent mints, blocks, challenges
-                </h2>
-            </div>
-            <a href="/dashboard" class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors inline-flex items-center gap-1.5">
-                Open dashboard
-                <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9L9 3M9 3H4M9 3V8" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="opacity-50 group-hover:translate-x-0.5 transition-transform" aria-hidden="true"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </a>
         </div>
 
-        <div class="border-t border-ink-line/60">
-
-            {* ======== row 1: mint ======== *}
-            <a href="/antibody/IMM-2026-0312" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
-                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent" aria-label="mint" title="mint"></span>
-                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">23s ago</span>
-                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0312</span>
-                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">minted</span>
-                <span class="text-fg-secondary text-[13.5px] truncate">SEMANTIC pattern, 87% confidence, "approve unlimited spend"</span>
-                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">by huntress.eth</span>
-            </a>
-
-            {* ======== row 2: block ======== *}
-            <a href="/antibody/IMM-2026-0287" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
-                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500" aria-label="block"></span>
-                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">47s ago</span>
-                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0287</span>
-                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">blocked</span>
-                <span class="text-fg-secondary text-[13.5px] truncate">$4,200 protected, swap on Uniswap v4 / Sepolia hook</span>
-                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">tx 0x9af3..2c1e</span>
-            </a>
-
-            {* ======== row 3: mirror ======== *}
-            <a href="/antibody/IMM-2026-0301" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
-                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-fg-tertiary" aria-label="mirror"></span>
-                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">1m ago</span>
-                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0301</span>
-                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">mirrored</span>
-                <span class="text-fg-secondary text-[13.5px] truncate">propagated to Base, Optimism, Arbitrum (3 chains)</span>
-                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">relayer 0x4a..91c2</span>
-            </a>
-
-            {* ======== row 4: mint ======== *}
-            <a href="/antibody/IMM-2026-0298" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
-                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent" aria-label="mint"></span>
-                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">2m ago</span>
-                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0298</span>
-                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">minted</span>
-                <span class="text-fg-secondary text-[13.5px] truncate">ADDRESS, drainer wallet flagged from 7 prior matches</span>
-                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">by scout.eth</span>
-            </a>
-
-            {* ======== row 5: challenge ======== *}
-            <a href="/antibody/IMM-2026-0276" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
-                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-caution-500" aria-label="challenge"></span>
-                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">4m ago</span>
-                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0276</span>
-                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">challenged</span>
-                <span class="text-fg-secondary text-[13.5px] truncate">counter-stake 1.5 USDC, claim: "legitimate dex aggregator"</span>
-                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">by 0x6f1c..bd80</span>
-            </a>
-
-            {* ======== row 6: mint ======== *}
-            <a href="/antibody/IMM-2026-0289" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
-                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent" aria-label="mint"></span>
-                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">6m ago</span>
-                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0289</span>
-                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">minted</span>
-                <span class="text-fg-secondary text-[13.5px] truncate">CALL_PATTERN, approve(MAX_UINT256, 0xbad..1234)</span>
-                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">by sentinel.eth</span>
-            </a>
-
-            {* ======== row 7: block ======== *}
-            <a href="/antibody/IMM-2026-0271" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
-                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500" aria-label="block"></span>
-                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">9m ago</span>
-                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0271</span>
-                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">blocked</span>
-                <span class="text-fg-secondary text-[13.5px] truncate">$890 protected, swap intercepted before signature</span>
-                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">tx 0x42c9..d4f7</span>
-            </a>
-
-            {* ======== row 8: expire ======== *}
-            <a href="/antibody/IMM-2026-0263" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 hover:bg-ink-elevated/40 transition-colors group">
-                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-fg-dim" aria-label="expire"></span>
-                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">12m ago</span>
-                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0263</span>
-                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">expired</span>
-                <span class="text-fg-secondary text-[13.5px] truncate">72h stake released, 0 challenges, +0.41 USDC to publisher</span>
-                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">by sentinel.eth</span>
-            </a>
-
-        </div>
-
-        {* Legend *}
-        <div class="flex items-center justify-end gap-5 mt-6 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">
-            <span class="inline-flex items-center gap-2"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent"></span>mint</span>
-            <span class="inline-flex items-center gap-2"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500"></span>block</span>
-            <span class="inline-flex items-center gap-2"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-fg-tertiary"></span>mirror</span>
-            <span class="inline-flex items-center gap-2"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-caution-500"></span>challenge</span>
-            <span class="inline-flex items-center gap-2"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-fg-dim"></span>expire</span>
-        </div>
-
-    </div>
-</section>
-
-{* ================================================ ARCHITECTURE LAYERS ===== *}
-<section class="relative">
-    <div class="max-w-[1400px] mx-auto px-7 py-24">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-[1080px]">
-            <div>
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Speed layer</div>
-                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Gossip in seconds</h3>
-                <p class="text-fg-secondary text-[14px] leading-[1.65]">Antibodies fan out across the AXL mesh through signed pub/sub topics. Every agent's local cache updates in well under one second.</p>
-            </div>
-            <div>
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Trust layer</div>
-                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Staked on chain</h3>
-                <p class="text-fg-secondary text-[14px] leading-[1.65]">Each publisher locks 1 USDC for 72 hours. Match rewards split 70 / 20 / 10. False positives are challengeable. Skin in the game by design.</p>
-            </div>
-            <div>
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Verification layer</div>
-                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Sealed evidence</h3>
-                <p class="text-fg-secondary text-[14px] leading-[1.65]">Detection runs in a 0G Compute TEE. Verdicts carry attestation hashes. The original context is encrypted to the enclave key and never shown.</p>
-            </div>
-        </div>
     </div>
 </section>
 
