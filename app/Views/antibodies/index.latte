@@ -5,43 +5,9 @@
 {block content}
 
 {*
- * 30 hardcoded rows. Phase 2 will swap this array for live data from the
- * MockGenerator class (or, eventually, the Postgres-backed broker).
- * Distribution roughly matches the spec: ADDRESS ~60%, SEMANTIC ~20%,
- * CALL_PATTERN/BYTECODE/GRAPH ~7% each. Status mix favors ACTIVE.
+ * Rows are passed in by the controller from EntryService::findRecent(30).
+ * Each is an Entry entity (snake_case props from the antibody.entry table).
  *}
-{var $rows = [
-  ['id'=>'IMM-2026-0312', 'type'=>'SEMANTIC',     'verdict'=>'MALICIOUS', 'conf'=>87.0, 'sev'=>73, 'pub'=>'huntress.eth',  'status'=>'ACTIVE',     'when'=>'23s ago'],
-  ['id'=>'IMM-2026-0311', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>99.5, 'sev'=>92, 'pub'=>'sentinel.eth',  'status'=>'ACTIVE',     'when'=>'2m ago'],
-  ['id'=>'IMM-2026-0310', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>98.0, 'sev'=>88, 'pub'=>'0xa3f1..2c1e', 'status'=>'ACTIVE',     'when'=>'4m ago'],
-  ['id'=>'IMM-2026-0309', 'type'=>'CALL_PATTERN', 'verdict'=>'MALICIOUS', 'conf'=>91.0, 'sev'=>78, 'pub'=>'sentinel.eth',  'status'=>'ACTIVE',     'when'=>'7m ago'],
-  ['id'=>'IMM-2026-0308', 'type'=>'GRAPH',        'verdict'=>'SUSPICIOUS','conf'=>60.0, 'sev'=>54, 'pub'=>'0x6f1c..bd80', 'status'=>'CHALLENGED', 'when'=>'12m ago'],
-  ['id'=>'IMM-2026-0307', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>96.5, 'sev'=>81, 'pub'=>'scout.eth',     'status'=>'ACTIVE',     'when'=>'18m ago'],
-  ['id'=>'IMM-2026-0306', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>99.0, 'sev'=>95, 'pub'=>'forta-bot',     'status'=>'ACTIVE',     'when'=>'24m ago'],
-  ['id'=>'IMM-2026-0305', 'type'=>'BYTECODE',     'verdict'=>'MALICIOUS', 'conf'=>94.0, 'sev'=>76, 'pub'=>'0x9b2d..a401', 'status'=>'ACTIVE',     'when'=>'31m ago'],
-  ['id'=>'IMM-2026-0304', 'type'=>'SEMANTIC',     'verdict'=>'SUSPICIOUS','conf'=>72.0, 'sev'=>48, 'pub'=>'wolf.eth',      'status'=>'CHALLENGED', 'when'=>'42m ago'],
-  ['id'=>'IMM-2026-0303', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>99.5, 'sev'=>91, 'pub'=>'metamask',      'status'=>'ACTIVE',     'when'=>'1h ago'],
-  ['id'=>'IMM-2026-0302', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>98.5, 'sev'=>89, 'pub'=>'sentinel.eth',  'status'=>'ACTIVE',     'when'=>'1h ago'],
-  ['id'=>'IMM-2026-0301', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>97.0, 'sev'=>84, 'pub'=>'huntress.eth',  'status'=>'ACTIVE',     'when'=>'2h ago'],
-  ['id'=>'IMM-2026-0300', 'type'=>'SEMANTIC',     'verdict'=>'MALICIOUS', 'conf'=>83.5, 'sev'=>66, 'pub'=>'0x4a91..7e2c', 'status'=>'ACTIVE',     'when'=>'2h ago'],
-  ['id'=>'IMM-2026-0299', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>99.0, 'sev'=>87, 'pub'=>'scamsniffer',   'status'=>'ACTIVE',     'when'=>'3h ago'],
-  ['id'=>'IMM-2026-0298', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>98.0, 'sev'=>82, 'pub'=>'scout.eth',     'status'=>'ACTIVE',     'when'=>'3h ago'],
-  ['id'=>'IMM-2026-0297', 'type'=>'GRAPH',        'verdict'=>'SUSPICIOUS','conf'=>64.0, 'sev'=>52, 'pub'=>'0x8c5f..d013', 'status'=>'EXPIRED',    'when'=>'5h ago'],
-  ['id'=>'IMM-2026-0296', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>99.5, 'sev'=>93, 'pub'=>'metamask',      'status'=>'ACTIVE',     'when'=>'7h ago'],
-  ['id'=>'IMM-2026-0295', 'type'=>'CALL_PATTERN', 'verdict'=>'MALICIOUS', 'conf'=>89.5, 'sev'=>71, 'pub'=>'sentinel.eth',  'status'=>'ACTIVE',     'when'=>'8h ago'],
-  ['id'=>'IMM-2026-0294', 'type'=>'SEMANTIC',     'verdict'=>'MALICIOUS', 'conf'=>78.5, 'sev'=>62, 'pub'=>'huntress.eth',  'status'=>'ACTIVE',     'when'=>'10h ago'],
-  ['id'=>'IMM-2026-0293', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>99.0, 'sev'=>86, 'pub'=>'0x1b7e..f3a8', 'status'=>'ACTIVE',     'when'=>'12h ago'],
-  ['id'=>'IMM-2026-0292', 'type'=>'BYTECODE',     'verdict'=>'MALICIOUS', 'conf'=>91.5, 'sev'=>74, 'pub'=>'forta-bot',     'status'=>'ACTIVE',     'when'=>'14h ago'],
-  ['id'=>'IMM-2026-0291', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>97.5, 'sev'=>83, 'pub'=>'scout.eth',     'status'=>'ACTIVE',     'when'=>'18h ago'],
-  ['id'=>'IMM-2026-0290', 'type'=>'SEMANTIC',     'verdict'=>'MALICIOUS', 'conf'=>81.0, 'sev'=>65, 'pub'=>'sentinel.eth',  'status'=>'SLASHED',    'when'=>'21h ago'],
-  ['id'=>'IMM-2026-0289', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>99.5, 'sev'=>90, 'pub'=>'metamask',      'status'=>'ACTIVE',     'when'=>'1d ago'],
-  ['id'=>'IMM-2026-0288', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>98.5, 'sev'=>85, 'pub'=>'huntress.eth',  'status'=>'ACTIVE',     'when'=>'1d ago'],
-  ['id'=>'IMM-2026-0287', 'type'=>'GRAPH',        'verdict'=>'SUSPICIOUS','conf'=>67.5, 'sev'=>59, 'pub'=>'0xc9d4..0e21', 'status'=>'CHALLENGED', 'when'=>'1d ago'],
-  ['id'=>'IMM-2026-0286', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>99.0, 'sev'=>88, 'pub'=>'scamsniffer',   'status'=>'EXPIRED',    'when'=>'2d ago'],
-  ['id'=>'IMM-2026-0285', 'type'=>'SEMANTIC',     'verdict'=>'MALICIOUS', 'conf'=>76.0, 'sev'=>61, 'pub'=>'wolf.eth',      'status'=>'CHALLENGED', 'when'=>'2d ago'],
-  ['id'=>'IMM-2026-0284', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>99.5, 'sev'=>94, 'pub'=>'forta-bot',     'status'=>'ACTIVE',     'when'=>'3d ago'],
-  ['id'=>'IMM-2026-0283', 'type'=>'ADDRESS',      'verdict'=>'MALICIOUS', 'conf'=>97.0, 'sev'=>80, 'pub'=>'0x7a3f..8b91', 'status'=>'EXPIRED',    'when'=>'3d ago'],
-]}
 
 <section class="max-w-[1400px] mx-auto px-7 pt-14 pb-10">
 
@@ -61,9 +27,9 @@
         <div class="text-right shrink-0">
             <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Registry totals</div>
             <div class="font-mono text-[12.5px] text-fg-secondary leading-[1.6]">
-                <div><span class="text-fg-primary tabular-nums">312</span> active</div>
-                <div><span class="text-fg-primary tabular-nums">87</span> expired</div>
-                <div><span class="text-fg-primary tabular-nums">3</span> slashed</div>
+                <div><span class="text-fg-primary tabular-nums">{$totals['active']}</span> active</div>
+                <div><span class="text-fg-primary tabular-nums">{$totals['expired']}</span> expired</div>
+                <div><span class="text-fg-primary tabular-nums">{$totals['slashed']}</span> slashed</div>
             </div>
         </div>
     </div>
@@ -229,45 +195,49 @@
         </thead>
         <tbody>
         {foreach $rows as $r}
-            {var $typeColor = match($r['type']) {
+            {var $typeUpper = strtoupper($r->type)}
+            {var $verdictUpper = strtoupper($r->verdict)}
+            {var $statusUpper = strtoupper($r->status)}
+            {var $typeColor = match($typeUpper) {
                 'ADDRESS'      => 'text-fg-secondary',
                 'CALL_PATTERN' => 'text-caution-300',
                 'BYTECODE'     => 'text-immune-300',
                 'GRAPH'        => 'text-accent-soft',
                 default        => 'text-threat-300',
             }}
-            {var $verdictColor = $r['verdict'] === 'MALICIOUS' ? 'text-threat-500' : 'text-caution-500'}
-            {var $statusBadge = match($r['status']) {
+            {var $verdictColor = $verdictUpper === 'MALICIOUS' ? 'text-threat-500' : 'text-caution-500'}
+            {var $statusBadge = match($statusUpper) {
                 'ACTIVE'     => 'bg-immune-500/10 text-immune-500',
                 'CHALLENGED' => 'bg-caution-500/10 text-caution-500',
                 'EXPIRED'    => 'bg-fg-dim/15 text-fg-tertiary',
                 'SLASHED'    => 'bg-threat-500/15 text-threat-500',
                 default      => 'bg-fg-dim/10 text-fg-tertiary',
             }}
-            {var $isHexPub = str_starts_with($r['pub'], '0x')}
+            {var $publisherDisplay = $r->publisher_ens ?? '0x' . substr(bin2hex($r->publisher), 0, 8) . '..' . substr(bin2hex($r->publisher), -4)}
+            {var $isHexPub = $r->publisher_ens === null}
             <tr class="border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
                 <td class="py-3 pr-6">
-                    <a href="/antibody/{$r['id']}" class="font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">{$r['id']}</a>
+                    <a href="/antibody/{$r->imm_id}" class="font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">{$r->imm_id}</a>
                 </td>
                 <td class="py-3 pr-6">
-                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 {$typeColor}">{$r['type']}</span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 {$typeColor}">{$typeUpper}</span>
                 </td>
                 <td class="py-3 pr-6">
-                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 {$verdictColor}">{$r['verdict']}</span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 {$verdictColor}">{$verdictUpper}</span>
                 </td>
                 <td class="py-3 pr-6 text-right">
-                    <span class="text-fg-primary">{$r['conf']|number:1}</span>
+                    <span class="text-fg-primary">{$r->confidence|number:1}</span>
                 </td>
                 <td class="py-3 pr-6 text-right">
-                    <span class="text-fg-secondary">{$r['sev']}</span>
+                    <span class="text-fg-secondary">{$r->severity}</span>
                 </td>
                 <td class="py-3 pr-6">
-                    <span class="{$isHexPub ? 'font-mono text-[12px] text-fg-secondary' : 'text-fg-secondary'}">{$r['pub']}</span>
+                    <span class="{$isHexPub ? 'font-mono text-[12px] text-fg-secondary' : 'text-fg-secondary'}">{$publisherDisplay}</span>
                 </td>
                 <td class="py-3 pr-6">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-[10px] uppercase tracking-widest2 {$statusBadge}">{$r['status']}</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-[10px] uppercase tracking-widest2 {$statusBadge}">{$statusUpper}</span>
                 </td>
-                <td class="py-3 text-right font-mono text-[11.5px] text-fg-tertiary">{$r['when']}</td>
+                <td class="py-3 text-right font-mono text-[11.5px] text-fg-tertiary">{format('timeago', $r->created_at)}</td>
             </tr>
         {/foreach}
         </tbody>
