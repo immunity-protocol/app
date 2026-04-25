@@ -13,7 +13,7 @@
 
 # Front controller - route all requests through index.php
 RewriteEngine On
-RewriteCond %{THE_REQUEST} !(robots\.txt|sitemap\.xml|assets|favicon\.ico)
+RewriteCond %{THE_REQUEST} !(robots\.txt|sitemap\.xml|assets|javascripts|stylesheets|favicon\.ico)
 RewriteRule ^/?(.+)/?$ index.php [NC,L,QSA]
 
 # Block direct access to .php files (except index.php)
