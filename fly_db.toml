@@ -1,0 +1,22 @@
+app = 'immunity-db'
+primary_region = 'yyz'
+
+[build]
+  dockerfile = '.flyio/Dockerfile.db'
+
+[env]
+  POSTGRES_DB       = 'immunity'
+  POSTGRES_USER     = 'dev'
+  POSTGRES_PASSWORD = 'dev'
+  PGDATA            = '/data/pgdata'
+
+[[mounts]]
+  source = 'pg_data'
+  destination = '/data'
+
+# No public http_service - reachable only via immunity-db.internal:5432
+# from the other Fly apps in the same org.
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '1gb'

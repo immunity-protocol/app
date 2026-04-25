@@ -1,0 +1,24 @@
+app = 'immunity-cron'
+primary_region = 'yyz'
+
+[build]
+  dockerfile = '.flyio/Dockerfile.app'
+
+[env]
+  APP_ENV     = 'production'
+  APP_DEBUG   = 'false'
+  APP_TIMEZONE = 'UTC'
+  MODE        = 'CRON'
+
+# CRON_TOKEN injected via `fly secrets set`. The cron tier does not need DB
+# access; it just calls the API tier over internal DNS.
+
+# No http_service - this app runs supercronic and does not serve traffic.
+
+[processes]
+  cron = "/usr/local/bin/supercronic /var/www/html/.flyio/crontab"
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '256mb'
+  processes = ['cron']
