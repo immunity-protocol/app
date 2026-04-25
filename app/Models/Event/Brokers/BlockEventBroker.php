@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models\Event\Brokers;
+
+use App\Models\Core\Broker;
+
+class BlockEventBroker extends Broker
+{
+    /**
+     * @return \stdClass[]
+     */
+    public function findRecent(int $limit, ?int $beforeId = null): array
+    {
+        if ($beforeId !== null) {
+            return $this->select(
+                "SELECT * FROM event.block_event WHERE id < ? ORDER BY id DESC LIMIT ?",
+                [$beforeId, $limit]
+            );
+        }
+        return $this->select(
+            "SELECT * FROM event.block_event ORDER BY id DESC LIMIT ?",
+            [$limit]
+        );
+    }
+
+    public function countSince(string $sinceIso): int
+    {
+        return (int) $this->selectValue(
+            "SELECT count(*) FROM event.block_event WHERE occurred_at >= ?::timestamptz",
+            [$sinceIso]
+        );
+    }
+
+    public function sumValueProtectedAllTime(): string
+    {
+        return (string) $this->selectValue(
+            "SELECT coalesce(sum(value_protected_usd), 0) FROM event.block_event"
+        );
+    }
+
+    public function sumValueProtectedSince(string $sinceIso): string
+    {
+        return (string) $this->selectValue(
+            "SELECT coalesce(sum(value_protected_usd), 0) FROM event.block_event
+             WHERE occurred_at >= ?::timestamptz",
+            [$sinceIso]
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function insert(array $data): int
+    {
+        $cols = array_keys($data);
+        $placeholders = implode(', ', array_fill(0, count($cols), '?'));
+        $colList = implode(', ', array_map(fn ($c) => '"' . $c . '"', $cols));
+        $sql = "INSERT INTO event.block_event ($colList) VALUES ($placeholders) RETURNING id";
+        $row = $this->selectOne($sql, array_values($data));
+        return (int) $row->id;
+    }
+}
