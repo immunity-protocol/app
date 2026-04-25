@@ -113,10 +113,10 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
    tint overlay does the actual recoloring. */
 .hero-video,
 .hero-poster {
-    filter: saturate(0.3) brightness(0.75);
+    filter: saturate(0.85) brightness(0.55);
     object-position: right center;
 }
-.hero-video { filter: saturate(0.3) brightness(0.75) blur(3px); }
+.hero-video { filter: saturate(0.85) brightness(0.55) blur(2px); }
 
 /* Respect prefers-reduced-motion: swap the video for the static poster image */
 @media (prefers-reduced-motion: reduce) {

@@ -31,19 +31,14 @@ window.addEventListener('DOMContentLoaded', () => {
     {* Ambient video, hidden on mobile to save bandwidth *}
     <video class="hero-video absolute inset-0 w-full h-full object-cover hidden md:block pointer-events-none"
            autoplay muted loop playsinline preload="metadata"
-           poster="{asset('/assets/videos/hero-flora-poster.jpg')}"
+           poster="{asset('/assets/videos/hero-aqua-poster.jpg')}"
            aria-hidden="true">
-        <source src="{asset('/assets/videos/hero-flora.mp4')}" type="video/mp4">
+        <source src="{asset('/assets/videos/hero-aqua.mp4')}" type="video/mp4">
     </video>
 
     {* Mobile / reduced-motion fallback: poster as static image *}
     <img class="hero-poster absolute inset-0 w-full h-full object-cover md:hidden pointer-events-none"
-         src="{asset('/assets/videos/hero-flora-poster.jpg')}" alt="" aria-hidden="true">
-
-    {* Warm green tint laid over the desaturated footage via mix-blend-mode *}
-    <div class="absolute inset-0 pointer-events-none"
-         style="background-color: #7ab87a; mix-blend-mode: color; opacity: 0.6;"
-         aria-hidden="true"></div>
+         src="{asset('/assets/videos/hero-aqua-poster.jpg')}" alt="" aria-hidden="true">
 
     {* Left-side legibility gradient: opaque ink on the left half, video shines through on the right *}
     <div class="absolute inset-0 bg-gradient-to-r from-ink-base from-30% via-ink-base/80 via-50% to-transparent to-100% pointer-events-none" aria-hidden="true"></div>
