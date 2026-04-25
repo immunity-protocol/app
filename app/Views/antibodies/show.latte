@@ -212,11 +212,53 @@
                 </div>
             </section>
 
-            {* placeholder until 6d *}
-            <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Evidence</div>
-                <p class="text-fg-dim text-[13px] mt-3 italic">panel arrives in commit 6d</p>
-            </div>
+            {* ----------- EVIDENCE PANEL ----------- *}
+            <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
+
+                <header class="px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Evidence</span>
+                        <span class="font-mono text-[10px] text-fg-dim">redacted public excerpt</span>
+                    </div>
+                    {if $ab['evidence']['sealed']}
+                        <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 text-immune-500">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            Sealed bundle
+                        </span>
+                    {/if}
+                </header>
+
+                <div class="px-7 py-6 space-y-7">
+
+                    {* Reasoning excerpt *}
+                    <div>
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-3">Reasoning excerpt</div>
+                        <div class="text-[13.5px] text-fg-secondary leading-[1.7] whitespace-pre-line">{$ab['evidence']['reasoning']}</div>
+                        <p class="font-mono text-[10px] text-fg-dim mt-4 italic">Full evidence (TEE-sealed) is fetchable by holders of the unsealing key. Public mirror carries hash only.</p>
+                    </div>
+
+                    {* Attestation + CID grid *}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 pt-2">
+
+                        <div>
+                            <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-2">TEE attestation</div>
+                            <div class="font-mono text-[11.5px] text-fg-secondary bg-ink-sunken/60 border border-ink-line/40 rounded-sm px-3 py-2 break-all">{$ab['evidence']['tee_attestation']}</div>
+                        </div>
+
+                        <div>
+                            <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-2">Evidence CID</div>
+                            <div class="flex items-center gap-2">
+                                <code class="font-mono text-[11.5px] text-fg-secondary bg-ink-sunken/60 border border-ink-line/40 rounded-sm px-3 py-2 break-all min-w-0 flex-1">{$ab['evidence']['evidence_cid']}</code>
+                                <a href="https://ipfs.io/ipfs/{$ab['evidence']['evidence_cid']}" target="_blank" rel="noopener" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors shrink-0 inline-flex items-center gap-1" aria-label="Open on IPFS">
+                                    IPFS
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
 
             {* placeholder until 6e *}
             <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
