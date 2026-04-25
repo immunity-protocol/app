@@ -65,10 +65,91 @@
         <span class="text-fg-secondary">{$ab['id']}</span>
     </nav>
 
-    {* ============== HEADER (filled in 6b) ============== *}
-    <header class="mb-12">
-        <h1 class="font-mono text-[28px] text-fg-primary tracking-tight">{$ab['id']}</h1>
-        <p class="font-mono text-[12px] text-fg-tertiary mt-2 truncate">{$ab['keccak']}</p>
+    {* ============== HEADER ============== *}
+    {var $verdictTone = $ab['verdict'] === 'MALICIOUS' ? 'text-threat-500' : 'text-caution-500'}
+    {var $statusBadge = match($ab['status']) {
+        'ACTIVE'     => 'bg-immune-500/10 text-immune-500 border-immune-500/30',
+        'CHALLENGED' => 'bg-caution-500/10 text-caution-500 border-caution-500/30',
+        'EXPIRED'    => 'bg-fg-dim/15 text-fg-tertiary border-ink-line/60',
+        'SLASHED'    => 'bg-threat-500/15 text-threat-500 border-threat-500/30',
+    }}
+
+    <header class="mb-14">
+
+        {* Eyebrow line: kind + status pill *}
+        <div class="flex items-center gap-3 mb-5">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Antibody</span>
+            <span class="text-fg-dim" aria-hidden="true">/</span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border font-mono text-[10px] uppercase tracking-widest2 {$statusBadge}">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-current pulse-soft" aria-hidden="true"></span>
+                {$ab['status']}
+            </span>
+        </div>
+
+        {* IMM ID + copy *}
+        <div class="flex items-baseline gap-4 flex-wrap mb-3">
+            <h1 class="font-mono text-[34px] text-fg-primary tracking-tight leading-none">{$ab['id']}</h1>
+            <button data-copy="{$ab['id']}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors inline-flex items-center gap-1.5" aria-label="Copy IMM ID">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+            </button>
+        </div>
+
+        {* Keccak row *}
+        <div class="flex items-center gap-3 mb-7">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary shrink-0">Keccak</span>
+            <code class="font-mono text-[12px] text-fg-secondary truncate min-w-0">{$ab['keccak']}</code>
+            <button data-copy="{$ab['keccak']}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors inline-flex items-center gap-1.5 shrink-0" aria-label="Copy keccak">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+            </button>
+        </div>
+
+        {* Metadata strip: 5 cells *}
+        <div class="border-t border-b border-ink-line/60 grid grid-cols-2 md:grid-cols-5 divide-x divide-ink-line/40">
+            <div class="p-4">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Type</div>
+                <div class="font-mono text-[13px] uppercase tracking-widest2 text-accent-soft">{$ab['type']}</div>
+            </div>
+            <div class="p-4">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Verdict</div>
+                <div class="font-mono text-[13px] uppercase tracking-widest2 {$verdictTone}">{$ab['verdict']}</div>
+            </div>
+            <div class="p-4">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Confidence</div>
+                <div class="font-mono text-[15px] text-fg-primary tabular-nums">{$ab['confidence']|number:1}<span class="text-fg-tertiary text-[11px] ml-0.5">%</span></div>
+            </div>
+            <div class="p-4">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Severity</div>
+                <div class="flex items-center gap-2.5">
+                    <span class="font-mono text-[15px] text-fg-primary tabular-nums">{$ab['severity']}</span>
+                    <div class="h-1 w-16 bg-ink-line/60 rounded-full overflow-hidden">
+                        <div class="h-full bg-threat-500" style="width: {$ab['severity']}%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Stake</div>
+                <div class="font-mono text-[15px] text-fg-primary tabular-nums">{$ab['stake']|number:2}<span class="text-fg-tertiary text-[11px] ml-1">USDC</span></div>
+            </div>
+        </div>
+
+        {* Publisher + timestamps row *}
+        <div class="flex flex-wrap items-center gap-x-8 gap-y-3 mt-5 text-[12.5px]">
+            <div class="flex items-center gap-2">
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Published by</span>
+                <span class="text-fg-primary">{$ab['publisher']}</span>
+                <span class="font-mono text-[11px] text-fg-tertiary truncate max-w-[180px]">{$ab['publisher_addr']}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Created</span>
+                <span class="font-mono text-[11.5px] text-fg-secondary">{$ab['created_at']}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Expires</span>
+                <span class="font-mono text-[11.5px] text-fg-secondary">{$ab['expires_at']}</span>
+            </div>
+        </div>
     </header>
 
     {* ============== TWO-COLUMN BODY ============== *}
@@ -104,10 +185,61 @@
 
         {* ----------- SIDE RAIL ----------- *}
         <aside class="space-y-6">
-            <div class="border border-ink-line/60 rounded-sm p-5 bg-ink-elevated/20">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Actions</div>
-                <p class="text-fg-dim text-[13px] italic">side actions arrive with 6b</p>
+
+            {* Actions *}
+            <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary px-5 py-3 border-b border-ink-line/40">Actions</div>
+                <ul class="divide-y divide-ink-line/40">
+                    <li>
+                        <a href="#" class="flex items-center justify-between px-5 py-3 text-[13px] text-fg-secondary hover:text-fg-primary hover:bg-ink-elevated/40 transition-colors">
+                            <span>View raw JSON</span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="text-fg-dim"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center justify-between px-5 py-3 text-[13px] text-fg-secondary hover:text-fg-primary hover:bg-ink-elevated/40 transition-colors">
+                            <span>Copy evidence CID</span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="text-fg-dim"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center justify-between px-5 py-3 text-[13px] text-fg-secondary hover:text-fg-primary hover:bg-ink-elevated/40 transition-colors">
+                            <span>Share permalink</span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="text-fg-dim"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center justify-between px-5 py-3 text-[13px] text-caution-500 hover:text-caution-300 hover:bg-caution-500/5 transition-colors">
+                            <span>Challenge antibody</span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </a>
+                    </li>
+                </ul>
             </div>
+
+            {* Quick stats *}
+            <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-5">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">At a glance</div>
+                <dl class="space-y-3">
+                    <div class="flex items-baseline justify-between gap-3">
+                        <dt class="text-fg-tertiary text-[11.5px]">Network propagation</dt>
+                        <dd class="font-mono text-[12px] text-immune-500">3.2s</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3">
+                        <dt class="text-fg-tertiary text-[11.5px]">Mirrors live</dt>
+                        <dd class="font-mono text-[12px] text-fg-primary">{count($ab['mirrors'])}/4</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3">
+                        <dt class="text-fg-tertiary text-[11.5px]">Cache hits</dt>
+                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{$ab['impact']['cache_hits']|number(0, '.', ',')}</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3">
+                        <dt class="text-fg-tertiary text-[11.5px]">USD protected</dt>
+                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">${$ab['impact']['llm_saved_usd']|number(2, '.', ',')}</dd>
+                    </div>
+                </dl>
+            </div>
+
         </aside>
     </div>
 
