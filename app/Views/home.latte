@@ -695,7 +695,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 <div class="grid grid-cols-[64px_1fr_1.6fr] md:grid-cols-[120px_1fr_1.6fr] items-center gap-6 py-6 border-b border-ink-line/40 hover:bg-ink-elevated/30 transition-colors">
                     {* Placeholder mark *}
                     <div class="flex items-center justify-center h-12 w-12 md:h-14 md:w-14 border border-ink-line/60 rounded-sm bg-ink-elevated/40 font-mono text-[10px] tracking-widest2 text-fg-dim uppercase select-none">
-                        {$s['name']|truncate:2:''}
+                        {$s['name']|substr(0, 2)}
                     </div>
                     <div>
                         <div class="font-display text-[18px] tracking-tighter text-fg-primary leading-tight">{$s['name']}</div>
