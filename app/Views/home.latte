@@ -221,4 +221,31 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
+{* ============================================ TICKER · recent IMM IDs ===== *}
+{var $tickerIds = [
+  'IMM-2026-0312', 'IMM-2026-0311', 'IMM-2026-0310', 'IMM-2026-0309', 'IMM-2026-0308',
+  'IMM-2026-0307', 'IMM-2026-0306', 'IMM-2026-0305', 'IMM-2026-0304', 'IMM-2026-0303',
+  'IMM-2026-0301', 'IMM-2026-0299', 'IMM-2026-0298', 'IMM-2026-0296', 'IMM-2026-0295',
+  'IMM-2026-0293', 'IMM-2026-0291', 'IMM-2026-0290', 'IMM-2026-0289', 'IMM-2026-0287',
+  'IMM-2026-0285', 'IMM-2026-0284', 'IMM-2026-0283', 'IMM-2026-0276', 'IMM-2026-0271',
+  'IMM-2026-0263',
+]}
+<aside class="relative bg-ink-base border-y border-ink-line/60 overflow-hidden" aria-label="Recently published antibodies">
+    <div class="ticker-track py-4 select-none">
+        {* Two identical lists side-by-side make the loop seamless *}
+        {for $pass = 0; $pass < 2; $pass++}
+            <ul class="flex items-center gap-10 px-5" aria-hidden="{$pass === 1 ? 'true' : 'false'}">
+                {foreach $tickerIds as $id}
+                    <li>
+                        <a href="/antibody/{$id}" class="font-mono text-[12px] text-fg-tertiary hover:text-accent transition-colors tabular-nums whitespace-nowrap inline-flex items-center gap-2">
+                            <span class="inline-flex h-1 w-1 rounded-full bg-immune-500/70" aria-hidden="true"></span>
+                            {$id}
+                        </a>
+                    </li>
+                {/foreach}
+            </ul>
+        {/for}
+    </div>
+</aside>
+
 {/block}
