@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use App\Models\Core\Db;
 use Zephyrus\Core\Config\DatabaseConfig;
 use Zephyrus\Data\Database;
 
@@ -15,7 +16,7 @@ abstract class IntegrationTestCase extends TestCase
     {
         /** @var DatabaseConfig $config */
         $config = $GLOBALS['TEST_DATABASE_CONFIG'];
-        $this->db = Database::fromConfig($config);
+        $this->db = Db::fromConfig($config);
         $this->db->pdo()->beginTransaction();
     }
 

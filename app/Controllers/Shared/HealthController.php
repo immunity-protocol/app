@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controllers\Shared;
 
+use App\Models\Core\Db;
 use Throwable;
 use Zephyrus\Controller\Controller;
 use Zephyrus\Core\App;
-use Zephyrus\Data\Database;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;
 
@@ -20,7 +20,7 @@ final class HealthController extends Controller
         $config = App::getConfiguration()?->database;
         if ($config !== null) {
             try {
-                Database::fromConfig($config)->selectValue('SELECT 1');
+                Db::fromConfig($config)->selectValue('SELECT 1');
                 $dbStatus = 'reachable';
             } catch (Throwable) {
                 $dbStatus = 'unreachable';
