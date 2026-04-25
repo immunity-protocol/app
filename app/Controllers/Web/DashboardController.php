@@ -2,17 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers;
+namespace App\Controllers\Web;
 
-use Zephyrus\Controller\Controller;
 use Zephyrus\Http\Response;
-use Zephyrus\Rendering\RenderResponses;
 use Zephyrus\Routing\Attribute\Get;
 
 final class DashboardController extends Controller
 {
-    use RenderResponses;
-
     #[Get('/dashboard')]
     public function index(): Response
     {

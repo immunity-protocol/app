@@ -121,6 +121,13 @@ abstract class Kernel
     {
         Dotenv::createImmutable(ROOT_DIR)->safeLoad();
 
+        // Default to WEB tier so single-process local dev (no MODE set) keeps
+        // loading web routes. Containerized tiers set MODE explicitly.
+        if (!isset($_ENV['MODE']) && getenv('MODE') === false) {
+            $_ENV['MODE'] = 'WEB';
+            putenv('MODE=WEB');
+        }
+
         $this->config = Configuration::fromYamlFile(ROOT_DIR . '/config.yml', [
             'render' => RenderConfig::class,
             'mailer' => MailerConfig::class,
