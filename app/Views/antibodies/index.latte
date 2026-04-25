@@ -70,8 +70,150 @@
 
     <div class="hr-fade mb-8"></div>
 
-    {* ================================================ TABLE ===== *}
-    <div class="overflow-x-auto -mx-7 px-7">
+    {* ================================================ SEARCH BAR ===== *}
+    <div class="mb-8">
+        <div class="relative">
+            <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-fg-tertiary pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/>
+                <path d="m20 20-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <input
+                type="search"
+                placeholder="Search by IMM ID, primary matcher, address, ENS, structural marker..."
+                class="w-full bg-ink-elevated/40 border border-ink-line/80 rounded-sm pl-11 pr-32 py-3 text-[14px] text-fg-primary placeholder:text-fg-dim font-mono focus:border-fg-tertiary focus:bg-ink-elevated/70 focus:outline-none transition-colors"
+            >
+            <kbd class="absolute right-4 top-1/2 -translate-y-1/2 font-mono text-[10px] text-fg-tertiary uppercase tracking-widest2 hidden md:inline">/ to focus</kbd>
+        </div>
+    </div>
+
+    {* ================================================ FILTERS + TABLE ===== *}
+    <div class="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-x-10 gap-y-8">
+
+        {* ----------- SIDEBAR FILTERS ----------- *}
+        <aside class="space-y-7">
+
+            {* Type *}
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Type</span>
+                    <button class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-fg-secondary transition-colors">Clear</button>
+                </div>
+                <div class="space-y-1.5">
+                    {var $typeFacets = [
+                      ['key'=>'ADDRESS',      'count'=>187, 'checked'=>true],
+                      ['key'=>'CALL_PATTERN', 'count'=>24,  'checked'=>true],
+                      ['key'=>'BYTECODE',     'count'=>18,  'checked'=>false],
+                      ['key'=>'GRAPH',        'count'=>12,  'checked'=>false],
+                      ['key'=>'SEMANTIC',     'count'=>71,  'checked'=>true],
+                    ]}
+                    {foreach $typeFacets as $f}
+                        <label class="flex items-center gap-2.5 cursor-pointer group">
+                            <input type="checkbox" {if $f['checked']}checked{/if} class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-accent checked:border-accent shrink-0 transition-colors">
+                            <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1 truncate">{$f['key']}</span>
+                            <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">{$f['count']}</span>
+                        </label>
+                    {/foreach}
+                </div>
+            </div>
+
+            {* Verdict *}
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Verdict</div>
+                <div class="space-y-1.5">
+                    <label class="flex items-center gap-2.5 cursor-pointer group">
+                        <input type="checkbox" checked class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-threat-500 checked:border-threat-500 shrink-0 transition-colors">
+                        <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1">Malicious</span>
+                        <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">278</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 cursor-pointer group">
+                        <input type="checkbox" class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-caution-500 checked:border-caution-500 shrink-0 transition-colors">
+                        <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1">Suspicious</span>
+                        <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">34</span>
+                    </label>
+                </div>
+            </div>
+
+            {* Status *}
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Status</div>
+                <div class="space-y-1.5">
+                    {var $statusFacets = [
+                      ['key'=>'Active',     'count'=>312, 'tone'=>'immune-500',  'checked'=>true],
+                      ['key'=>'Challenged', 'count'=>4,   'tone'=>'caution-500', 'checked'=>false],
+                      ['key'=>'Expired',    'count'=>87,  'tone'=>'fg-tertiary', 'checked'=>false],
+                      ['key'=>'Slashed',    'count'=>3,   'tone'=>'threat-500',  'checked'=>false],
+                    ]}
+                    {foreach $statusFacets as $f}
+                        <label class="flex items-center gap-2.5 cursor-pointer group">
+                            <input type="checkbox" {if $f['checked']}checked{/if} class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-{$f['tone']} checked:border-{$f['tone']} shrink-0 transition-colors">
+                            <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1">{$f['key']}</span>
+                            <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">{$f['count']}</span>
+                        </label>
+                    {/foreach}
+                </div>
+            </div>
+
+            {* Date range *}
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Date range</div>
+                <div class="flex flex-wrap gap-1.5">
+                    {var $ranges = [['k'=>'24h','active'=>false],['k'=>'7d','active'=>true],['k'=>'30d','active'=>false],['k'=>'90d','active'=>false],['k'=>'all','active'=>false]]}
+                    {foreach $ranges as $r}
+                        <button class="px-2.5 py-1 font-mono text-[10.5px] uppercase tracking-widest2 border rounded-sm transition-colors {$r['active'] ? 'bg-accent/15 border-accent/60 text-accent' : 'bg-transparent border-ink-line text-fg-secondary hover:text-fg-primary hover:border-fg-tertiary'}">{$r['k']}</button>
+                    {/foreach}
+                </div>
+            </div>
+
+            {* Severity range *}
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Severity</div>
+                <div class="flex items-center gap-2">
+                    <input type="number" value="50" min="0" max="100" class="w-full bg-ink-elevated/60 border border-ink-line rounded-sm px-2 py-1.5 font-mono text-[12px] text-fg-primary tabular-nums focus:border-fg-tertiary focus:outline-none">
+                    <span class="text-fg-tertiary text-[12px]">to</span>
+                    <input type="number" value="100" min="0" max="100" class="w-full bg-ink-elevated/60 border border-ink-line rounded-sm px-2 py-1.5 font-mono text-[12px] text-fg-primary tabular-nums focus:border-fg-tertiary focus:outline-none">
+                </div>
+            </div>
+
+            {* Publisher search *}
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Publisher</div>
+                <input type="text" placeholder="ENS or 0x..." class="w-full bg-ink-elevated/40 border border-ink-line rounded-sm px-3 py-2 font-mono text-[12px] text-fg-primary placeholder:text-fg-dim focus:border-fg-tertiary focus:outline-none">
+            </div>
+
+            {* Has embedding *}
+            <div>
+                <label class="flex items-center justify-between cursor-pointer group">
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Has embedding</span>
+                    <span class="relative inline-flex items-center">
+                        <input type="checkbox" class="sr-only peer">
+                        <span class="w-8 h-4 rounded-full bg-ink-elevated border border-ink-line peer-checked:bg-immune-500/40 peer-checked:border-immune-500/60 transition-colors"></span>
+                        <span class="absolute left-0.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-fg-tertiary peer-checked:translate-x-4 peer-checked:bg-immune-500 transition-transform transition-colors"></span>
+                    </span>
+                </label>
+            </div>
+
+            {* Mirror status *}
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Mirror status</div>
+                <select class="w-full bg-ink-elevated/40 border border-ink-line rounded-sm px-3 py-2 font-mono text-[12px] text-fg-primary focus:border-fg-tertiary focus:outline-none appearance-none">
+                    <option>Any</option>
+                    <option>Not mirrored</option>
+                    <option>Mirrored to 1+ chain</option>
+                    <option>Mirrored to 2+ chains</option>
+                    <option>Mirrored to 3 chains</option>
+                </select>
+            </div>
+
+            {* Reset all *}
+            <div class="pt-3 border-t border-ink-line/40">
+                <button class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors">
+                    Reset all filters
+                </button>
+            </div>
+        </aside>
+
+        {* ----------- TABLE ----------- *}
+        <div class="overflow-x-auto -mr-7 pr-7 lg:mr-0 lg:pr-0">
     <table class="w-full border-collapse text-[13px] tabular-nums">
         <thead>
             <tr class="text-left">
@@ -130,6 +272,8 @@
         {/foreach}
         </tbody>
     </table>
+        </div>
+
     </div>
 
 </section>
