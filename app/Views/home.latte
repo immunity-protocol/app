@@ -521,4 +521,26 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
+{* ============================================ TICKER · attack categories ===== *}
+{var $threatLabels = [
+  'DRAINER WALLETS', 'PROMPT INJECTION', 'HONEYPOT TOKENS', 'UNLIMITED APPROVALS',
+  'SOCIAL ENGINEERING', 'TYPOSQUATTING', 'MIXER ROUTING', 'BYTECODE CLONES',
+  'PHISHING SIGNATURES', 'SANDWICH BOTS', 'SYBIL FUNDING', 'ROUTING EXPLOITS',
+  'ORACLE MANIPULATION', 'PERMIT2 ABUSE', 'SEED DRAINERS',
+]}
+<aside class="relative bg-ink-base border-y border-ink-line/60 overflow-hidden" aria-label="Attack categories defended">
+    <div class="ticker-track-reverse py-5 select-none">
+        {for $pass = 0; $pass < 2; $pass++}
+            <ul class="flex items-center gap-12 px-6" aria-hidden="{$pass === 1 ? 'true' : 'false'}">
+                {foreach $threatLabels as $label}
+                    <li class="font-mono text-[13.5px] uppercase tracking-widest2 text-fg-secondary whitespace-nowrap inline-flex items-center gap-3">
+                        <span class="inline-flex h-1 w-1 rounded-full bg-threat-500/70" aria-hidden="true"></span>
+                        {$label}
+                    </li>
+                {/foreach}
+            </ul>
+        {/for}
+    </div>
+</aside>
+
 {/block}
