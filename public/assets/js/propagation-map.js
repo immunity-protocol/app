@@ -71,6 +71,7 @@ class PropagationMap {
       ring.setAttribute('fill', 'none');
       ring.setAttribute('stroke', palette.spokeStroke);
       ring.setAttribute('stroke-width', '1');
+      ring.style.pointerEvents = 'none';
       this.svg.appendChild(ring);
     });
 
@@ -81,6 +82,7 @@ class PropagationMap {
     halo.setAttribute('r', radius * 0.12);
     halo.setAttribute('fill', palette.centerHalo);
     halo.setAttribute('stroke', 'none');
+    halo.style.pointerEvents = 'none';
     this.svg.appendChild(halo);
   }
 
@@ -99,6 +101,8 @@ class PropagationMap {
       membrane.setAttribute('fill', 'none');
       membrane.setAttribute('stroke', palette.idleStroke);
       membrane.setAttribute('stroke-width', '0.6');
+      membrane.style.transition = 'stroke 220ms ease-out, opacity 220ms ease-out, r 220ms ease-out';
+      membrane.style.pointerEvents = 'none';
       this.svg.appendChild(membrane);
 
       // Inner core (the "nucleus")
@@ -109,10 +113,25 @@ class PropagationMap {
       core.setAttribute('fill', palette.idleFill);
       core.setAttribute('stroke', palette.idleStroke);
       core.setAttribute('stroke-width', '0.8');
-      core.style.transition = 'fill 280ms ease-out, stroke 280ms ease-out, r 280ms ease-out';
+      core.style.transition = 'fill 280ms ease-out, stroke 280ms ease-out, r 280ms ease-out, opacity 280ms ease-out';
+      core.style.pointerEvents = 'none';
       this.svg.appendChild(core);
 
-      this.nodes.push({ i, x, y, angle, core, membrane, killed: false });
+      // Generous transparent hit area for click/hover (sits on top, captures pointer)
+      const hit = document.createElementNS(NS, 'circle');
+      hit.setAttribute('cx', x);
+      hit.setAttribute('cy', y);
+      hit.setAttribute('r', 14);
+      hit.setAttribute('fill', 'transparent');
+      hit.style.cursor = 'pointer';
+      this.svg.appendChild(hit);
+
+      const node = { i, x, y, angle, core, membrane, hit, killed: false };
+      hit.addEventListener('click', () => this.toggleKill(node.i));
+      hit.addEventListener('mouseenter', () => this._setHover(node, true));
+      hit.addEventListener('mouseleave', () => this._setHover(node, false));
+
+      this.nodes.push(node);
     }
   }
 
@@ -132,6 +151,18 @@ class PropagationMap {
   /** Fire one wave immediately. Useful for tests and debug poking. */
   triggerNow() {
     this._triggerWave();
+  }
+
+  /** Toggle a node between alive and killed. Killed nodes are skipped by waves. */
+  toggleKill(idx) {
+    const node = this.nodes[idx];
+    if (!node) return;
+    node.killed = !node.killed;
+    this._applyIdleVisual(node);
+  }
+
+  killedCount() {
+    return this.nodes.reduce((n, x) => n + (x.killed ? 1 : 0), 0);
   }
 
   // ========================================================== animation loop
@@ -167,13 +198,7 @@ class PropagationMap {
     pub.core.setAttribute('stroke', palette.publisher);
     pub.core.setAttribute('r', String(nodeRadius * 1.6));
     pub.membrane.setAttribute('stroke', palette.publisher);
-    setTimeout(() => {
-      if (pub.killed) return;
-      pub.core.setAttribute('fill', palette.idleFill);
-      pub.core.setAttribute('stroke', palette.idleStroke);
-      pub.core.setAttribute('r', String(nodeRadius));
-      pub.membrane.setAttribute('stroke', palette.idleStroke);
-    }, 800);
+    setTimeout(() => this._applyIdleVisual(pub), 800);
 
     // Expanding rings, staggered
     for (let k = 0; k < ringCount; k++) {
@@ -202,6 +227,7 @@ class PropagationMap {
     ring.setAttribute('stroke', palette.publisher);
     ring.setAttribute('stroke-width', '1.4');
     ring.setAttribute('opacity', '0.55');
+    ring.style.pointerEvents = 'none';
     ring.style.transition =
       `r ${waveDurationMs}ms cubic-bezier(0.2, 0.65, 0.25, 0.95),` +
       ` opacity ${waveDurationMs}ms ease-out,` +
@@ -222,13 +248,42 @@ class PropagationMap {
     node.core.setAttribute('stroke', palette.receiver);
     node.core.setAttribute('r', String(nodeRadius * 1.4));
     node.membrane.setAttribute('stroke', palette.receiver);
-    setTimeout(() => {
-      if (node.killed) return;
+    setTimeout(() => this._applyIdleVisual(node), 360);
+  }
+
+  // ============================================================ visuals helpers
+
+  _applyIdleVisual(node) {
+    const { palette, nodeRadius } = this.opts;
+    if (node.killed) {
+      node.core.setAttribute('fill', palette.killed);
+      node.core.setAttribute('stroke', palette.killed);
+      node.core.setAttribute('r', String(nodeRadius));
+      node.core.setAttribute('opacity', '0.55');
+      node.membrane.setAttribute('stroke', palette.killed);
+      node.membrane.setAttribute('opacity', '0.4');
+      node.membrane.setAttribute('r', String(nodeRadius + 3));
+    } else {
       node.core.setAttribute('fill', palette.idleFill);
       node.core.setAttribute('stroke', palette.idleStroke);
       node.core.setAttribute('r', String(nodeRadius));
+      node.core.removeAttribute('opacity');
       node.membrane.setAttribute('stroke', palette.idleStroke);
-    }, 360);
+      node.membrane.removeAttribute('opacity');
+      node.membrane.setAttribute('r', String(nodeRadius + 3));
+    }
+  }
+
+  _setHover(node, hovering) {
+    if (node.killed) return;
+    const { nodeRadius, palette } = this.opts;
+    if (hovering) {
+      node.membrane.setAttribute('r', String(nodeRadius + 5));
+      node.membrane.setAttribute('stroke', palette.publisher);
+    } else {
+      node.membrane.setAttribute('r', String(nodeRadius + 3));
+      node.membrane.setAttribute('stroke', palette.idleStroke);
+    }
   }
 }
 
