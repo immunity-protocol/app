@@ -248,4 +248,94 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </aside>
 
+{* ============================================ 03 · LIVE ACTIVITY ===== *}
+{var $events = [
+  ['kind' => 'mint',      'verb' => 'published', 'proto' => 'mint',     'id' => 'IMM-2026-0312', 'when' => '23s ago', 'desc' => 'SEMANTIC pattern, 87% confidence, "approve unlimited spend"', 'meta' => 'by huntress.eth'],
+  ['kind' => 'block',     'verb' => 'protected', 'proto' => 'block',    'id' => 'IMM-2026-0287', 'when' => '47s ago', 'desc' => '$4,200 protected, swap on Uniswap v4 / Sepolia hook',         'meta' => 'tx 0x9af3..2c1e'],
+  ['kind' => 'mirror',    'verb' => 'synced',    'proto' => 'mirror',   'id' => 'IMM-2026-0301', 'when' => '1m ago',  'desc' => 'propagated to Base, Optimism, Arbitrum (3 chains)',          'meta' => 'relayer 0x4a..91c2'],
+  ['kind' => 'mint',      'verb' => 'published', 'proto' => 'mint',     'id' => 'IMM-2026-0298', 'when' => '2m ago',  'desc' => 'ADDRESS, drainer wallet flagged from 7 prior matches',       'meta' => 'by scout.eth'],
+  ['kind' => 'challenge', 'verb' => 'challenged','proto' => 'challenge','id' => 'IMM-2026-0276', 'when' => '4m ago',  'desc' => 'counter-stake 1.5 USDC, claim: "legitimate dex aggregator"',  'meta' => 'by 0x6f1c..bd80'],
+  ['kind' => 'mint',      'verb' => 'published', 'proto' => 'mint',     'id' => 'IMM-2026-0289', 'when' => '6m ago',  'desc' => 'CALL_PATTERN, approve(MAX_UINT256, 0xbad..1234)',             'meta' => 'by sentinel.eth'],
+  ['kind' => 'block',     'verb' => 'protected', 'proto' => 'block',    'id' => 'IMM-2026-0271', 'when' => '9m ago',  'desc' => '$890 protected, swap intercepted before signature',          'meta' => 'tx 0x42c9..d4f7'],
+  ['kind' => 'expire',    'verb' => 'released',  'proto' => 'expire',   'id' => 'IMM-2026-0263', 'when' => '12m ago', 'desc' => '72h stake released, 0 challenges, +0.41 USDC to publisher',  'meta' => 'by sentinel.eth'],
+]}
+{var $filters = [
+  ['key' => 'all',       'label' => 'All',        'count' => count($events)],
+  ['key' => 'mint',      'label' => 'Published',  'count' => 3],
+  ['key' => 'block',     'label' => 'Protected',  'count' => 2],
+  ['key' => 'mirror',    'label' => 'Synced',     'count' => 1],
+  ['key' => 'challenge', 'label' => 'Disputed',   'count' => 1],
+  ['key' => 'expire',    'label' => 'Released',   'count' => 1],
+]}
+
+<section class="relative bg-ink-base">
+    <div class="max-w-[1400px] mx-auto px-7 pt-20 pb-16">
+
+        <div class="flex flex-wrap items-end justify-between gap-6 mb-8">
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">03</span>
+                    <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Live activity</span>
+                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">Live · updating every 4s</span>
+                </div>
+                <h2 class="font-display text-[34px] font-light tracking-tighter text-fg-primary leading-[1.05]">
+                    The network is breathing.
+                </h2>
+                <p class="text-fg-secondary text-[14px] leading-[1.6] mt-3 max-w-[520px]">
+                    Every event below is a real artifact: signed, staked, and addressable forever. Click any IMM ID to inspect.
+                </p>
+            </div>
+            <a href="/dashboard" class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors inline-flex items-center gap-1.5 self-start">
+                Open dashboard
+                <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9L9 3M9 3H4M9 3V8" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+            </a>
+        </div>
+
+        {* Filter chips *}
+        <div class="flex flex-wrap items-center gap-2 mb-6 pb-5 border-b border-ink-line/40">
+            {foreach $filters as $f}
+                {var $active = $f['key'] === 'all'}
+                <button data-filter="{$f['key']}"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border font-mono text-[10.5px] uppercase tracking-widest2 transition-colors
+                               {$active ? 'border-accent/40 bg-accent/10 text-accent' : 'border-ink-line/60 text-fg-tertiary hover:text-fg-secondary hover:border-fg-tertiary'}">
+                    {$f['label']}
+                    <span class="text-fg-dim tabular-nums normal-case tracking-normal">{$f['count']}</span>
+                </button>
+            {/foreach}
+        </div>
+
+        <div class="border-t border-ink-line/60">
+            {foreach $events as $i => $e}
+                {var $dotTone = match($e['kind']) {
+                    'mint'      => 'bg-accent',
+                    'block'     => 'bg-immune-500',
+                    'mirror'    => 'bg-fg-tertiary',
+                    'challenge' => 'bg-caution-500',
+                    'expire'    => 'bg-fg-dim',
+                }}
+                {var $isLast = $i === count($events) - 1}
+                <a href="/antibody/{$e['id']}" data-event="{$e['kind']}"
+                   class="grid grid-cols-[14px_64px_148px_140px_1fr_200px] gap-4 items-center py-3.5 {$isLast ? '' : 'border-b border-ink-line/40'} hover:bg-ink-elevated/40 transition-colors group">
+                    <span class="inline-flex h-1.5 w-1.5 rounded-full {$dotTone}" aria-label="{$e['kind']}"></span>
+                    <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">{$e['when']}</span>
+                    <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">{$e['id']}</span>
+                    <span class="flex items-baseline gap-2">
+                        <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-secondary">{$e['verb']}</span>
+                        <span class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim normal-case lowercase">{$e['proto']}</span>
+                    </span>
+                    <span class="text-fg-secondary text-[13.5px] truncate">{$e['desc']}</span>
+                    <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">{$e['meta']}</span>
+                </a>
+            {/foreach}
+        </div>
+
+        <p class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim mt-6">
+            Verbs are the friendly name. The smaller word below each is the protocol term.
+        </p>
+
+    </div>
+</section>
+
 {/block}
