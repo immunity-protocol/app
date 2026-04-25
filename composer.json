@@ -29,6 +29,8 @@
         "ext-mbstring": "*"
     },
     "require-dev": {
+        "fakerphp/faker": "^1.23",
+        "phpunit/phpunit": "^11.0",
         "symfony/var-dumper": "*"
     },
     "autoload": {
@@ -37,8 +39,17 @@
             "App\\Models\\": "app/Models"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
     "scripts": {
-        "test": "vendor/bin/phpunit --stderr"
+        "test": "vendor/bin/phpunit --stderr",
+        "test:unit": "vendor/bin/phpunit --testsuite=unit --stderr",
+        "test:integration": "vendor/bin/phpunit --testsuite=integration --stderr",
+        "seed": "php bin/seed.php",
+        "seed:reset": "php bin/seed.php --reset"
     },
     "config": {
         "sort-packages": true
