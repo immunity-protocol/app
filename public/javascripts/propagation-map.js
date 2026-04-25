@@ -8,6 +8,7 @@
 //   radius           : layout radius in viewBox units (default 280)
 //   nodeRadius       : idle node radius (default 4.5)
 //   palette          : color tokens (idle, line, publisher, receiver, killed)
+//   onNodeClick(i, node) : optional callback fired alongside the kill toggle
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -127,7 +128,10 @@ class PropagationMap {
       this.svg.appendChild(hit);
 
       const node = { i, x, y, angle, core, membrane, hit, killed: false };
-      hit.addEventListener('click', () => this.toggleKill(node.i));
+      hit.addEventListener('click', () => {
+        this.toggleKill(node.i);
+        if (typeof this.opts.onNodeClick === 'function') this.opts.onNodeClick(node.i, node);
+      });
       hit.addEventListener('mouseenter', () => this._setHover(node, true));
       hit.addEventListener('mouseleave', () => this._setHover(node, false));
 

@@ -4,7 +4,67 @@
 
 {block head}
 <script defer src="{asset('/javascripts/propagation-map.js')}"></script>
+{syntax off}
 <script>
+// Mock fleet of 96 agents that backs the propagation map. Index in this array
+// corresponds to node index in the SVG. Phase 2 wires real agent registry data.
+const AGENT_FLEET = (() => {
+  const stems = ['huntress', 'sentinel', 'scout', 'forta', 'metamask', 'rabby', 'phantom', 'wolf', 'agentkit', 'wallet-shield', 'scamsniffer'];
+  const regions = ['us-east', 'us-west', 'eu-fra', 'eu-lon', 'ap-tokyo', 'ap-syd', 'sa-spo'];
+  return Array.from({ length: 96 }, (_, i) => {
+    const stem = stems[i % stems.length];
+    return {
+      id: `${stem}-${String(i).padStart(2, '0')}`,
+      ens: i % 4 === 0 ? `${stem}.eth` : null,
+      region: regions[i % regions.length],
+      synced: 280 + ((i * 17) % 50),
+      blocks: 4 + ((i * 7) % 24),
+      latency: 80 + ((i * 13) % 220),
+      uptime: 96.0 + ((i * 0.07) % 4),
+    };
+  });
+})();
+
+function renderAgent(idx, killed) {
+  const a = AGENT_FLEET[idx];
+  if (!a) return;
+  const root = document.getElementById('agent-detail');
+  if (!root) return;
+  root.innerHTML = `
+    <div class="flex items-center justify-between gap-3 mb-5">
+      <div class="flex items-center gap-2.5">
+        <span class="inline-flex h-1.5 w-1.5 rounded-full ${killed ? 'bg-fg-dim' : 'bg-immune-500 pulse-soft'}"></span>
+        <span class="font-mono text-[10px] uppercase tracking-widest2 ${killed ? 'text-fg-dim' : 'text-immune-500'}">${killed ? 'Offline' : 'Online'}</span>
+      </div>
+      <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">node #${String(idx).padStart(3, '0')}</span>
+    </div>
+    <div class="font-mono text-[15px] text-fg-primary mb-1">${a.ens || a.id}</div>
+    ${a.ens ? `<div class="font-mono text-[10.5px] text-fg-tertiary mb-5">${a.id}</div>` : '<div class="mb-5"></div>'}
+    <dl class="space-y-3 text-[11.5px]">
+      <div class="flex items-baseline justify-between gap-3">
+        <dt class="text-fg-tertiary">Region</dt>
+        <dd class="font-mono text-fg-secondary">${a.region}</dd>
+      </div>
+      <div class="flex items-baseline justify-between gap-3">
+        <dt class="text-fg-tertiary">Antibodies synced</dt>
+        <dd class="font-mono text-fg-primary tabular-nums">${a.synced}</dd>
+      </div>
+      <div class="flex items-baseline justify-between gap-3">
+        <dt class="text-fg-tertiary">Attacks blocked, 24h</dt>
+        <dd class="font-mono text-threat-300 tabular-nums">${a.blocks}</dd>
+      </div>
+      <div class="flex items-baseline justify-between gap-3">
+        <dt class="text-fg-tertiary">P50 sync latency</dt>
+        <dd class="font-mono text-fg-secondary tabular-nums">${a.latency}ms</dd>
+      </div>
+      <div class="flex items-baseline justify-between gap-3">
+        <dt class="text-fg-tertiary">Uptime, 30d</dt>
+        <dd class="font-mono text-immune-500 tabular-nums">${a.uptime.toFixed(2)}%</dd>
+      </div>
+    </dl>
+  `;
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('dash-map');
   if (el && window.PropagationMap) {
@@ -12,11 +72,14 @@ window.addEventListener('DOMContentLoaded', () => {
       nodeCount: 96,
       nodeRadius: 4.0,
       eventIntervalMs: [2200, 5500],
+      onNodeClick: (i, node) => renderAgent(i, node.killed),
     });
     window.__dashMap.start();
+    renderAgent(0, false);
   }
 });
 </script>
+{/syntax}
 {/block}
 
 {block content}
@@ -78,7 +141,7 @@ window.addEventListener('DOMContentLoaded', () => {
     {* ============== MAP + DUAL FEED (filled in 7c, 7d, 7e) ============== *}
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 mb-10">
 
-        {* Propagation map + agent detail (7e) *}
+        {* Propagation map + agent detail *}
         <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-7 flex flex-col gap-4">
 
             <header class="flex items-center justify-between gap-4">
@@ -96,7 +159,17 @@ window.addEventListener('DOMContentLoaded', () => {
                 </div>
             </header>
 
-            <div id="dash-map" class="relative w-full aspect-square max-h-[640px] mx-auto" aria-label="Live agent propagation map"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-6 items-start">
+                <div id="dash-map" class="relative w-full aspect-square" aria-label="Live agent propagation map"></div>
+
+                {* Agent detail rail *}
+                <aside class="border border-ink-line/40 rounded-sm bg-ink-sunken/40 p-5 lg:sticky lg:top-20" aria-label="Selected agent detail">
+                    <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-4">Selected agent</div>
+                    <div id="agent-detail">
+                        <p class="font-mono text-[11px] text-fg-dim italic">Click any cell to inspect.</p>
+                    </div>
+                </aside>
+            </div>
 
             <p class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim text-center">
                 Click any cell to take it offline. Network adapts in real time.
