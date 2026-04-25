@@ -659,4 +659,58 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
+{* ============================================ 08 · BUILT ON ===== *}
+{var $sponsors = [
+  ['name' => 'Gensyn AXL',   'role' => 'Speed layer',
+   'desc' => 'Peer-to-peer antibody gossip via custom pub/sub.'],
+  ['name' => '0G Chain',     'role' => 'Trust layer',
+   'desc' => 'On-chain antibody registry, stake, and settlement.'],
+  ['name' => '0G Storage',   'role' => 'Verification layer',
+   'desc' => 'Sealed evidence bundles and public envelopes.'],
+  ['name' => '0G Compute',   'role' => 'Detection layer',
+   'desc' => 'Verifiable TEE inference for semantic threats.'],
+  ['name' => 'Uniswap v4',   'role' => 'Protection layer',
+   'desc' => 'Pool-level hooks for collective LP defense.'],
+]}
+
+<section class="relative bg-ink-base">
+    <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(180deg, rgba(14,14,13,1) 0%, rgba(28,28,26,0.6) 100%);" aria-hidden="true"></div>
+
+    <div class="relative max-w-[1400px] mx-auto px-7 py-24">
+
+        <div class="flex items-center gap-3 mb-3">
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">08</span>
+            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Built on</span>
+        </div>
+        <h2 class="font-display text-[34px] font-light tracking-tighter text-fg-primary leading-[1.05] mb-4 max-w-[720px]">
+            Standing on serious infrastructure.
+        </h2>
+        <p class="text-fg-secondary text-[14.5px] leading-[1.65] max-w-[640px] mb-12">
+            Each sponsor handles one job. Together they make the protocol fast, trustworthy, and verifiable end-to-end.
+        </p>
+
+        <div class="border-t border-ink-line/50">
+            {foreach $sponsors as $s}
+                <div class="grid grid-cols-[64px_1fr_1.6fr] md:grid-cols-[120px_1fr_1.6fr] items-center gap-6 py-6 border-b border-ink-line/40 hover:bg-ink-elevated/30 transition-colors">
+                    {* Placeholder mark *}
+                    <div class="flex items-center justify-center h-12 w-12 md:h-14 md:w-14 border border-ink-line/60 rounded-sm bg-ink-elevated/40 font-mono text-[10px] tracking-widest2 text-fg-dim uppercase select-none">
+                        {$s['name']|truncate:2:''}
+                    </div>
+                    <div>
+                        <div class="font-display text-[18px] tracking-tighter text-fg-primary leading-tight">{$s['name']}</div>
+                        <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-accent-soft mt-1">{$s['role']}</div>
+                    </div>
+                    <p class="text-fg-secondary text-[13.5px] leading-[1.65]">{$s['desc']}</p>
+                </div>
+            {/foreach}
+        </div>
+
+        <p class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim mt-6">
+            Sponsor logos pending. Placeholder marks shown above.
+        </p>
+
+    </div>
+</section>
+
 {/block}
