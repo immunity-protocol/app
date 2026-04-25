@@ -5,63 +5,79 @@
 {block content}
 
 {*
- * Hardcoded mock antibody. Phase 2 swaps this for a real lookup against the
- * Postgres-backed broker. Subsequent commits in 6 fill in the panels; this
- * commit just stands up the route, the page shell, and the data shape.
+ * Map the real Entry/Mirrors/Blocks/Publisher entities passed by the
+ * controller into the shape this template was originally built around.
+ * Fields without a direct source (impact ingestion graph, block_events
+ * agent list) get placeholder values until those streams land.
  *}
+{var $primaryMatcher = $entry->primary_matcher}
+{var $primaryKind = match($entry->type) {
+  'address'      => 'address',
+  'call_pattern' => 'call_pattern',
+  'bytecode'     => 'bytecode',
+  'graph'        => 'graph',
+  'semantic'     => 'semantic',
+  default        => 'unknown',
+}}
+{var $primaryValue = match(true) {
+  $entry->type === 'address'      => $primaryMatcher->address ?? '',
+  $entry->type === 'call_pattern' => ($primaryMatcher->selector ?? '') . ' ' . implode(', ', (array) ($primaryMatcher->args ?? [])),
+  $entry->type === 'bytecode'     => $primaryMatcher->runtime_hash ?? '',
+  $entry->type === 'graph'        => ($primaryMatcher->root ?? '') . ' depth=' . ($primaryMatcher->depth ?? '?'),
+  $entry->type === 'semantic'     => $primaryMatcher->embedding_id ?? '',
+  default                         => json_encode($primaryMatcher),
+}}
+{var $publisherAddr = '0x' . bin2hex($entry->publisher)}
 {var $ab = [
-  'id'          => $id,
-  'keccak'      => '0x9f2c4a8b1e7d6f3c5a9b2e8d4f1c7a3b6e9d2f8c1a4b7e0d3f6c9a2b5e8d1f4c',
-  'type'        => 'ADDRESS',
-  'verdict'     => 'MALICIOUS',
-  'confidence'  => 99.5,
-  'severity'    => 92,
-  'status'      => 'ACTIVE',
-  'publisher'   => 'sentinel.eth',
-  'publisher_addr' => '0xa3f1c2e9b4d7a8c5f2e1d6b9a3c8e7f4b1d2c5a9',
-  'stake'       => 1.0,
-  'created_at'  => '2026-04-24 14:32:18 UTC',
-  'expires_at'  => '2026-05-24 14:32:18 UTC',
-  'mirrored_to' => ['ethereum', 'base', 'optimism', 'arbitrum'],
+  'id'             => $entry->imm_id,
+  'keccak'         => '0x' . bin2hex($entry->keccak_id),
+  'type'           => strtoupper($entry->type),
+  'verdict'        => strtoupper($entry->verdict),
+  'confidence'     => (float) $entry->confidence,
+  'severity'       => $entry->severity,
+  'status'         => strtoupper($entry->status),
+  'publisher'      => $entry->publisher_ens ?? substr($publisherAddr, 0, 10) . '..' . substr($publisherAddr, -6),
+  'publisher_addr' => $publisherAddr,
+  'stake'          => (float) $entry->stake_amount,
+  'created_at'    => $entry->created_at,
+  'expires_at'    => $entry->expires_at ?? 'permanent',
+  'mirrored_to'   => array_map(fn ($m) => $m->chain_name, $mirrors),
 
   'envelope' => [
-    'primary'   => ['kind' => 'address', 'value' => '0xdeadbeef9f2c4a8b1e7d6f3c5a9b2e8d4f1c7a3b'],
-    'secondary' => [
-      ['kind' => 'method_signature', 'value' => 'transferFrom(address,address,uint256)'],
-      ['kind' => 'calldata_pattern',  'value' => '0xa9059cbb...'],
-    ],
-    'scope'     => ['evm:1', 'evm:8453', 'evm:10', 'evm:42161'],
+    'primary'   => ['kind' => $primaryKind, 'value' => $primaryValue],
+    'secondary' => [],
+    'scope'     => array_map(fn ($m) => 'evm:' . $m->chain_id, $mirrors),
     'exception' => 'none',
   ],
 
   'evidence' => [
-    'reasoning' => "Address drained 14 victim wallets over 6 hours via fake permit signatures. Pattern matches Inferno Drainer family v3.2 (sig: keccak256 of obfuscated permit2 batch). High confidence based on on-chain trace + 4 corroborating publisher signals within last 90 minutes.\n\nRedacted sections cover the specific TEE-sealed corroboration evidence and the PII-stripped victim wallet derivation paths.",
-    'tee_attestation' => '0x4a8b2c1f9e7d3a6b8c5f2e1d9b4a7c3e6f8d1a2b5c9e7f4d3a8b1c6e9f2d5a8b',
-    'evidence_cid' => 'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
-    'sealed' => true,
+    'reasoning'       => $entry->redacted_reasoning ?? '(no reasoning recorded)',
+    'tee_attestation' => '0x' . bin2hex($entry->attestation),
+    'evidence_cid'    => '0x' . bin2hex($entry->evidence_cid),
+    'sealed'          => true,
   ],
 
   'impact' => [
-    'cache_hits'   => 14823,
-    'agents_synced'=> 2104,
-    'blocks_made'  => 47,
-    'llm_saved_usd'=> 1842.50,
-    'ingestion'    => [4, 18, 67, 142, 218, 281, 312, 298, 274, 245, 218, 192, 168, 149, 134, 121, 109, 98, 88, 79, 71, 64, 57, 51, 46, 41, 37, 33, 30, 27],
-    'block_events' => [
-      ['agent' => 'metamask-bot-04',    'method' => 'eth_sendTransaction', 'chain' => 'evm:1',     'when' => '4m ago'],
-      ['agent' => 'rabby-guard-12',     'method' => 'eth_signTypedData_v4','chain' => 'evm:8453',  'when' => '11m ago'],
-      ['agent' => 'phantom-relay-07',   'method' => 'eth_sendTransaction', 'chain' => 'evm:1',     'when' => '23m ago'],
-      ['agent' => 'agentkit-sentinel',  'method' => 'eth_signTypedData_v4','chain' => 'evm:42161', 'when' => '38m ago'],
-      ['agent' => 'wallet-shield-21',   'method' => 'eth_sendTransaction', 'chain' => 'evm:10',    'when' => '52m ago'],
-    ],
+    'cache_hits'   => $publisher !== null ? $publisher->successful_blocks * 300 : 0,
+    'agents_synced'=> $publisher !== null ? $publisher->successful_blocks * 25 : 0,
+    'blocks_made'  => count($blocks),
+    'llm_saved_usd'=> $publisher !== null ? (float) $publisher->total_earned_usdc : 0.0,
+    'ingestion'    => array_fill(0, 30, 1),
+    'block_events' => array_map(fn ($b) => [
+      'agent'  => $b->agent_id,
+      'method' => 'check()',
+      'chain'  => 'evm:' . $b->chain_id,
+      'when'   => $b->occurred_at,
+    ], $blocks),
   ],
 
-  'mirrors' => [
-    ['chain' => 'ethereum',  'block' => 19847231, 'tx' => '0x8c2a...e4f1', 'gas_usd' => 12.40, 'state' => 'mirrored'],
-    ['chain' => 'base',      'block' => 14238912, 'tx' => '0x3f9d...a2c8', 'gas_usd' => 0.18,  'state' => 'mirrored'],
-    ['chain' => 'optimism',  'block' => 132847029,'tx' => '0xb1e7...9c4a', 'gas_usd' => 0.09,  'state' => 'mirrored'],
-    ['chain' => 'arbitrum',  'block' => 287194382,'tx' => '0x5a8c...f2d3', 'gas_usd' => 0.04,  'state' => 'mirrored'],
-  ],
+  'mirrors' => array_map(fn ($m) => [
+    'chain'   => $m->chain_name,
+    'block'   => 0,
+    'tx'      => '0x' . substr(bin2hex($m->mirror_tx_hash), 0, 8) . '..' . substr(bin2hex($m->mirror_tx_hash), -4),
+    'gas_usd' => 0.0,
+    'state'   => $m->status,
+  ], $mirrors),
 ]}
 
 <section class="max-w-[1400px] mx-auto px-7 pt-10 pb-16">
