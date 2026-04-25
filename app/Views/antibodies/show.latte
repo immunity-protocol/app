@@ -351,11 +351,66 @@
 
             </section>
 
-            {* placeholder until 6f *}
-            <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Mirror status</div>
-                <p class="text-fg-dim text-[13px] mt-3 italic">panel arrives in commit 6f</p>
-            </div>
+            {* ----------- MIRROR STATUS PANEL ----------- *}
+            {var $totalGas = 0}
+            {foreach $ab['mirrors'] as $m}{var $totalGas = $totalGas + $m['gas_usd']}{/foreach}
+            <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
+
+                <header class="px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Mirror status</span>
+                        <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 text-immune-500">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            All chains synced
+                        </span>
+                    </div>
+                    <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">Relayer + indexer</span>
+                </header>
+
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-ink-line/40 bg-ink-sunken/30">
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left px-7 py-3">Chain</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right px-3 py-3">Block</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left px-3 py-3">Tx</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right px-3 py-3">Gas</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right px-7 py-3">State</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {foreach $ab['mirrors'] as $m}
+                        <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors">
+                            <td class="px-7 py-3.5">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="inline-flex h-2 w-2 rounded-full bg-immune-500" aria-hidden="true"></span>
+                                    <span class="text-[13px] text-fg-primary capitalize">{$m['chain']}</span>
+                                </div>
+                            </td>
+                            <td class="px-3 py-3.5 font-mono text-[12px] text-fg-secondary tabular-nums text-right">{$m['block']|number(0, '.', ',')}</td>
+                            <td class="px-3 py-3.5">
+                                <a href="#" class="font-mono text-[11.5px] text-accent-soft hover:text-accent transition-colors inline-flex items-center gap-1">
+                                    {$m['tx']}
+                                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+                                </a>
+                            </td>
+                            <td class="px-3 py-3.5 font-mono text-[11.5px] text-fg-tertiary tabular-nums text-right">${$m['gas_usd']|number(2, '.', ',')}</td>
+                            <td class="px-7 py-3.5 text-right">
+                                <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 text-immune-500">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+                                    {$m['state']}
+                                </span>
+                            </td>
+                        </tr>
+                    {/foreach}
+                    </tbody>
+                </table>
+
+                <footer class="px-7 py-3.5 border-t border-ink-line/40 flex items-center justify-between font-mono text-[10.5px] text-fg-tertiary">
+                    <span>{count($ab['mirrors'])} of 4 chains mirrored</span>
+                    <span>Total relayer cost <span class="text-fg-secondary">${$totalGas|number(2, '.', ',')}</span></span>
+                </footer>
+
+            </section>
         </div>
 
         {* ----------- SIDE RAIL ----------- *}
