@@ -51,6 +51,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <div class="relative max-w-[1400px] mx-auto px-7 pt-20 pb-24 min-h-screen flex flex-col justify-center">
 
+        {* Big hero brand block. Cross-fades to the small nav brand on scroll
+           via #hero-brand / #nav-brand opacity rules in app.css. *}
+        <div id="hero-brand" class="hero-brand absolute top-7 left-7 flex items-center gap-4 origin-left pointer-events-none select-none" aria-hidden="true">
+            <span class="block h-[88px] w-[88px] bg-fg-primary"
+                  style="-webkit-mask: url(/assets/images/immunity-mark.png) center/contain no-repeat; mask: url(/assets/images/immunity-mark.png) center/contain no-repeat;"></span>
+            <span class="font-display text-[56px] font-light tracking-tighter text-fg-primary leading-none">Immunity</span>
+        </div>
+
         {* Kicker, italic, almost a whisper *}
         <p class="font-display italic text-fg-tertiary text-[15px] mb-5 tracking-tight">
             A vaccine for AI agents.
