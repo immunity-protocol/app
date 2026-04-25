@@ -90,4 +90,68 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
+{* ============================================ 01 · NETWORK STATUS ===== *}
+<section class="relative bg-ink-elevated/40 border-y border-ink-line/60">
+    <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none" aria-hidden="true"></div>
+
+    <div class="relative max-w-[1400px] mx-auto px-7 py-12">
+
+        <div class="flex items-center gap-3 mb-7">
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">01</span>
+            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network status</span>
+            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-immune-500">Live</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-y-10 md:gap-0">
+
+            <div class="md:px-7 md:first:pl-0 md:border-r md:border-ink-line/60 md:last:border-r-0 md:last:pr-0">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3 flex items-center gap-2">
+                    <span>Antibodies active</span>
+                    <span class="inline-flex h-1 w-1 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+                </div>
+                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">312</div>
+                <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
+                    <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    +14 in 1h
+                </div>
+            </div>
+
+            <div class="md:px-7 md:border-r md:border-ink-line/60">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Agents online</div>
+                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">1,247</div>
+                <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
+                    <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    +8 in 1h
+                </div>
+            </div>
+
+            <div class="md:px-7 md:border-r md:border-ink-line/60">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Cache hits / hr</div>
+                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">18,492</div>
+                <div class="font-mono text-[11px] text-fg-tertiary mt-3">avg 5.1 / agent</div>
+            </div>
+
+            <div class="md:px-7 md:border-r md:border-ink-line/60">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">LLM calls saved</div>
+                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">4,217</div>
+                <div class="font-mono text-[11px] text-fg-tertiary mt-3">
+                    <span class="text-immune-500">≈ $8,920</span> in compute
+                </div>
+            </div>
+
+            <div class="md:px-7 md:last:pr-0">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Value protected</div>
+                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">$248,300</div>
+                <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
+                    <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    +$4,200 in 1h
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
 {/block}
