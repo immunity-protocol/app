@@ -29,10 +29,33 @@
 
     <div class="hr-fade mb-10"></div>
 
-    {* ============== STATS BAR (filled in 7b) ============== *}
-    <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-6 mb-10">
-        <p class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network stats</p>
-        <p class="text-fg-dim text-[13px] mt-2 italic">stats bar arrives in commit 7b</p>
+    {* ============== STATS BAR ============== *}
+    {var $stats = [
+      ['label' => 'Nodes online',         'value' => 60,      'fmt' => 'count', 'delta' => '+3 in 24h',     'tone' => 'immune'],
+      ['label' => 'Antibodies active',    'value' => 312,     'fmt' => 'count', 'delta' => '+47 today',     'tone' => 'immune'],
+      ['label' => 'Mints / minute',       'value' => 4.7,     'fmt' => 'rate',  'delta' => '+0.8 vs avg',   'tone' => 'immune'],
+      ['label' => 'Attacks blocked, 24h', 'value' => 1284,    'fmt' => 'count', 'delta' => '+212 vs prev',  'tone' => 'threat'],
+      ['label' => 'Value protected, 24h', 'value' => 248312,  'fmt' => 'money', 'delta' => '+$31,420 vs prev', 'tone' => 'accent'],
+    ]}
+
+    <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 grid grid-cols-2 md:grid-cols-5 divide-x divide-ink-line/40 mb-10">
+        {foreach $stats as $s}
+            {var $valueTone = match($s['tone']) {
+              'threat' => 'text-threat-300',
+              'accent' => 'text-accent-soft',
+              default  => 'text-fg-primary',
+            }}
+            <div class="px-6 py-6">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-2">{$s['label']}</div>
+                <div class="font-mono text-[28px] {$valueTone} tabular-nums leading-none">
+                    {if $s['fmt'] === 'money'}{format('money', $s['value'])}
+                    {elseif $s['fmt'] === 'rate'}{format('decimal', $s['value'], 1)}
+                    {else}{format('decimal', $s['value'], 0)}
+                    {/if}
+                </div>
+                <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-2">{$s['delta']}</div>
+            </div>
+        {/foreach}
     </div>
 
     {* ============== MAP + DUAL FEED (filled in 7c, 7d, 7e) ============== *}
