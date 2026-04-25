@@ -119,7 +119,7 @@
             </div>
             <div class="p-4">
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Confidence</div>
-                <div class="font-mono text-[15px] text-fg-primary tabular-nums">{$ab['confidence']|number:1}<span class="text-fg-tertiary text-[11px] ml-0.5">%</span></div>
+                <div class="font-mono text-[15px] text-fg-primary tabular-nums">{format('decimal', $ab['confidence'], 1)}<span class="text-fg-tertiary text-[11px] ml-0.5">%</span></div>
             </div>
             <div class="p-4">
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Severity</div>
@@ -132,7 +132,7 @@
             </div>
             <div class="p-4">
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Stake</div>
-                <div class="font-mono text-[15px] text-fg-primary tabular-nums">{$ab['stake']|number:2}<span class="text-fg-tertiary text-[11px] ml-1">USDC</span></div>
+                <div class="font-mono text-[15px] text-fg-primary tabular-nums">{format('decimal', $ab['stake'], 2)}<span class="text-fg-tertiary text-[11px] ml-1">USDC</span></div>
             </div>
         </div>
 
@@ -281,12 +281,12 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-ink-line/40 border-b border-ink-line/40">
                     <div class="px-6 py-5">
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Cache hits</div>
-                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{$ab['impact']['cache_hits']|number(0, '.', ',')}</div>
+                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{format('decimal', $ab['impact']['cache_hits'], 0)}</div>
                         <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-1">+1,247 / hr</div>
                     </div>
                     <div class="px-6 py-5">
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Agents synced</div>
-                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{$ab['impact']['agents_synced']|number(0, '.', ',')}</div>
+                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{format('decimal', $ab['impact']['agents_synced'], 0)}</div>
                         <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">of 2,180 online</div>
                     </div>
                     <div class="px-6 py-5">
@@ -296,7 +296,7 @@
                     </div>
                     <div class="px-6 py-5">
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">USD protected</div>
-                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">${$ab['impact']['llm_saved_usd']|number(2, '.', ',')}</div>
+                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{format('money', $ab['impact']['llm_saved_usd'])}</div>
                         <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">tx value at intercept</div>
                     </div>
                 </div>
@@ -386,14 +386,14 @@
                                     <span class="text-[13px] text-fg-primary capitalize">{$m['chain']}</span>
                                 </div>
                             </td>
-                            <td class="px-3 py-3.5 font-mono text-[12px] text-fg-secondary tabular-nums text-right">{$m['block']|number(0, '.', ',')}</td>
+                            <td class="px-3 py-3.5 font-mono text-[12px] text-fg-secondary tabular-nums text-right">{format('decimal', $m['block'], 0)}</td>
                             <td class="px-3 py-3.5">
                                 <a href="#" class="font-mono text-[11.5px] text-accent-soft hover:text-accent transition-colors inline-flex items-center gap-1">
                                     {$m['tx']}
                                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
                                 </a>
                             </td>
-                            <td class="px-3 py-3.5 font-mono text-[11.5px] text-fg-tertiary tabular-nums text-right">${$m['gas_usd']|number(2, '.', ',')}</td>
+                            <td class="px-3 py-3.5 font-mono text-[11.5px] text-fg-tertiary tabular-nums text-right">{format('money', $m['gas_usd'])}</td>
                             <td class="px-7 py-3.5 text-right">
                                 <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 text-immune-500">
                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
@@ -407,7 +407,7 @@
 
                 <footer class="px-7 py-3.5 border-t border-ink-line/40 flex items-center justify-between font-mono text-[10.5px] text-fg-tertiary">
                     <span>{count($ab['mirrors'])} of 4 chains mirrored</span>
-                    <span>Total relayer cost <span class="text-fg-secondary">${$totalGas|number(2, '.', ',')}</span></span>
+                    <span>Total relayer cost <span class="text-fg-secondary">{format('money', $totalGas)}</span></span>
                 </footer>
 
             </section>
@@ -461,11 +461,11 @@
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="text-fg-tertiary text-[11.5px]">Cache hits</dt>
-                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{$ab['impact']['cache_hits']|number(0, '.', ',')}</dd>
+                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{format('decimal', $ab['impact']['cache_hits'], 0)}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="text-fg-tertiary text-[11.5px]">USD protected</dt>
-                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">${$ab['impact']['llm_saved_usd']|number(2, '.', ',')}</dd>
+                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{format('money', $ab['impact']['llm_saved_usd'])}</dd>
                     </div>
                 </dl>
             </div>
