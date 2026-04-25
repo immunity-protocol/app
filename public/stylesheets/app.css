@@ -136,6 +136,9 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     border-radius: 0;
     box-shadow: none;
     max-width: 1400px;
+    /* At top: tall band so center links + right items align with the big hero brand
+       (88px mark at top:28). Min-height 144 → flex items-center sits at y=72. */
+    min-height: 144px;
     transition:
         background-color 320ms cubic-bezier(0.4, 0, 0.2, 1),
         backdrop-filter 320ms cubic-bezier(0.4, 0, 0.2, 1),
@@ -143,7 +146,8 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         border-color 320ms cubic-bezier(0.4, 0, 0.2, 1),
         border-radius 320ms cubic-bezier(0.4, 0, 0.2, 1),
         box-shadow 320ms cubic-bezier(0.4, 0, 0.2, 1),
-        max-width 320ms cubic-bezier(0.4, 0, 0.2, 1);
+        max-width 320ms cubic-bezier(0.4, 0, 0.2, 1),
+        min-height 320ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 body[data-scrolled="true"] .site-nav {
     top: 18px;
@@ -154,6 +158,7 @@ body[data-scrolled="true"] .site-nav-inner {
     border-radius: 9999px;
     box-shadow: 0 8px 32px -12px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
     max-width: 1080px;
+    min-height: 64px;
     -webkit-backdrop-filter: blur(20px) saturate(150%);
     backdrop-filter: blur(20px) saturate(150%);
 }
