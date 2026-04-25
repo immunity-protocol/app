@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Models\Core;
 
 use Zephyrus\Core\App;
+use Zephyrus\Core\ApplicationBuilder;
 use Zephyrus\Rendering\Asset;
+use Zephyrus\Security\AuthGuardMiddleware;
+use Zephyrus\Security\HeaderTokenGuard;
 
 /**
  * Application entry point.
@@ -24,5 +27,19 @@ final class Application extends Kernel
         // generated through the asset() helper. Browsers cache forever; a
         // changed file invalidates automatically.
         App::setAsset(new Asset(ROOT_DIR . '/public'));
+    }
+
+    protected function registerMiddleware(ApplicationBuilder $builder): ApplicationBuilder
+    {
+        $cronToken = (string) ($_ENV['CRON_TOKEN'] ?? getenv('CRON_TOKEN') ?: '');
+        if ($cronToken !== '') {
+            $guard = new HeaderTokenGuard(
+                expectedToken: $cronToken,
+                headerName: 'X-CRON-TOKEN',
+                bearerPrefix: '',
+            );
+            $builder = $builder->registerMiddleware('cron', new AuthGuardMiddleware($guard));
+        }
+        return $builder;
     }
 }

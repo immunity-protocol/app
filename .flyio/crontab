@@ -1,0 +1,5 @@
+# Immunity CRON tier - schedules to call the API tier on internal DNS.
+# Loaded by supercronic in the immunity-cron Fly machine.
+
+# Mock network ticker: every minute, simulates one round of activity.
+* * * * * curl -sS -X POST -H "X-CRON-TOKEN: ${CRON_TOKEN}" http://immunity-api.internal/internal/tick >/dev/null

@@ -8,10 +8,45 @@ services:
       - "80:80"
       - "443:443"
       - "1080:1080"
+    environment:
+      MODE: "WEB"
+      CRON_TOKEN: "${CRON_TOKEN:-localdev-cron-token}"
     links:
       - database
     volumes:
       - ./:/var/www/html
+
+  api:
+    build:
+      context: "./docker/services/php"
+    container_name: "immunity_api"
+    restart: 'always'
+    ports:
+      - "8081:80"
+    environment:
+      MODE: "API"
+      CRON_TOKEN: "${CRON_TOKEN:-localdev-cron-token}"
+    links:
+      - database
+    volumes:
+      - ./:/var/www/html
+
+  cron:
+    image: "alpine:3.20"
+    container_name: "immunity_cron"
+    restart: 'always'
+    depends_on:
+      - api
+    environment:
+      CRON_TOKEN: "${CRON_TOKEN:-localdev-cron-token}"
+    command: >
+      sh -c '
+        apk add --no-cache curl >/dev/null;
+        while true; do
+          curl -sS -X POST -H "X-CRON-TOKEN: $$CRON_TOKEN" http://api/internal/tick || true;
+          sleep 60;
+        done
+      '
 
   database:
     build:
@@ -21,7 +56,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./sql/init.sql:/docker-entrypoint-initdb.d/1-init.sql
+      - ./sql:/docker-entrypoint-initdb.d
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
