@@ -44,6 +44,67 @@ class EntryBroker extends Broker
     }
 
     /**
+     * Filtered list for the explorer.
+     *
+     * @return stdClass[]
+     */
+    public function findFiltered(
+        ?string $type = null,
+        ?string $status = null,
+        ?string $search = null,
+        int $limit = 30,
+        ?int $beforeId = null,
+    ): array {
+        $where = ['1=1'];
+        $params = [];
+        if ($type !== null && $type !== '') {
+            $where[] = 'type = ?::antibody.entry_type';
+            $params[] = $type;
+        }
+        if ($status !== null && $status !== '') {
+            $where[] = 'status = ?::antibody.entry_status';
+            $params[] = $status;
+        }
+        if ($search !== null && $search !== '') {
+            $where[] = '(imm_id ILIKE ? OR publisher_ens ILIKE ?)';
+            $params[] = '%' . $search . '%';
+            $params[] = '%' . $search . '%';
+        }
+        if ($beforeId !== null) {
+            $where[] = 'id < ?';
+            $params[] = $beforeId;
+        }
+        $params[] = $limit;
+        $sql = "SELECT * FROM antibody.entry WHERE " . implode(' AND ', $where)
+             . " ORDER BY id DESC LIMIT ?";
+        return $this->select($sql, $params);
+    }
+
+    public function countFiltered(
+        ?string $type = null,
+        ?string $status = null,
+        ?string $search = null,
+    ): int {
+        $where = ['1=1'];
+        $params = [];
+        if ($type !== null && $type !== '') {
+            $where[] = 'type = ?::antibody.entry_type';
+            $params[] = $type;
+        }
+        if ($status !== null && $status !== '') {
+            $where[] = 'status = ?::antibody.entry_status';
+            $params[] = $status;
+        }
+        if ($search !== null && $search !== '') {
+            $where[] = '(imm_id ILIKE ? OR publisher_ens ILIKE ?)';
+            $params[] = '%' . $search . '%';
+            $params[] = '%' . $search . '%';
+        }
+        $sql = "SELECT count(*) FROM antibody.entry WHERE " . implode(' AND ', $where);
+        return (int) $this->selectValue($sql, $params);
+    }
+
+    /**
      * @return array<string, int> map of type -> count
      */
     public function countByType(): array

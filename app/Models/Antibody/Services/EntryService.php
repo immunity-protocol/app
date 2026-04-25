@@ -38,6 +38,29 @@ readonly class EntryService
     }
 
     /**
+     * @return Entry[]
+     */
+    public function findFiltered(
+        ?string $type = null,
+        ?string $status = null,
+        ?string $search = null,
+        int $limit = 30,
+        ?int $beforeId = null,
+    ): array {
+        return Entry::buildArray(
+            $this->broker->findFiltered($type, $status, $search, $limit, $beforeId)
+        );
+    }
+
+    public function countFiltered(
+        ?string $type = null,
+        ?string $status = null,
+        ?string $search = null,
+    ): int {
+        return $this->broker->countFiltered($type, $status, $search);
+    }
+
+    /**
      * @return array<string, int>
      */
     public function countByType(): array

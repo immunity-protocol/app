@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Antibody\Entities;
 
+use App\Models\Core\HasByteaSerialization;
 use Zephyrus\Data\Entity;
 
 class Entry extends Entity
 {
+    use HasByteaSerialization;
+
     public int $id;
     public string $keccak_id;
     public string $imm_id;
@@ -47,5 +50,17 @@ class Entry extends Entity
     public function isMalicious(): bool
     {
         return $this->verdict === 'malicious';
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected static function byteaProperties(): array
+    {
+        return [
+            'keccak_id', 'context_hash', 'evidence_cid',
+            'embedding_hash', 'embedding_cid',
+            'publisher', 'attestation',
+        ];
     }
 }
