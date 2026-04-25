@@ -40,8 +40,8 @@ window.addEventListener('DOMContentLoaded', () => {
     <img class="hero-poster absolute inset-0 w-full h-full object-cover md:hidden pointer-events-none"
          src="{asset('/assets/videos/hero-aqua-poster.jpg')}" alt="" aria-hidden="true">
 
-    {* Left-side legibility gradient: opaque ink on the left half, video shines through on the right *}
-    <div class="absolute inset-0 bg-gradient-to-r from-ink-base from-30% via-ink-base/80 via-50% to-transparent to-100% pointer-events-none" aria-hidden="true"></div>
+    {* Left-side legibility gradient: starts below the nav so the video shines through behind the (transparent) navbar *}
+    <div class="absolute inset-x-0 top-[88px] bottom-0 bg-gradient-to-r from-ink-base from-30% via-ink-base/80 via-50% to-transparent to-100% pointer-events-none" aria-hidden="true"></div>
 
     {* Bottom fade-to-dark, soft blend into the next section *}
     <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-b from-transparent via-ink-base/80 via-60% to-ink-base pointer-events-none" aria-hidden="true"></div>
