@@ -2,6 +2,16 @@
 
 {block title}Immunity, decentralized threat intelligence for AI agents{/block}
 
+{block head}
+<script defer src="/assets/js/propagation-map.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('prop-map');
+  if (el && window.PropagationMap) new window.PropagationMap(el);
+});
+</script>
+{/block}
+
 {block content}
 
 {* ============================================================ HERO ===== *}
@@ -46,6 +56,30 @@
             </span>
         </div>
 
+    </div>
+</section>
+
+{* ================================================== PROPAGATION MAP ===== *}
+<section class="relative border-y border-ink-line/70 bg-ink-sunken/40">
+    <div class="absolute inset-0 grid-bg opacity-30 pointer-events-none"></div>
+    <div class="relative max-w-[1400px] mx-auto px-7 py-16">
+        <div class="flex items-end justify-between mb-8">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network</span>
+                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+                </div>
+                <h2 class="font-display text-[28px] font-light tracking-tighter text-fg-primary">
+                    60 agents, gossiping antibodies in real time
+                </h2>
+            </div>
+            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary text-right">
+                <div>Tip: click a node to take it offline</div>
+                <div class="text-fg-dim">propagation continues regardless</div>
+            </div>
+        </div>
+
+        <div id="prop-map" class="w-full max-w-[760px] mx-auto aspect-square"></div>
     </div>
 </section>
 
