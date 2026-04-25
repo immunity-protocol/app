@@ -1,0 +1,35 @@
+app = 'immunity-app'
+primary_region = 'yyz'
+
+[build]
+  dockerfile = '.flyio/Dockerfile'
+
+[env]
+  APP_ENV = 'production'
+  APP_DEBUG = 'false'
+  APP_TIMEZONE = 'UTC'
+  DB_HOST = 'localhost'
+  DB_PORT = '5432'
+  DB_NAME = 'immunity'
+  DB_USERNAME = 'immunity'
+
+[[mounts]]
+  source = 'pg_data'
+  destination = '/data'
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+  [http_service.concurrency]
+    type = 'connections'
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '512mb'

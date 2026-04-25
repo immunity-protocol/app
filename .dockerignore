@@ -1,0 +1,15 @@
+.git
+.idea
+vendor
+cache
+temp
+node_modules
+.env
+.env.local
+xdebug
+.DS_Store
+CHALLENGES.md
+FEEDBACK.md
+.claude
+docker-compose.yml
+docker
