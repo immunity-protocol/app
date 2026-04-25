@@ -56,10 +56,19 @@ foreach ($files as $file) {
         fwrite(STDERR, "  skipped (empty)\n");
         continue;
     }
-    $db->transaction(function () use ($db, $sql, $name) {
-        $db->query($sql);
-        $db->query("INSERT INTO schema_migrations (name) VALUES (?)", [$name]);
-    });
+    // exec() runs multi-statement SQL without prepared-statement parsing,
+    // which is what migration files typically contain.
+    $pdo = $db->pdo();
+    $pdo->beginTransaction();
+    try {
+        $pdo->exec($sql);
+        $insert = $pdo->prepare("INSERT INTO schema_migrations (name) VALUES (?)");
+        $insert->execute([$name]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
     $ranAny = true;
 }
 
