@@ -3,11 +3,13 @@
 {block title}Immunity, decentralized threat intelligence for AI agents{/block}
 
 {block content}
+
+{* ============================================================ HERO ===== *}
 <section class="relative">
     <div class="absolute inset-0 dot-bg opacity-60 pointer-events-none"></div>
     <div class="absolute inset-x-0 top-0 h-[420px] vignette-radial pointer-events-none"></div>
 
-    <div class="relative max-w-[1400px] mx-auto px-7 pt-28 pb-32">
+    <div class="relative max-w-[1400px] mx-auto px-7 pt-24 pb-20">
 
         {* Eyebrow *}
         <div class="flex items-center gap-3 mb-8">
@@ -31,7 +33,7 @@
         </p>
 
         {* CTAs *}
-        <div class="flex flex-wrap items-center gap-3 mb-20">
+        <div class="flex flex-wrap items-center gap-3">
             <a href="/antibodies" class="group inline-flex items-center gap-2 px-5 py-3 text-[13px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
                 Explore antibodies
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="opacity-60 group-hover:translate-x-0.5 transition-transform"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -44,10 +46,71 @@
             </span>
         </div>
 
-        {* Hairline *}
-        <div class="hr-fade max-w-[760px] mb-12"></div>
+    </div>
+</section>
 
-        {* Three-up labels (the three layers of the network) *}
+{* ====================================================== STAT STRIP ===== *}
+<section class="border-y border-ink-line/70 bg-ink-sunken/60 relative">
+    <div class="absolute inset-0 dot-bg opacity-30 pointer-events-none"></div>
+    <div class="relative max-w-[1400px] mx-auto px-7 py-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-y-10 md:gap-0">
+
+        {* Antibodies active *}
+        <div class="md:px-7 md:first:pl-0 md:border-r md:border-ink-line/60 md:last:border-r-0 md:last:pr-0">
+            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3 flex items-center gap-2">
+                <span>Antibodies active</span>
+                <span class="inline-flex h-1 w-1 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+            </div>
+            <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">312</div>
+            <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
+                <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                +14 in 1h
+            </div>
+        </div>
+
+        {* Agents online *}
+        <div class="md:px-7 md:border-r md:border-ink-line/60">
+            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Agents online</div>
+            <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">1,247</div>
+            <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
+                <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                +8 in 1h
+            </div>
+        </div>
+
+        {* Cache hits / hour *}
+        <div class="md:px-7 md:border-r md:border-ink-line/60">
+            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Cache hits / hr</div>
+            <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">18,492</div>
+            <div class="font-mono text-[11px] text-fg-tertiary mt-3">
+                avg 5.1 / agent
+            </div>
+        </div>
+
+        {* LLM calls saved *}
+        <div class="md:px-7 md:border-r md:border-ink-line/60">
+            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">LLM calls saved</div>
+            <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">4,217</div>
+            <div class="font-mono text-[11px] text-fg-tertiary mt-3">
+                <span class="text-immune-500">≈ $8,920</span> in compute
+            </div>
+        </div>
+
+        {* Value protected *}
+        <div class="md:px-7 md:last:pr-0">
+            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Value protected</div>
+            <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">$248,300</div>
+            <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
+                <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                +$4,200 in 1h
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{* ================================================ ARCHITECTURE LAYERS ===== *}
+<section class="relative">
+    <div class="max-w-[1400px] mx-auto px-7 py-24">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-[1080px]">
             <div>
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Speed layer</div>
@@ -65,7 +128,7 @@
                 <p class="text-fg-secondary text-[14px] leading-[1.65]">Detection runs in a 0G Compute TEE. Verdicts carry attestation hashes. The original context is encrypted to the enclave key and never shown.</p>
             </div>
         </div>
-
     </div>
 </section>
+
 {/block}
