@@ -1,0 +1,46 @@
+# ----------------------------- ERROR HANDLING ------------------------------ #
+php_flag html_errors on
+php_flag log_errors on
+php_flag ignore_repeated_errors on
+php_flag ignore_repeated_source on
+php_flag report_memleaks on
+php_value docref_root 0
+php_value docref_ext 0
+php_value error_reporting -1
+php_value log_errors_max_len 0
+
+# --------------------------- LANGUAGE & CHARSET ---------------------------- #
+AddDefaultCharset UTF-8
+DefaultLanguage en
+
+# --------------------------- RESOURCE LIMITS ------------------------------- #
+php_value post_max_size 50M
+php_value upload_max_filesize 50M
+LimitRequestBody 52428800
+php_value max_execution_time 300
+php_value memory_limit 256M
+php_value max_input_time 180
+
+# --------------------------- SECURITY SETTINGS ----------------------------- #
+# Disable directory browsing and server exposition
+Options All -Indexes
+ServerSignature Off
+php_flag expose_php Off
+
+# Transmit session id only with cookie and prevent theft from client
+# scripts (XSS).
+php_flag session.use_cookies On
+php_flag session.use_only_cookies On
+php_flag session.cookie_httponly On
+php_flag session.use_trans_sid Off
+
+# Prevent remote file inclusion attacks
+php_flag allow_url_fopen Off
+php_flag allow_url_include Off
+
+# Protect sensitive files from web access
+<FilesMatch "^(\.htaccess|\.env|config\.yml|composer\.json|composer\.lock)$">
+    order allow,deny
+    deny from all
+    satisfy all
+</FilesMatch>

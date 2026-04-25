@@ -1,0 +1,177 @@
+{layout layouts/main.latte}
+
+{varType string $frameworkVersion}
+{varType string $phpVersion}
+{varType string $environment}
+{varType array $extensions}
+{varType array $database}
+{varType array $formatting}
+
+{block title}Zephyrus - Welcome{/block}
+
+{block content}
+<div class="min-h-screen flex flex-col">
+
+    {* Header *}
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-4xl mx-auto px-6 py-8 text-center">
+            <img src="/assets/images/logo-black.png" alt="Zephyrus" class="h-16 mx-auto mb-4">
+            <p class="text-gray-500 text-sm tracking-wide uppercase">Version {$frameworkVersion}</p>
+        </div>
+    </div>
+
+    {* Main Content *}
+    <div class="flex-1">
+        <div class="max-w-4xl mx-auto px-6 py-10">
+
+            {* Welcome *}
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-semibold text-gray-900 mb-2">{localize("welcome.title")}</h1>
+                <p class="text-gray-500 text-lg">Your application is ready.</p>
+            </div>
+
+            {* Environment Badge *}
+            <div class="flex justify-center mb-10">
+                {if $environment === 'dev' || $environment === 'development' || $environment === 'local'}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
+                        Development
+                    </span>
+                {elseif $environment === 'staging' || $environment === 'stage'}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        Staging
+                    </span>
+                {else}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        Production
+                    </span>
+                {/if}
+            </div>
+
+            {* System Checks *}
+            <div class="grid md:grid-cols-2 gap-6 mb-10">
+
+                {* PHP & Extensions *}
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">System</h2>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">PHP</span>
+                            <span class="text-sm font-mono text-gray-900">{$phpVersion}</span>
+                        </div>
+                        {foreach $extensions as $name => $loaded}
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">{$name}</span>
+                                {if $loaded}
+                                    <span class="inline-flex items-center text-green-600">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </span>
+                                {else}
+                                    <span class="inline-flex items-center text-red-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </span>
+                                {/if}
+                            </div>
+                        {/foreach}
+                    </div>
+                </div>
+
+                {* Database *}
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Database</h2>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Status</span>
+                            {if $database['connected']}
+                                <span class="inline-flex items-center text-green-600">
+                                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    Connected
+                                </span>
+                            {else}
+                                <span class="inline-flex items-center text-red-500">
+                                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                    Disconnected
+                                </span>
+                            {/if}
+                        </div>
+                        {if $database['connected'] && $database['version']}
+                            <div class="flex items-start justify-between">
+                                <span class="text-gray-600">Version</span>
+                                <span class="text-sm font-mono text-gray-900 text-right max-w-[60%] break-words">{$database['version']}</span>
+                            </div>
+                        {elseif !$database['connected']}
+                            <div class="flex items-start justify-between">
+                                <span class="text-gray-600">Error</span>
+                                <span class="text-sm text-red-500 text-right max-w-[60%]">{$database['message']}</span>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+
+            {* Formatter Showcase *}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 mb-10">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Formatter</h2>
+                <p class="text-gray-500 text-sm mb-4">Locale-aware formatting powered by <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">ext-intl</code>. Use the global <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">format()</code> helper in controllers and templates.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-2 pr-4 font-medium text-gray-600">Code</th>
+                                <th class="text-left py-2 font-medium text-gray-600">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {foreach $formatting as $example}
+                                <tr>
+                                    <td class="py-2 pr-4"><code class="text-xs font-mono text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">{$example['code']}</code></td>
+                                    <td class="py-2 font-mono text-gray-900">{$example['result']}</td>
+                                </tr>
+                            {/foreach}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {* Getting Started *}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 mb-10">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Getting Started</h2>
+                <div class="space-y-4 text-gray-600">
+                    <div class="flex items-start">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold mr-3 mt-0.5 shrink-0">1</span>
+                        <p>Edit <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">app/Controllers/HomeController.php</code> to modify this page or add new routes using <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">#[Get]</code>, <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">#[Post]</code> attributes.</p>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold mr-3 mt-0.5 shrink-0">2</span>
+                        <p>Create Latte templates in <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">app/Views/</code> and domain models in <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">app/Models/</code>.</p>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold mr-3 mt-0.5 shrink-0">3</span>
+                        <p>Adjust <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">config.yml</code> and <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">.env</code> to configure your application, database, and mailer settings.</p>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold mr-3 mt-0.5 shrink-0">4</span>
+                        <p>Register new controllers in <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">app/Models/Core/Application.php</code> by chaining them on the Router.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {* Footer *}
+    <div class="border-t border-gray-200 bg-white">
+        <div class="max-w-4xl mx-auto px-6 py-4 text-center text-sm text-gray-400">
+            Zephyrus Framework &middot; PHP {$phpVersion}
+        </div>
+    </div>
+
+</div>
+{/block}

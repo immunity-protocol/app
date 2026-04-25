@@ -1,0 +1,29 @@
+services:
+  webserver:
+    build:
+      context: "./docker/services/php"
+    container_name: "zephyrus_webserver"
+    restart: 'always'
+    ports:
+      - "80:80"
+      - "443:443"
+      - "1080:1080"
+    links:
+      - database
+    volumes:
+      - ./:/var/www/html
+      - ../zephyrus2:/var/www/zephyrus2
+
+  database:
+    build:
+      context: "./docker/services/postgres"
+    container_name: ${DB_HOST}
+    restart: 'always'
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/1-init.sql
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
