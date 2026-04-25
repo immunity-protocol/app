@@ -1,0 +1,35 @@
+<nav class="border-b border-ink-line/70 bg-ink-base/85 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-[1400px] mx-auto px-7 h-14 flex items-center justify-between">
+
+        {* Logo *}
+        <a href="/" class="flex items-center gap-3 group" aria-label="Immunity home">
+            <span class="relative inline-flex h-2 w-2">
+                <span class="absolute inset-0 inline-flex rounded-full bg-immune-500 ping-soft"></span>
+                <span class="relative inline-flex h-2 w-2 rounded-full bg-immune-500"></span>
+            </span>
+            <span class="font-display display-md text-[19px] font-light tracking-tighter text-fg-primary">Immunity</span>
+            <span class="font-mono text-[10px] tracking-widest2 text-fg-dim uppercase mt-0.5 hidden sm:inline">v0.1</span>
+        </a>
+
+        {* Center nav *}
+        <div class="hidden md:flex items-center gap-1 text-[13px] tracking-wide">
+            <a href="/antibodies" class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Antibodies</a>
+            <a href="/dashboard"  class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Dashboard</a>
+            <a href="/feed/antibodies.rss" class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Feed</a>
+            <a href="https://docs.immunity.xyz" rel="noopener" class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Docs</a>
+        </div>
+
+        {* Right status *}
+        <div class="flex items-center gap-5 text-[11.5px] text-fg-tertiary font-mono uppercase tracking-widest2">
+            <span class="hidden sm:inline-flex items-center gap-2">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft"></span>
+                <span>60 nodes</span>
+            </span>
+            <span class="hidden lg:inline-flex items-center gap-2">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent pulse-soft" style="animation-delay: -1.2s;"></span>
+                <span>$248k protected</span>
+            </span>
+        </div>
+
+    </div>
+</nav>
