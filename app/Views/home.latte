@@ -1,177 +1,71 @@
 {layout layouts/main.latte}
 
-{varType string $frameworkVersion}
-{varType string $phpVersion}
-{varType string $environment}
-{varType array $extensions}
-{varType array $database}
-{varType array $formatting}
-
-{block title}Zephyrus - Welcome{/block}
+{block title}Immunity, decentralized threat intelligence for AI agents{/block}
 
 {block content}
-<div class="min-h-screen flex flex-col">
+<section class="relative">
+    <div class="absolute inset-0 dot-bg opacity-60 pointer-events-none"></div>
+    <div class="absolute inset-x-0 top-0 h-[420px] vignette-radial pointer-events-none"></div>
 
-    {* Header *}
-    <div class="bg-white border-b border-gray-200">
-        <div class="max-w-4xl mx-auto px-6 py-8 text-center">
-            <img src="/assets/images/logo-black.png" alt="Zephyrus" class="h-16 mx-auto mb-4">
-            <p class="text-gray-500 text-sm tracking-wide uppercase">Version {$frameworkVersion}</p>
+    <div class="relative max-w-[1400px] mx-auto px-7 pt-28 pb-32">
+
+        {* Eyebrow *}
+        <div class="flex items-center gap-3 mb-8">
+            <span class="inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent pulse-soft"></span>
+                Live network / mock data
+            </span>
+            <span class="h-px w-10 bg-ink-line"></span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">v0.1.0</span>
         </div>
-    </div>
 
-    {* Main Content *}
-    <div class="flex-1">
-        <div class="max-w-4xl mx-auto px-6 py-10">
+        {* Headline *}
+        <h1 class="font-display display-xl font-light tracking-tightest text-fg-primary text-[64px] sm:text-[80px] md:text-[104px] leading-[0.92] mb-10 max-w-[1080px]">
+            Decentralized threat<br>intelligence for
+            <span class="italic font-light text-accent">AI agents</span>.
+        </h1>
 
-            {* Welcome *}
-            <div class="text-center mb-10">
-                <h1 class="text-3xl font-semibold text-gray-900 mb-2">{localize("welcome.title")}</h1>
-                <p class="text-gray-500 text-lg">Your application is ready.</p>
-            </div>
+        {* Lede *}
+        <p class="text-fg-secondary text-[17px] leading-[1.65] max-w-[560px] mb-12">
+            When one agent encounters a malicious actor, every other agent learns within seconds. Antibodies are signed by their publisher, staked on chain, and globally addressable by a stable CVE-style identifier.
+        </p>
 
-            {* Environment Badge *}
-            <div class="flex justify-center mb-10">
-                {if $environment === 'dev' || $environment === 'development' || $environment === 'local'}
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
-                        Development
-                    </span>
-                {elseif $environment === 'staging' || $environment === 'stage'}
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                        Staging
-                    </span>
-                {else}
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        Production
-                    </span>
-                {/if}
-            </div>
-
-            {* System Checks *}
-            <div class="grid md:grid-cols-2 gap-6 mb-10">
-
-                {* PHP & Extensions *}
-                <div class="bg-white rounded-lg border border-gray-200 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">System</h2>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-600">PHP</span>
-                            <span class="text-sm font-mono text-gray-900">{$phpVersion}</span>
-                        </div>
-                        {foreach $extensions as $name => $loaded}
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-600">{$name}</span>
-                                {if $loaded}
-                                    <span class="inline-flex items-center text-green-600">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                    </span>
-                                {else}
-                                    <span class="inline-flex items-center text-red-500">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
-                                    </span>
-                                {/if}
-                            </div>
-                        {/foreach}
-                    </div>
-                </div>
-
-                {* Database *}
-                <div class="bg-white rounded-lg border border-gray-200 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Database</h2>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-600">Status</span>
-                            {if $database['connected']}
-                                <span class="inline-flex items-center text-green-600">
-                                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                    </svg>
-                                    Connected
-                                </span>
-                            {else}
-                                <span class="inline-flex items-center text-red-500">
-                                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                    Disconnected
-                                </span>
-                            {/if}
-                        </div>
-                        {if $database['connected'] && $database['version']}
-                            <div class="flex items-start justify-between">
-                                <span class="text-gray-600">Version</span>
-                                <span class="text-sm font-mono text-gray-900 text-right max-w-[60%] break-words">{$database['version']}</span>
-                            </div>
-                        {elseif !$database['connected']}
-                            <div class="flex items-start justify-between">
-                                <span class="text-gray-600">Error</span>
-                                <span class="text-sm text-red-500 text-right max-w-[60%]">{$database['message']}</span>
-                            </div>
-                        {/if}
-                    </div>
-                </div>
-            </div>
-
-            {* Formatter Showcase *}
-            <div class="bg-white rounded-lg border border-gray-200 p-6 mb-10">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Formatter</h2>
-                <p class="text-gray-500 text-sm mb-4">Locale-aware formatting powered by <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">ext-intl</code>. Use the global <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">format()</code> helper in controllers and templates.</p>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b border-gray-200">
-                                <th class="text-left py-2 pr-4 font-medium text-gray-600">Code</th>
-                                <th class="text-left py-2 font-medium text-gray-600">Result</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            {foreach $formatting as $example}
-                                <tr>
-                                    <td class="py-2 pr-4"><code class="text-xs font-mono text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">{$example['code']}</code></td>
-                                    <td class="py-2 font-mono text-gray-900">{$example['result']}</td>
-                                </tr>
-                            {/foreach}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {* Getting Started *}
-            <div class="bg-white rounded-lg border border-gray-200 p-6 mb-10">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Getting Started</h2>
-                <div class="space-y-4 text-gray-600">
-                    <div class="flex items-start">
-                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold mr-3 mt-0.5 shrink-0">1</span>
-                        <p>Edit <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">app/Controllers/HomeController.php</code> to modify this page or add new routes using <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">#[Get]</code>, <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">#[Post]</code> attributes.</p>
-                    </div>
-                    <div class="flex items-start">
-                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold mr-3 mt-0.5 shrink-0">2</span>
-                        <p>Create Latte templates in <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">app/Views/</code> and domain models in <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">app/Models/</code>.</p>
-                    </div>
-                    <div class="flex items-start">
-                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold mr-3 mt-0.5 shrink-0">3</span>
-                        <p>Adjust <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">config.yml</code> and <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">.env</code> to configure your application, database, and mailer settings.</p>
-                    </div>
-                    <div class="flex items-start">
-                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold mr-3 mt-0.5 shrink-0">4</span>
-                        <p>Register new controllers in <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">app/Models/Core/Application.php</code> by chaining them on the Router.</p>
-                    </div>
-                </div>
-            </div>
-
+        {* CTAs *}
+        <div class="flex flex-wrap items-center gap-3 mb-20">
+            <a href="/antibodies" class="group inline-flex items-center gap-2 px-5 py-3 text-[13px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
+                Explore antibodies
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="opacity-60 group-hover:translate-x-0.5 transition-transform"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a href="/dashboard" class="inline-flex items-center gap-2 px-5 py-3 text-[13px] tracking-wide border border-ink-line text-fg-secondary hover:text-fg-primary hover:border-fg-tertiary transition-colors rounded-sm">
+                View live dashboard
+            </a>
+            <span class="ml-2 text-[12px] text-fg-tertiary font-mono">
+                or read the <a href="https://docs.immunity.xyz" rel="noopener" class="text-fg-secondary hover:text-fg-primary underline underline-offset-4 decoration-fg-dim">protocol brief</a>
+            </span>
         </div>
-    </div>
 
-    {* Footer *}
-    <div class="border-t border-gray-200 bg-white">
-        <div class="max-w-4xl mx-auto px-6 py-4 text-center text-sm text-gray-400">
-            Zephyrus Framework &middot; PHP {$phpVersion}
+        {* Hairline *}
+        <div class="hr-fade max-w-[760px] mb-12"></div>
+
+        {* Three-up labels (the three layers of the network) *}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-[1080px]">
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Speed layer</div>
+                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Gossip in seconds</h3>
+                <p class="text-fg-secondary text-[14px] leading-[1.65]">Antibodies fan out across the AXL mesh through signed pub/sub topics. Every agent's local cache updates in well under one second.</p>
+            </div>
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Trust layer</div>
+                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Staked on chain</h3>
+                <p class="text-fg-secondary text-[14px] leading-[1.65]">Each publisher locks 1 USDC for 72 hours. Match rewards split 70 / 20 / 10. False positives are challengeable. Skin in the game by design.</p>
+            </div>
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Verification layer</div>
+                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Sealed evidence</h3>
+                <p class="text-fg-secondary text-[14px] leading-[1.65]">Detection runs in a 0G Compute TEE. Verdicts carry attestation hashes. The original context is encrypted to the enclave key and never shown.</p>
+            </div>
         </div>
-    </div>
 
-</div>
+    </div>
+</section>
 {/block}
