@@ -107,6 +107,23 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         radial-gradient(40% 60% at 12% 100%, rgba(122, 184, 122, 0.05), transparent 60%);
 }
 
+/* Hero ambient video: heavy filter so it reads as background, not foreground.
+   Saturate kills the source pink chroma; blur de-emphasizes detail; brightness
+   keeps it from competing with the headline. The accompanying mix-blend-mode
+   tint overlay does the actual recoloring. */
+.hero-video,
+.hero-poster {
+    filter: saturate(0.3) brightness(0.75);
+    object-position: right center;
+}
+.hero-video { filter: saturate(0.3) brightness(0.75) blur(3px); }
+
+/* Respect prefers-reduced-motion: swap the video for the static poster image */
+@media (prefers-reduced-motion: reduce) {
+    .hero-video { display: none !important; }
+    .hero-poster { display: block !important; }
+}
+
 /* Infinite-scroll ticker strip. The track holds two identical lists side-by-side
    so the loop is seamless. */
 @keyframes ticker-scroll {

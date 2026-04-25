@@ -28,17 +28,31 @@ window.addEventListener('DOMContentLoaded', () => {
 {* ============================================================ HERO ===== *}
 <section class="relative overflow-hidden bg-ink-base">
 
-    {* Ambient background: warm radial glow, dot pattern, large faded mark *}
-    <div class="absolute inset-0 hero-glow pointer-events-none" aria-hidden="true"></div>
-    <div class="absolute inset-0 dot-bg opacity-50 pointer-events-none" aria-hidden="true"></div>
+    {* Ambient video, hidden on mobile to save bandwidth *}
+    <video class="hero-video absolute inset-0 w-full h-full object-cover hidden md:block pointer-events-none"
+           autoplay muted loop playsinline preload="metadata"
+           poster="{asset('/assets/videos/hero-poster.jpg')}"
+           aria-hidden="true">
+        <source src="{asset('/assets/videos/hero.mp4')}" type="video/mp4">
+    </video>
 
-    {* Large faded watermark on the right *}
-    <div class="absolute -right-24 top-1/2 -translate-y-1/2 w-[640px] h-[640px] opacity-[0.035] pointer-events-none hidden lg:block"
-         style="background: var(--fg-primary); -webkit-mask: url(/assets/images/immunity-mark.png) center/contain no-repeat; mask: url(/assets/images/immunity-mark.png) center/contain no-repeat;"
+    {* Mobile / reduced-motion fallback: poster as static image *}
+    <img class="hero-poster absolute inset-0 w-full h-full object-cover md:hidden pointer-events-none"
+         src="{asset('/assets/videos/hero-poster.jpg')}" alt="" aria-hidden="true">
+
+    {* Warm green tint laid over the desaturated footage via mix-blend-mode *}
+    <div class="absolute inset-0 pointer-events-none"
+         style="background-color: #7ab87a; mix-blend-mode: color; opacity: 0.6;"
          aria-hidden="true"></div>
 
-    {* Bottom gradient for text legibility on long pages *}
-    <div class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink-base pointer-events-none" aria-hidden="true"></div>
+    {* Left-side legibility gradient: opaque ink on the left half, video shines through on the right *}
+    <div class="absolute inset-0 bg-gradient-to-r from-ink-base from-30% via-ink-base/80 via-50% to-transparent to-100% pointer-events-none" aria-hidden="true"></div>
+
+    {* Bottom fade-to-dark, soft blend into the next section *}
+    <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-b from-transparent via-ink-base/80 via-60% to-ink-base pointer-events-none" aria-hidden="true"></div>
+
+    {* Subtle grain so the video doesn't read as a stock-footage embed *}
+    <div class="absolute inset-0 dot-bg opacity-50 pointer-events-none" aria-hidden="true"></div>
 
     <div class="relative max-w-[1400px] mx-auto px-7 pt-24 pb-28 min-h-[80vh] flex flex-col justify-center">
 
