@@ -31,14 +31,14 @@ window.addEventListener('DOMContentLoaded', () => {
     {* Ambient video, hidden on mobile to save bandwidth *}
     <video class="hero-video absolute inset-0 w-full h-full object-cover hidden md:block pointer-events-none"
            autoplay muted loop playsinline preload="metadata"
-           poster="{asset('/assets/videos/hero-poster.jpg')}"
+           poster="{asset('/assets/videos/hero-flora-poster.jpg')}"
            aria-hidden="true">
-        <source src="{asset('/assets/videos/hero.mp4')}" type="video/mp4">
+        <source src="{asset('/assets/videos/hero-flora.mp4')}" type="video/mp4">
     </video>
 
     {* Mobile / reduced-motion fallback: poster as static image *}
     <img class="hero-poster absolute inset-0 w-full h-full object-cover md:hidden pointer-events-none"
-         src="{asset('/assets/videos/hero-poster.jpg')}" alt="" aria-hidden="true">
+         src="{asset('/assets/videos/hero-flora-poster.jpg')}" alt="" aria-hidden="true">
 
     {* Warm green tint laid over the desaturated footage via mix-blend-mode *}
     <div class="absolute inset-0 pointer-events-none"
