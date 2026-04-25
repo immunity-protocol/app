@@ -136,9 +136,7 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     border-radius: 0;
     box-shadow: none;
     max-width: 1400px;
-    /* At top: tall band so center links + right items align with the big hero brand
-       (88px mark at top:28). Min-height 144 → flex items-center sits at y=72. */
-    min-height: 144px;
+    min-height: 64px;
     transition:
         background-color 320ms cubic-bezier(0.4, 0, 0.2, 1),
         backdrop-filter 320ms cubic-bezier(0.4, 0, 0.2, 1),
@@ -148,6 +146,11 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         box-shadow 320ms cubic-bezier(0.4, 0, 0.2, 1),
         max-width 320ms cubic-bezier(0.4, 0, 0.2, 1),
         min-height 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Tall band only on pages with a hero brand to align with (home).
+   Center links + right items sit at y=72, matching the 88px hero mark at top:28. */
+body:has(#hero-brand):not([data-scrolled="true"]) .site-nav-inner {
+    min-height: 144px;
 }
 body[data-scrolled="true"] .site-nav {
     top: 18px;
@@ -165,15 +168,21 @@ body[data-scrolled="true"] .site-nav-inner {
 
 /* ============================================ Brand handoff: hero ↔ nav */
 .nav-brand {
-    opacity: 0;
-    transform: translateX(-6px);
+    opacity: 1;
+    transform: translateX(0);
     transition:
         opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
         transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
-body[data-scrolled="true"] .nav-brand {
-    opacity: 1;
-    transform: translateX(0);
+/* Hide nav brand only on pages where a hero brand owns the slot */
+body:has(#hero-brand):not([data-scrolled="true"]) .nav-brand {
+    opacity: 0;
+    transform: translateX(-6px);
+}
+
+/* Inner pages (no hero) need explicit top padding to clear the fixed nav */
+body:not(:has(#hero-brand)) main {
+    padding-top: 96px;
 }
 
 .hero-brand {
