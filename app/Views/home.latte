@@ -372,96 +372,96 @@ window.addEventListener('DOMContentLoaded', () => {
 </section>
 
 {* ============================================ 05 · FOR DEVELOPERS ===== *}
-<section class="relative bg-cream-base text-parch-primary">
-    <div class="absolute inset-0 dot-bg-light opacity-50 pointer-events-none" aria-hidden="true"></div>
+<section class="relative bg-ink-base">
+    <div class="absolute inset-0 dot-bg opacity-50 pointer-events-none" aria-hidden="true"></div>
 
     <div class="relative max-w-[1400px] mx-auto px-7 py-24">
 
         <div class="flex items-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-parch-tertiary tabular-nums">05</span>
-            <span class="font-mono text-[10.5px] text-parch-dim">·</span>
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-parch-tertiary">For developers</span>
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">05</span>
+            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">For developers</span>
         </div>
-        <h2 class="font-display text-[40px] font-light tracking-tighter leading-[1.05] mb-4 max-w-[720px]">
+        <h2 class="font-display text-[40px] font-light tracking-tighter text-fg-primary leading-[1.05] mb-4 max-w-[720px]">
             One call before any agent action.
         </h2>
-        <p class="text-parch-secondary text-[15.5px] leading-[1.65] max-w-[640px] mb-14">
-            The SDK is a single import. Pass any tx or context to <code class="font-mono text-[14px]">immunity.check()</code> and the network responds with a verdict, evidence, and matching antibodies before you sign.
+        <p class="text-fg-secondary text-[15.5px] leading-[1.65] max-w-[640px] mb-14">
+            The SDK is a single import. Pass any tx or context to <code class="font-mono text-[14px] text-fg-primary">immunity.check()</code> and the network responds with a verdict, evidence, and matching antibodies before you sign.
         </p>
 
         <div class="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-10 items-start">
 
             {* Code sample with window chrome *}
-            <div class="border border-cream-line rounded-sm bg-cream-elevated overflow-hidden shadow-sm">
-                <header class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-cream-line bg-cream-sunken">
+            <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/40 overflow-hidden shadow-panel">
+                <header class="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-ink-line/60 bg-ink-sunken/60">
                     <div class="flex items-center gap-2">
-                        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-threat-300/70" aria-hidden="true"></span>
-                        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-caution-300/70" aria-hidden="true"></span>
-                        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-immune-300/70" aria-hidden="true"></span>
+                        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-threat-500/70" aria-hidden="true"></span>
+                        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-caution-500/70" aria-hidden="true"></span>
+                        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-immune-500/70" aria-hidden="true"></span>
                     </div>
-                    <span class="font-mono text-[11px] text-parch-tertiary">agent.ts</span>
-                    <button data-copy-btn="#sdk-code" class="font-mono text-[10px] uppercase tracking-widest2 text-parch-tertiary hover:text-parch-primary transition-colors inline-flex items-center gap-1.5"
+                    <span class="font-mono text-[11px] text-fg-tertiary">agent.ts</span>
+                    <button data-copy-btn="#sdk-code" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary hover:text-accent transition-colors inline-flex items-center gap-1.5"
                             aria-label="Copy code">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         <span data-copy-label>Copy</span>
                     </button>
                 </header>
                 {syntax off}
-                <pre id="sdk-code" class="font-mono text-[12.5px] leading-[1.7] px-5 py-5 overflow-x-auto m-0"><code><span class="text-threat-700">import</span> <span class="text-parch-primary">{ Immunity }</span> <span class="text-threat-700">from</span> <span class="text-immune-700">"@immunity/sdk"</span><span class="text-parch-tertiary">;</span>
+                <pre id="sdk-code" class="font-mono text-[12.5px] leading-[1.7] px-5 py-5 overflow-x-auto m-0"><code><span class="text-threat-300">import</span> <span class="text-fg-primary">{ Immunity }</span> <span class="text-threat-300">from</span> <span class="text-immune-300">"@immunity/sdk"</span><span class="text-fg-tertiary">;</span>
 
-<span class="text-threat-700">const</span> immunity <span class="text-parch-tertiary">=</span> <span class="text-threat-700">new</span> <span class="text-caution-700">Immunity</span><span class="text-parch-tertiary">({</span>
-  wallet<span class="text-parch-tertiary">,</span>
-  network<span class="text-parch-tertiary">:</span> <span class="text-immune-700">"mainnet"</span>
-<span class="text-parch-tertiary">});</span>
+<span class="text-threat-300">const</span> immunity <span class="text-fg-tertiary">=</span> <span class="text-threat-300">new</span> <span class="text-accent-soft">Immunity</span><span class="text-fg-tertiary">({</span>
+  wallet<span class="text-fg-tertiary">,</span>
+  network<span class="text-fg-tertiary">:</span> <span class="text-immune-300">"mainnet"</span>
+<span class="text-fg-tertiary">});</span>
 
-<span class="text-parch-tertiary">// Before any agent action</span>
-<span class="text-threat-700">const</span> result <span class="text-parch-tertiary">=</span> <span class="text-threat-700">await</span> immunity<span class="text-parch-tertiary">.</span><span class="text-caution-700">check</span><span class="text-parch-tertiary">(</span>tx<span class="text-parch-tertiary">,</span> context<span class="text-parch-tertiary">);</span>
+<span class="text-fg-dim italic">// Before any agent action</span>
+<span class="text-threat-300">const</span> result <span class="text-fg-tertiary">=</span> <span class="text-threat-300">await</span> immunity<span class="text-fg-tertiary">.</span><span class="text-accent-soft">check</span><span class="text-fg-tertiary">(</span>tx<span class="text-fg-tertiary">,</span> context<span class="text-fg-tertiary">);</span>
 
-<span class="text-threat-700">if</span> <span class="text-parch-tertiary">(</span>result<span class="text-parch-tertiary">.</span>decision <span class="text-parch-tertiary">===</span> <span class="text-immune-700">"block"</span><span class="text-parch-tertiary">)</span> <span class="text-parch-tertiary">{</span>
-  console<span class="text-parch-tertiary">.</span><span class="text-caution-700">warn</span><span class="text-parch-tertiary">(</span><span class="text-immune-700">"Blocked:"</span><span class="text-parch-tertiary">,</span> result<span class="text-parch-tertiary">.</span>antibodies<span class="text-parch-tertiary">[</span><span class="text-caution-700">0</span><span class="text-parch-tertiary">].</span>immId<span class="text-parch-tertiary">);</span>
-  <span class="text-threat-700">return</span><span class="text-parch-tertiary">;</span>
-<span class="text-parch-tertiary">}</span>
+<span class="text-threat-300">if</span> <span class="text-fg-tertiary">(</span>result<span class="text-fg-tertiary">.</span>decision <span class="text-fg-tertiary">===</span> <span class="text-immune-300">"block"</span><span class="text-fg-tertiary">)</span> <span class="text-fg-tertiary">{</span>
+  console<span class="text-fg-tertiary">.</span><span class="text-accent-soft">warn</span><span class="text-fg-tertiary">(</span><span class="text-immune-300">"Blocked:"</span><span class="text-fg-tertiary">,</span> result<span class="text-fg-tertiary">.</span>antibodies<span class="text-fg-tertiary">[</span><span class="text-accent-soft">0</span><span class="text-fg-tertiary">].</span>immId<span class="text-fg-tertiary">);</span>
+  <span class="text-threat-300">return</span><span class="text-fg-tertiary">;</span>
+<span class="text-fg-tertiary">}</span>
 
-<span class="text-threat-700">if</span> <span class="text-parch-tertiary">(</span>result<span class="text-parch-tertiary">.</span>decision <span class="text-parch-tertiary">===</span> <span class="text-immune-700">"escalate"</span><span class="text-parch-tertiary">)</span> <span class="text-parch-tertiary">{</span>
-  <span class="text-threat-700">await</span> <span class="text-caution-700">notifyOperator</span><span class="text-parch-tertiary">(</span>result<span class="text-parch-tertiary">);</span>
-  <span class="text-threat-700">return</span><span class="text-parch-tertiary">;</span>
-<span class="text-parch-tertiary">}</span>
+<span class="text-threat-300">if</span> <span class="text-fg-tertiary">(</span>result<span class="text-fg-tertiary">.</span>decision <span class="text-fg-tertiary">===</span> <span class="text-immune-300">"escalate"</span><span class="text-fg-tertiary">)</span> <span class="text-fg-tertiary">{</span>
+  <span class="text-threat-300">await</span> <span class="text-accent-soft">notifyOperator</span><span class="text-fg-tertiary">(</span>result<span class="text-fg-tertiary">);</span>
+  <span class="text-threat-300">return</span><span class="text-fg-tertiary">;</span>
+<span class="text-fg-tertiary">}</span>
 
-<span class="text-parch-tertiary">// Safe to proceed</span>
-<span class="text-threat-700">await</span> wallet<span class="text-parch-tertiary">.</span><span class="text-caution-700">sendTransaction</span><span class="text-parch-tertiary">(</span>tx<span class="text-parch-tertiary">);</span></code></pre>
+<span class="text-fg-dim italic">// Safe to proceed</span>
+<span class="text-threat-300">await</span> wallet<span class="text-fg-tertiary">.</span><span class="text-accent-soft">sendTransaction</span><span class="text-fg-tertiary">(</span>tx<span class="text-fg-tertiary">);</span></code></pre>
                 {/syntax}
             </div>
 
             {* Bullets + CTA *}
             <div>
-                <div class="font-mono text-[10px] uppercase tracking-widest2 text-parch-tertiary mb-5">What you get</div>
-                <ul class="space-y-3.5 text-[14px] text-parch-secondary leading-[1.6]">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-5">What you get</div>
+                <ul class="space-y-3.5 text-[14px] text-fg-secondary leading-[1.6]">
                     <li class="flex items-start gap-3">
-                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>
-                        Sub-millisecond local cache via <code class="font-mono text-[12.5px] text-parch-primary">axl-pubsub</code>
+                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
+                        Sub-millisecond local cache via <code class="font-mono text-[12.5px] text-fg-primary">axl-pubsub</code>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>
+                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
                         Automatic on-chain settlement on every check
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>
+                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
                         TEE-backed semantic detection for novel threats
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>
+                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
                         Configurable escalation handlers for SUSPICIOUS verdicts
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>
+                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
                         Cross-chain antibody mirroring out of the box
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>
+                        <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
                         Open source, MIT licensed
                     </li>
                 </ul>
-                <a href="https://docs.immunity.xyz/sdk" rel="noopener" class="group inline-flex items-center gap-2 mt-7 font-mono text-[11px] uppercase tracking-widest2 text-parch-primary hover:text-threat-600 transition-colors border-b border-parch-tertiary/50 hover:border-threat-600 pb-1">
+                <a href="https://docs.immunity.xyz/sdk" rel="noopener" class="group inline-flex items-center gap-2 mt-7 font-mono text-[11px] uppercase tracking-widest2 text-fg-primary hover:text-accent transition-colors border-b border-fg-tertiary/40 hover:border-accent pb-1">
                     Read the SDK reference
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" class="group-hover:translate-x-0.5 transition-transform" aria-hidden="true"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </a>
