@@ -401,19 +401,26 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <span class="text-threat-300">const</span> immunity <span class="text-fg-tertiary">=</span> <span class="text-threat-300">new</span> <span class="text-accent-soft">Immunity</span><span class="text-fg-tertiary">({</span>
   wallet<span class="text-fg-tertiary">,</span>
-  network<span class="text-fg-tertiary">:</span> <span class="text-immune-300">"mainnet"</span>
+
+  <span class="text-fg-dim italic">// Called when verdict is SUSPICIOUS. Return true to allow, false to block.</span>
+  <span class="text-fg-dim italic">// Defaults to "deny" if not provided.</span>
+  onEscalate<span class="text-fg-tertiary">:</span> <span class="text-threat-300">async</span> <span class="text-fg-tertiary">(</span>verdict<span class="text-fg-tertiary">)</span> <span class="text-fg-tertiary">=&gt;</span> <span class="text-fg-tertiary">{</span>
+    <span class="text-threat-300">return</span> <span class="text-threat-300">await</span> <span class="text-accent-soft">notifyOperator</span><span class="text-fg-tertiary">({</span>
+      antibody<span class="text-fg-tertiary">:</span> verdict<span class="text-fg-tertiary">.</span>antibodies<span class="text-fg-tertiary">[</span><span class="text-accent-soft">0</span><span class="text-fg-tertiary">],</span>
+      confidence<span class="text-fg-tertiary">:</span> verdict<span class="text-fg-tertiary">.</span>confidence<span class="text-fg-tertiary">,</span>
+      explanation<span class="text-fg-tertiary">:</span> verdict<span class="text-fg-tertiary">.</span>explanation<span class="text-fg-tertiary">,</span>
+    <span class="text-fg-tertiary">});</span>
+  <span class="text-fg-tertiary">},</span>
+
+  escalationTimeout<span class="text-fg-tertiary">:</span> <span class="text-accent-soft">300</span><span class="text-fg-tertiary">,</span> <span class="text-fg-dim italic">// seconds, default 300</span>
+  onTimeout<span class="text-fg-tertiary">:</span> <span class="text-immune-300">"deny"</span><span class="text-fg-tertiary">,</span> <span class="text-fg-dim italic">// "deny" | "allow", default "deny"</span>
 <span class="text-fg-tertiary">});</span>
 
 <span class="text-fg-dim italic">// Before any agent action</span>
 <span class="text-threat-300">const</span> result <span class="text-fg-tertiary">=</span> <span class="text-threat-300">await</span> immunity<span class="text-fg-tertiary">.</span><span class="text-accent-soft">check</span><span class="text-fg-tertiary">(</span>tx<span class="text-fg-tertiary">,</span> context<span class="text-fg-tertiary">);</span>
 
-<span class="text-threat-300">if</span> <span class="text-fg-tertiary">(</span>result<span class="text-fg-tertiary">.</span>decision <span class="text-fg-tertiary">===</span> <span class="text-immune-300">"block"</span><span class="text-fg-tertiary">)</span> <span class="text-fg-tertiary">{</span>
-  console<span class="text-fg-tertiary">.</span><span class="text-accent-soft">warn</span><span class="text-fg-tertiary">(</span><span class="text-immune-300">"Blocked:"</span><span class="text-fg-tertiary">,</span> result<span class="text-fg-tertiary">.</span>antibodies<span class="text-fg-tertiary">[</span><span class="text-accent-soft">0</span><span class="text-fg-tertiary">].</span>immId<span class="text-fg-tertiary">);</span>
-  <span class="text-threat-300">return</span><span class="text-fg-tertiary">;</span>
-<span class="text-fg-tertiary">}</span>
-
-<span class="text-threat-300">if</span> <span class="text-fg-tertiary">(</span>result<span class="text-fg-tertiary">.</span>decision <span class="text-fg-tertiary">===</span> <span class="text-immune-300">"escalate"</span><span class="text-fg-tertiary">)</span> <span class="text-fg-tertiary">{</span>
-  <span class="text-threat-300">await</span> <span class="text-accent-soft">notifyOperator</span><span class="text-fg-tertiary">(</span>result<span class="text-fg-tertiary">);</span>
+<span class="text-threat-300">if</span> <span class="text-fg-tertiary">(!</span>result<span class="text-fg-tertiary">.</span>allowed<span class="text-fg-tertiary">)</span> <span class="text-fg-tertiary">{</span>
+  console<span class="text-fg-tertiary">.</span><span class="text-accent-soft">warn</span><span class="text-fg-tertiary">(</span><span class="text-immune-300">`Blocked by ${result.antibodies[0].immId}: ${result.reason}`</span><span class="text-fg-tertiary">);</span>
   <span class="text-threat-300">return</span><span class="text-fg-tertiary">;</span>
 <span class="text-fg-tertiary">}</span>
 
