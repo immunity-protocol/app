@@ -108,6 +108,122 @@
     </div>
 </section>
 
+{* ===================================================== LIVE FEED ===== *}
+<section class="relative">
+    <div class="max-w-[1400px] mx-auto px-7 pt-20 pb-12">
+
+        <div class="flex items-end justify-between mb-7">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Live activity</span>
+                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+                </div>
+                <h2 class="font-display text-[28px] font-light tracking-tighter text-fg-primary">
+                    Recent mints, blocks, challenges
+                </h2>
+            </div>
+            <a href="/dashboard" class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors inline-flex items-center gap-1.5">
+                Open dashboard
+                <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9L9 3M9 3H4M9 3V8" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+            </a>
+        </div>
+
+        <div class="border-t border-ink-line/60">
+
+            {* ======== row 1: mint ======== *}
+            <a href="/antibody/IMM-2026-0312" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent" aria-label="mint" title="mint"></span>
+                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">23s ago</span>
+                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0312</span>
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">minted</span>
+                <span class="text-fg-secondary text-[13.5px] truncate">SEMANTIC pattern, 87% confidence, "approve unlimited spend"</span>
+                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">by huntress.eth</span>
+            </a>
+
+            {* ======== row 2: block ======== *}
+            <a href="/antibody/IMM-2026-0287" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500" aria-label="block"></span>
+                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">47s ago</span>
+                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0287</span>
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">blocked</span>
+                <span class="text-fg-secondary text-[13.5px] truncate">$4,200 protected, swap on Uniswap v4 / Sepolia hook</span>
+                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">tx 0x9af3..2c1e</span>
+            </a>
+
+            {* ======== row 3: mirror ======== *}
+            <a href="/antibody/IMM-2026-0301" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-fg-tertiary" aria-label="mirror"></span>
+                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">1m ago</span>
+                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0301</span>
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">mirrored</span>
+                <span class="text-fg-secondary text-[13.5px] truncate">propagated to Base, Optimism, Arbitrum (3 chains)</span>
+                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">relayer 0x4a..91c2</span>
+            </a>
+
+            {* ======== row 4: mint ======== *}
+            <a href="/antibody/IMM-2026-0298" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent" aria-label="mint"></span>
+                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">2m ago</span>
+                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0298</span>
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">minted</span>
+                <span class="text-fg-secondary text-[13.5px] truncate">ADDRESS, drainer wallet flagged from 7 prior matches</span>
+                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">by scout.eth</span>
+            </a>
+
+            {* ======== row 5: challenge ======== *}
+            <a href="/antibody/IMM-2026-0276" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-caution-500" aria-label="challenge"></span>
+                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">4m ago</span>
+                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0276</span>
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">challenged</span>
+                <span class="text-fg-secondary text-[13.5px] truncate">counter-stake 1.5 USDC, claim: "legitimate dex aggregator"</span>
+                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">by 0x6f1c..bd80</span>
+            </a>
+
+            {* ======== row 6: mint ======== *}
+            <a href="/antibody/IMM-2026-0289" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent" aria-label="mint"></span>
+                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">6m ago</span>
+                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0289</span>
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">minted</span>
+                <span class="text-fg-secondary text-[13.5px] truncate">CALL_PATTERN, approve(MAX_UINT256, 0xbad..1234)</span>
+                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">by sentinel.eth</span>
+            </a>
+
+            {* ======== row 7: block ======== *}
+            <a href="/antibody/IMM-2026-0271" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500" aria-label="block"></span>
+                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">9m ago</span>
+                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0271</span>
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">blocked</span>
+                <span class="text-fg-secondary text-[13.5px] truncate">$890 protected, swap intercepted before signature</span>
+                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">tx 0x42c9..d4f7</span>
+            </a>
+
+            {* ======== row 8: expire ======== *}
+            <a href="/antibody/IMM-2026-0263" class="grid grid-cols-[14px_64px_148px_118px_1fr_200px] gap-4 items-center py-3.5 hover:bg-ink-elevated/40 transition-colors group">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-fg-dim" aria-label="expire"></span>
+                <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">12m ago</span>
+                <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">IMM-2026-0263</span>
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">expired</span>
+                <span class="text-fg-secondary text-[13.5px] truncate">72h stake released, 0 challenges, +0.41 USDC to publisher</span>
+                <span class="font-mono text-[11px] text-fg-tertiary text-right truncate">by sentinel.eth</span>
+            </a>
+
+        </div>
+
+        {* Legend *}
+        <div class="flex items-center justify-end gap-5 mt-6 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">
+            <span class="inline-flex items-center gap-2"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent"></span>mint</span>
+            <span class="inline-flex items-center gap-2"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500"></span>block</span>
+            <span class="inline-flex items-center gap-2"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-fg-tertiary"></span>mirror</span>
+            <span class="inline-flex items-center gap-2"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-caution-500"></span>challenge</span>
+            <span class="inline-flex items-center gap-2"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-fg-dim"></span>expire</span>
+        </div>
+
+    </div>
+</section>
+
 {* ================================================ ARCHITECTURE LAYERS ===== *}
 <section class="relative">
     <div class="max-w-[1400px] mx-auto px-7 py-24">
