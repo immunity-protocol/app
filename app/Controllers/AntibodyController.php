@@ -18,4 +18,10 @@ final class AntibodyController extends Controller
     {
         return $this->render('antibodies/index');
     }
+
+    #[Get('/antibody/{id}')]
+    public function show(string $id): Response
+    {
+        return $this->render('antibodies/show', ['id' => $id]);
+    }
 }

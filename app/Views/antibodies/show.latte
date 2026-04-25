@@ -1,0 +1,116 @@
+{layout ../layouts/main.latte}
+
+{block title}{$id} / Immunity antibody{/block}
+
+{block content}
+
+{*
+ * Hardcoded mock antibody. Phase 2 swaps this for a real lookup against the
+ * Postgres-backed broker. Subsequent commits in 6 fill in the panels; this
+ * commit just stands up the route, the page shell, and the data shape.
+ *}
+{var $ab = [
+  'id'          => $id,
+  'keccak'      => '0x9f2c4a8b1e7d6f3c5a9b2e8d4f1c7a3b6e9d2f8c1a4b7e0d3f6c9a2b5e8d1f4c',
+  'type'        => 'ADDRESS',
+  'verdict'     => 'MALICIOUS',
+  'confidence'  => 99.5,
+  'severity'    => 92,
+  'status'      => 'ACTIVE',
+  'publisher'   => 'sentinel.eth',
+  'publisher_addr' => '0xa3f1c2e9b4d7a8c5f2e1d6b9a3c8e7f4b1d2c5a9',
+  'stake'       => 1.0,
+  'created_at'  => '2026-04-24 14:32:18 UTC',
+  'expires_at'  => '2026-05-24 14:32:18 UTC',
+  'mirrored_to' => ['ethereum', 'base', 'optimism', 'arbitrum'],
+
+  'envelope' => [
+    'primary'   => ['kind' => 'address', 'value' => '0xdeadbeef9f2c4a8b1e7d6f3c5a9b2e8d4f1c7a3b'],
+    'secondary' => [
+      ['kind' => 'method_signature', 'value' => 'transferFrom(address,address,uint256)'],
+      ['kind' => 'calldata_pattern',  'value' => '0xa9059cbb...'],
+    ],
+    'scope'     => ['evm:1', 'evm:8453', 'evm:10', 'evm:42161'],
+    'exception' => 'none',
+  ],
+
+  'evidence' => [
+    'reasoning' => "Address drained 14 victim wallets over 6 hours via fake permit signatures. Pattern matches Inferno Drainer family v3.2 (sig: keccak256 of obfuscated permit2 batch). High confidence based on on-chain trace + 4 corroborating publisher signals within last 90 minutes.\n\nRedacted sections cover the specific TEE-sealed corroboration evidence and the PII-stripped victim wallet derivation paths.",
+    'tee_attestation' => '0x4a8b2c1f9e7d3a6b8c5f2e1d9b4a7c3e6f8d1a2b5c9e7f4d3a8b1c6e9f2d5a8b',
+    'evidence_cid' => 'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+    'sealed' => true,
+  ],
+
+  'impact' => [
+    'cache_hits'   => 14823,
+    'agents_synced'=> 2104,
+    'blocks_made'  => 47,
+    'llm_saved_usd'=> 1842.50,
+  ],
+
+  'mirrors' => [
+    ['chain' => 'ethereum',  'block' => 19847231, 'tx' => '0x8c2a...e4f1', 'gas_usd' => 12.40, 'state' => 'mirrored'],
+    ['chain' => 'base',      'block' => 14238912, 'tx' => '0x3f9d...a2c8', 'gas_usd' => 0.18,  'state' => 'mirrored'],
+    ['chain' => 'optimism',  'block' => 132847029,'tx' => '0xb1e7...9c4a', 'gas_usd' => 0.09,  'state' => 'mirrored'],
+    ['chain' => 'arbitrum',  'block' => 287194382,'tx' => '0x5a8c...f2d3', 'gas_usd' => 0.04,  'state' => 'mirrored'],
+  ],
+]}
+
+<section class="max-w-[1400px] mx-auto px-7 pt-10 pb-16">
+
+    {* ----------- BREADCRUMB ----------- *}
+    <nav class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-8 flex items-center gap-2" aria-label="Breadcrumb">
+        <a href="/antibodies" class="hover:text-fg-secondary transition-colors">Antibodies</a>
+        <span class="text-fg-dim" aria-hidden="true">/</span>
+        <span class="text-fg-secondary">{$ab['id']}</span>
+    </nav>
+
+    {* ============== HEADER (filled in 6b) ============== *}
+    <header class="mb-12">
+        <h1 class="font-mono text-[28px] text-fg-primary tracking-tight">{$ab['id']}</h1>
+        <p class="font-mono text-[12px] text-fg-tertiary mt-2 truncate">{$ab['keccak']}</p>
+    </header>
+
+    {* ============== TWO-COLUMN BODY ============== *}
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-x-14 gap-y-10">
+
+        {* ----------- MAIN COLUMN (panels fill in 6c-6f) ----------- *}
+        <div class="space-y-10 min-w-0">
+
+            {* placeholder until 6c *}
+            <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Envelope</div>
+                <p class="text-fg-dim text-[13px] mt-3 italic">panel arrives in commit 6c</p>
+            </div>
+
+            {* placeholder until 6d *}
+            <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Evidence</div>
+                <p class="text-fg-dim text-[13px] mt-3 italic">panel arrives in commit 6d</p>
+            </div>
+
+            {* placeholder until 6e *}
+            <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network impact</div>
+                <p class="text-fg-dim text-[13px] mt-3 italic">panel arrives in commit 6e</p>
+            </div>
+
+            {* placeholder until 6f *}
+            <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Mirror status</div>
+                <p class="text-fg-dim text-[13px] mt-3 italic">panel arrives in commit 6f</p>
+            </div>
+        </div>
+
+        {* ----------- SIDE RAIL ----------- *}
+        <aside class="space-y-6">
+            <div class="border border-ink-line/60 rounded-sm p-5 bg-ink-elevated/20">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Actions</div>
+                <p class="text-fg-dim text-[13px] italic">side actions arrive with 6b</p>
+            </div>
+        </aside>
+    </div>
+
+</section>
+
+{/block}
