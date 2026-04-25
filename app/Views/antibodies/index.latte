@@ -272,6 +272,45 @@
         {/foreach}
         </tbody>
     </table>
+
+    {* ----------- PAGINATION ----------- *}
+    <div class="flex items-center justify-between mt-8 pt-5 border-t border-ink-line/60 gap-6 flex-wrap">
+
+        {* Showing N of M *}
+        <div class="font-mono text-[11px] uppercase tracking-widest2 text-fg-tertiary">
+            Showing <span class="text-fg-secondary tabular-nums">1</span> to <span class="text-fg-secondary tabular-nums">30</span> of <span class="text-fg-secondary tabular-nums">312</span>
+        </div>
+
+        {* Page controls *}
+        <nav class="flex items-center gap-1" aria-label="Pagination">
+            <button class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim px-3 py-1.5 rounded-sm cursor-not-allowed" disabled aria-label="Previous page">
+                <span aria-hidden="true">&larr;</span> Prev
+            </button>
+
+            <button class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm bg-accent/10 text-accent border border-accent/30" aria-current="page">1</button>
+            <button class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">2</button>
+            <button class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">3</button>
+            <button class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">4</button>
+            <span class="font-mono text-[12px] text-fg-dim px-1 select-none">...</span>
+            <button class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">11</button>
+
+            <button class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary px-3 py-1.5 rounded-sm hover:bg-ink-elevated/60 transition-colors" aria-label="Next page">
+                Next <span aria-hidden="true">&rarr;</span>
+            </button>
+        </nav>
+
+        {* Per page *}
+        <label class="flex items-center gap-3">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Per page</span>
+            <select class="bg-ink-elevated/40 border border-ink-line/80 rounded-sm font-mono text-[12px] text-fg-primary px-2.5 py-1.5 focus:border-fg-tertiary focus:outline-none transition-colors appearance-none pr-7" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22 fill=%22none%22><path d=%22M1 1l4 4 4-4%22 stroke=%22%239a9a92%22 stroke-width=%221.2%22 stroke-linecap=%22round%22/></svg>'); background-repeat: no-repeat; background-position: right 8px center;">
+                <option>30</option>
+                <option>60</option>
+                <option>100</option>
+                <option>200</option>
+            </select>
+        </label>
+    </div>
+
         </div>
 
     </div>
