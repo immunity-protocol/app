@@ -543,4 +543,120 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </aside>
 
+{* ============================================ 07 · TWO-LAYER PROTECTION ===== *}
+<section class="relative bg-cream-base text-parch-primary">
+    <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(180deg, rgba(245,241,232,0) 0%, rgba(216,208,189,0.25) 100%);" aria-hidden="true"></div>
+
+    <div class="relative max-w-[1400px] mx-auto px-7 py-24">
+
+        <div class="flex items-center gap-3 mb-3">
+            <span class="font-mono text-[10.5px] text-parch-tertiary tabular-nums">07</span>
+            <span class="font-mono text-[10.5px] text-parch-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-parch-tertiary">Two-layer protection</span>
+        </div>
+        <h2 class="font-display text-[40px] font-light tracking-tighter leading-[1.05] mb-4 max-w-[720px]">
+            Defends from both sides.
+        </h2>
+        <p class="text-parch-secondary text-[15.5px] leading-[1.65] max-w-[640px] mb-14">
+            Agents check before they sign. Pools check before they swap. Same registry, two enforcement points, no install required for the second.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-cream-line mb-14">
+
+            {* SDK side *}
+            <div class="bg-cream-base p-8 hover:bg-cream-elevated transition-colors">
+                <div class="flex items-start justify-between mb-6">
+                    <div>
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-parch-tertiary mb-2">For agent operators</div>
+                        <h3 class="font-display text-[24px] tracking-tighter text-parch-primary leading-tight">SDK protection</h3>
+                    </div>
+                    <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" class="text-parch-primary shrink-0" aria-hidden="true">
+                        <circle cx="20" cy="24" r="11"/>
+                        <circle cx="20" cy="24" r="3" fill="currentColor"/>
+                        <path d="M34 12l8 4v8c0 6-4 10-8 12-4-2-8-6-8-12v-8l8-4z" fill="rgba(196,90,90,0.10)"/>
+                    </svg>
+                </div>
+                <p class="text-parch-secondary text-[14px] leading-[1.65] mb-5">
+                    Install the SDK in your agent. Every action is checked against the network's collective immunity before signing. Works on any chain, any pool, any tx type.
+                </p>
+                <ul class="space-y-2.5 text-[13px] text-parch-secondary leading-[1.55]">
+                    <li class="flex items-start gap-3"><span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>Drop-in npm install</li>
+                    <li class="flex items-start gap-3"><span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>Local cache, sub-ms checks</li>
+                    <li class="flex items-start gap-3"><span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>Per-operator config</li>
+                </ul>
+            </div>
+
+            {* Hook side *}
+            <div class="bg-cream-base p-8 hover:bg-cream-elevated transition-colors">
+                <div class="flex items-start justify-between mb-6">
+                    <div>
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-parch-tertiary mb-2">For pool deployers</div>
+                        <h3 class="font-display text-[24px] tracking-tighter text-parch-primary leading-tight">Hook protection</h3>
+                    </div>
+                    <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" class="text-parch-primary shrink-0" aria-hidden="true">
+                        <path d="M8 26c4-8 12-8 16 0s12 8 16 0" fill="rgba(122,184,122,0.10)"/>
+                        <path d="M8 32c4-8 12-8 16 0s12 8 16 0"/>
+                        <path d="M34 8l8 4v8c0 6-4 10-8 12-4-2-8-6-8-12v-8l8-4z" fill="rgba(196,90,90,0.10)"/>
+                    </svg>
+                </div>
+                <p class="text-parch-secondary text-[14px] leading-[1.65] mb-5">
+                    Deploy a Uniswap v4 pool with the Immunity hook. Every swap on your pool is checked against the global registry. LPs are protected automatically — no install required.
+                </p>
+                <ul class="space-y-2.5 text-[13px] text-parch-secondary leading-[1.55]">
+                    <li class="flex items-start gap-3"><span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>v4 BeforeSwap hook</li>
+                    <li class="flex items-start gap-3"><span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>Mirrored ADDRESS antibodies per chain</li>
+                    <li class="flex items-start gap-3"><span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-700 shrink-0" aria-hidden="true"></span>Blocks bad actors AND bad assets</li>
+                </ul>
+            </div>
+        </div>
+
+        {* Coverage matrix *}
+        {var $matrix = [
+          ['scenario' => 'Agent uses SDK,    pool has hook', 'sdk' => true,  'hook' => true,  'note' => 'Both layers active. Maximum coverage.'],
+          ['scenario' => 'Agent uses SDK,    pool has none', 'sdk' => true,  'hook' => false, 'note' => 'Agent-side only. Per-agent.'],
+          ['scenario' => 'Agent has none,    pool has hook', 'sdk' => false, 'hook' => true,  'note' => 'Pool-side only. Protects every LP.'],
+          ['scenario' => 'Agent has none,    pool has none', 'sdk' => false, 'hook' => false, 'note' => 'No defense. Use the public feed.'],
+        ]}
+        <div class="border border-cream-line rounded-sm bg-cream-elevated overflow-hidden">
+            <header class="px-5 py-3 border-b border-cream-line flex items-center justify-between bg-cream-sunken">
+                <span class="font-mono text-[10px] uppercase tracking-widest2 text-parch-tertiary">Coverage matrix</span>
+                <span class="font-mono text-[10px] text-parch-dim">tx-by-tx outcomes</span>
+            </header>
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-cream-line/70 bg-cream-sunken/40">
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-parch-tertiary font-normal text-left px-5 py-3">Scenario</th>
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-parch-tertiary font-normal text-center px-3 py-3">SDK</th>
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-parch-tertiary font-normal text-center px-3 py-3">Hook</th>
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-parch-tertiary font-normal text-left px-5 py-3">Outcome</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {foreach $matrix as $i => $r}
+                    <tr class="border-b border-cream-line/50 last:border-0 hover:bg-cream-elevated/60 transition-colors">
+                        <td class="px-5 py-3 text-[13px] text-parch-primary">{$r['scenario']}</td>
+                        <td class="px-3 py-3 text-center">
+                            {if $r['sdk']}
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-immune-700 inline-block" aria-label="yes"><polyline points="20 6 9 17 4 12"/></svg>
+                            {else}
+                                <span class="text-parch-dim font-mono text-[14px]">—</span>
+                            {/if}
+                        </td>
+                        <td class="px-3 py-3 text-center">
+                            {if $r['hook']}
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-immune-700 inline-block" aria-label="yes"><polyline points="20 6 9 17 4 12"/></svg>
+                            {else}
+                                <span class="text-parch-dim font-mono text-[14px]">—</span>
+                            {/if}
+                        </td>
+                        <td class="px-5 py-3 text-[12.5px] text-parch-secondary">{$r['note']}</td>
+                    </tr>
+                {/foreach}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</section>
+
 {/block}
