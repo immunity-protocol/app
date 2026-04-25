@@ -124,6 +124,23 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     .hero-poster { display: block !important; }
 }
 
+/* ============================================ Nav: transparent → blur band */
+.site-nav {
+    background-color: transparent;
+    border-bottom: 1px solid transparent;
+    transition:
+        background-color 280ms cubic-bezier(0.4, 0, 0.2, 1),
+        backdrop-filter 280ms cubic-bezier(0.4, 0, 0.2, 1),
+        -webkit-backdrop-filter 280ms cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+body[data-scrolled="true"] .site-nav {
+    background-color: rgba(14, 14, 13, 0.65);
+    border-bottom-color: rgba(42, 42, 38, 0.6);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: blur(20px) saturate(150%);
+}
+
 /* Infinite-scroll ticker strip. The track holds two identical lists side-by-side
    so the loop is seamless. */
 @keyframes ticker-scroll {

@@ -49,6 +49,19 @@
     </script>
 
     <link rel="stylesheet" href="{asset('/stylesheets/app.css')}">
+
+    <script>
+      // Drives the nav transparent → island states via a single body[data-scrolled] flag.
+      (function () {
+        const SCROLL_THRESHOLD = 64;
+        const update = () => {
+          document.body.dataset.scrolled = (window.scrollY > SCROLL_THRESHOLD) ? 'true' : 'false';
+        };
+        document.addEventListener('DOMContentLoaded', update);
+        window.addEventListener('scroll', update, { passive: true });
+      })();
+    </script>
+
     {block head}{/block}
 </head>
 <body class="min-h-full antialiased">
