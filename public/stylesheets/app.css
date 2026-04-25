@@ -124,19 +124,36 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     .hero-poster { display: block !important; }
 }
 
-/* ============================================ Nav: transparent → blur band */
+/* ============================================ Nav: transparent → island pill */
 .site-nav {
-    background-color: transparent;
-    border-bottom: 1px solid transparent;
+    margin-top: 0;
     transition:
-        background-color 280ms cubic-bezier(0.4, 0, 0.2, 1),
-        backdrop-filter 280ms cubic-bezier(0.4, 0, 0.2, 1),
-        -webkit-backdrop-filter 280ms cubic-bezier(0.4, 0, 0.2, 1),
-        border-color 280ms cubic-bezier(0.4, 0, 0.2, 1);
+        margin-top 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.site-nav-inner {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 0;
+    box-shadow: none;
+    max-width: 1400px;
+    transition:
+        background-color 320ms cubic-bezier(0.4, 0, 0.2, 1),
+        backdrop-filter 320ms cubic-bezier(0.4, 0, 0.2, 1),
+        -webkit-backdrop-filter 320ms cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 320ms cubic-bezier(0.4, 0, 0.2, 1),
+        border-radius 320ms cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 320ms cubic-bezier(0.4, 0, 0.2, 1),
+        max-width 320ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 body[data-scrolled="true"] .site-nav {
-    background-color: rgba(14, 14, 13, 0.65);
-    border-bottom-color: rgba(42, 42, 38, 0.6);
+    margin-top: 12px;
+}
+body[data-scrolled="true"] .site-nav-inner {
+    background-color: rgba(14, 14, 13, 0.55);
+    border-color: rgba(42, 42, 38, 0.7);
+    border-radius: 9999px;
+    box-shadow: 0 8px 32px -12px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    max-width: 1080px;
     -webkit-backdrop-filter: blur(20px) saturate(150%);
     backdrop-filter: blur(20px) saturate(150%);
 }
