@@ -84,19 +84,13 @@
 
     <header class="mb-14">
 
-        {* Eyebrow line: kind + status pill *}
-        <div class="flex items-center gap-3 mb-5">
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Antibody</span>
-            <span class="text-fg-dim" aria-hidden="true">/</span>
+        {* IMM ID + status pill + copy *}
+        <div class="flex items-center gap-4 flex-wrap mb-3">
+            <h1 class="font-mono text-[34px] text-fg-primary tracking-tight leading-none">{$ab['id']}</h1>
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border font-mono text-[10px] uppercase tracking-widest2 {$statusBadge}">
                 <span class="inline-flex h-1.5 w-1.5 rounded-full bg-current pulse-soft" aria-hidden="true"></span>
                 {$ab['status']}
             </span>
-        </div>
-
-        {* IMM ID + copy *}
-        <div class="flex items-baseline gap-4 flex-wrap mb-3">
-            <h1 class="font-mono text-[34px] text-fg-primary tracking-tight leading-none">{$ab['id']}</h1>
             <button data-copy="{$ab['id']}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors inline-flex items-center gap-1.5" aria-label="Copy IMM ID">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Copy
