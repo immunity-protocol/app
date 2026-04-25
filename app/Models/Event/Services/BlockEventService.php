@@ -22,6 +22,14 @@ readonly class BlockEventService
         return BlockEvent::buildArray($this->broker->findRecent($limit, $beforeId));
     }
 
+    /**
+     * @return BlockEvent[]
+     */
+    public function findRecentByEntryId(int $entryId, int $limit = 10): array
+    {
+        return BlockEvent::buildArray($this->broker->findRecentByEntryId($entryId, $limit));
+    }
+
     public function countSince(string $sinceIso): int
     {
         return $this->broker->countSince($sinceIso);

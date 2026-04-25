@@ -25,6 +25,17 @@ class BlockEventBroker extends Broker
         );
     }
 
+    /**
+     * @return \stdClass[]
+     */
+    public function findRecentByEntryId(int $entryId, int $limit = 10): array
+    {
+        return $this->select(
+            "SELECT * FROM event.block_event WHERE entry_id = ? ORDER BY id DESC LIMIT ?",
+            [$entryId, $limit]
+        );
+    }
+
     public function countSince(string $sinceIso): int
     {
         return (int) $this->selectValue(
