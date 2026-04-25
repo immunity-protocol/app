@@ -2,6 +2,23 @@
 
 {block title}Dashboard / Immunity network{/block}
 
+{block head}
+<script defer src="{asset('/javascripts/propagation-map.js')}"></script>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('dash-map');
+  if (el && window.PropagationMap) {
+    window.__dashMap = new window.PropagationMap(el, {
+      nodeCount: 96,
+      nodeRadius: 4.0,
+      eventIntervalMs: [2200, 5500],
+    });
+    window.__dashMap.start();
+  }
+});
+</script>
+{/block}
+
 {block content}
 
 <section class="max-w-[1400px] mx-auto px-7 pt-10 pb-16">
@@ -61,10 +78,29 @@
     {* ============== MAP + DUAL FEED (filled in 7c, 7d, 7e) ============== *}
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 mb-10">
 
-        {* Propagation map + agent detail (7c, 7e) *}
-        <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-7 min-h-[520px]">
-            <p class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Propagation map</p>
-            <p class="text-fg-dim text-[13px] mt-2 italic">larger map arrives in commit 7c, agent detail in 7e</p>
+        {* Propagation map + agent detail (7e) *}
+        <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-7 flex flex-col gap-4">
+
+            <header class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Propagation map</span>
+                    <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 text-immune-500">
+                        <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+                        96 nodes
+                    </span>
+                </div>
+                <div class="flex items-center gap-4 font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">
+                    <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true"></span>Publisher</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-immune-500" aria-hidden="true"></span>Receiver</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-fg-dim" aria-hidden="true"></span>Killed</span>
+                </div>
+            </header>
+
+            <div id="dash-map" class="relative w-full aspect-square max-h-[640px] mx-auto" aria-label="Live agent propagation map"></div>
+
+            <p class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim text-center">
+                Click any cell to take it offline. Network adapts in real time.
+            </p>
         </div>
 
         {* Dual live feed (7d) *}
