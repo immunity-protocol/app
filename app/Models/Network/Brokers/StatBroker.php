@@ -71,4 +71,32 @@ class StatBroker extends Broker
         $row = $this->selectOne($sql, array_values($data));
         return (int) $row->id;
     }
+
+    /**
+     * Bulk-insert many rows in chunks to stay under Postgres' 65535 parameter
+     * cap per query. Used by the mock orchestrator for time-series seeding.
+     *
+     * @param list<array<string, mixed>> $rows
+     */
+    public function insertBulk(array $rows): void
+    {
+        if ($rows === []) {
+            return;
+        }
+        $cols = array_keys($rows[0]);
+        $colList = implode(', ', array_map(fn ($c) => '"' . $c . '"', $cols));
+        $rowPlaceholder = '(' . implode(', ', array_fill(0, count($cols), '?')) . ')';
+        $chunkSize = 1000;
+        foreach (array_chunk($rows, $chunkSize) as $chunk) {
+            $placeholders = implode(', ', array_fill(0, count($chunk), $rowPlaceholder));
+            $params = [];
+            foreach ($chunk as $row) {
+                foreach ($cols as $c) {
+                    $params[] = $row[$c] ?? null;
+                }
+            }
+            $sql = "INSERT INTO network.stat ($colList) VALUES $placeholders";
+            $this->db->query($sql, $params);
+        }
+    }
 }

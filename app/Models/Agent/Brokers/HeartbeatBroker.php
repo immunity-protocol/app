@@ -18,7 +18,7 @@ class HeartbeatBroker extends Broker
         $colList = implode(', ', array_map(fn ($c) => '"' . $c . '"', $cols));
         $updates = [];
         foreach ($cols as $c) {
-            if ($c === 'agent_id') {
+            if ($c === 'agent_id' || $c === 'last_seen') {
                 continue;
             }
             $updates[] = '"' . $c . '" = EXCLUDED."' . $c . '"';

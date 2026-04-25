@@ -55,4 +55,31 @@ class PublisherBroker extends Broker
                 ON CONFLICT (address) DO UPDATE SET $updateClause";
         $this->db->query($sql, array_values($data));
     }
+
+    /**
+     * Recompute aggregate fields from antibody.entry and event.block_event.
+     * Run by the mock orchestrator after entries and blocks have been seeded.
+     */
+    public function recomputeAggregates(): void
+    {
+        $this->db->query(
+            "UPDATE antibody.publisher p SET
+                antibodies_published = coalesce((
+                    SELECT count(*) FROM antibody.entry WHERE publisher = p.address
+                ), 0),
+                successful_blocks = coalesce((
+                    SELECT count(*) FROM event.block_event b
+                    JOIN antibody.entry e ON b.entry_id = e.id
+                    WHERE e.publisher = p.address
+                ), 0),
+                total_staked_usdc = coalesce((
+                    SELECT sum(stake_amount) FROM antibody.entry
+                    WHERE publisher = p.address
+                ), 0),
+                last_active_at = coalesce((
+                    SELECT max(created_at) FROM antibody.entry
+                    WHERE publisher = p.address
+                ), p.first_seen_at)"
+        );
+    }
 }
