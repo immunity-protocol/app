@@ -3,11 +3,14 @@
 {block title}Immunity, decentralized threat intelligence for AI agents{/block}
 
 {block head}
-<script defer src="/assets/js/propagation-map.js"></script>
+<script defer src="/assets/js/propagation-map.js?v=2"></script>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('prop-map');
-  if (el && window.PropagationMap) new window.PropagationMap(el);
+  if (el && window.PropagationMap) {
+    window.__propMap = new window.PropagationMap(el);
+    window.__propMap.start();
+  }
 });
 </script>
 {/block}

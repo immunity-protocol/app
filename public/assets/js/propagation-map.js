@@ -15,6 +15,14 @@ const DEFAULTS = {
   nodeCount: 60,
   radius: 280,
   nodeRadius: 4.5,
+  // Cadence between auto-triggered waves (ms range, picked uniformly).
+  // Spec calls for 8-15s; we run faster on the landing for demo legibility.
+  eventIntervalMs: [3500, 7500],
+  waveDurationMs: 2400,
+  ringCount: 3,
+  ringStaggerMs: 220,
+  // Initial delay before the first wave fires after start().
+  firstEventDelayMs: 700,
   palette: {
     idleFill:    'rgba(232, 232, 227, 0.04)',
     idleStroke:  'rgba(232, 232, 227, 0.18)',
@@ -106,6 +114,121 @@ class PropagationMap {
 
       this.nodes.push({ i, x, y, angle, core, membrane, killed: false });
     }
+  }
+
+  // ============================================================ public API
+
+  start() {
+    if (this._started) return;
+    this._started = true;
+    this._scheduleNext(this.opts.firstEventDelayMs);
+  }
+
+  stop() {
+    this._started = false;
+    if (this._nextTimer) clearTimeout(this._nextTimer);
+  }
+
+  /** Fire one wave immediately. Useful for tests and debug poking. */
+  triggerNow() {
+    this._triggerWave();
+  }
+
+  // ========================================================== animation loop
+
+  _scheduleNext(forceWaitMs) {
+    const wait = forceWaitMs ?? this._randomInterval();
+    if (this._nextTimer) clearTimeout(this._nextTimer);
+    this._nextTimer = setTimeout(() => this._triggerWave(), wait);
+  }
+
+  _randomInterval() {
+    const [min, max] = this.opts.eventIntervalMs;
+    return min + Math.random() * (max - min);
+  }
+
+  _triggerWave() {
+    if (!this._started) return;
+    const candidates = this.nodes.filter((n) => !n.killed);
+    if (candidates.length > 0) {
+      const pub = candidates[Math.floor(Math.random() * candidates.length)];
+      this._emitFromPublisher(pub);
+    }
+    this._scheduleNext();
+  }
+
+  // =================================================== publisher / receiver
+
+  _emitFromPublisher(pub) {
+    const { palette, waveDurationMs, ringCount, ringStaggerMs, nodeRadius } = this.opts;
+
+    // Brighten publisher
+    pub.core.setAttribute('fill', palette.publisher);
+    pub.core.setAttribute('stroke', palette.publisher);
+    pub.core.setAttribute('r', String(nodeRadius * 1.6));
+    pub.membrane.setAttribute('stroke', palette.publisher);
+    setTimeout(() => {
+      if (pub.killed) return;
+      pub.core.setAttribute('fill', palette.idleFill);
+      pub.core.setAttribute('stroke', palette.idleStroke);
+      pub.core.setAttribute('r', String(nodeRadius));
+      pub.membrane.setAttribute('stroke', palette.idleStroke);
+    }, 800);
+
+    // Expanding rings, staggered
+    for (let k = 0; k < ringCount; k++) {
+      setTimeout(() => this._emitRing(pub), k * ringStaggerMs);
+    }
+
+    // Receiver flashes timed by distance from publisher
+    this.nodes.forEach((n) => {
+      if (n.i === pub.i || n.killed) return;
+      const dx = n.x - pub.x;
+      const dy = n.y - pub.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxDist = this.opts.radius * 2;
+      const delay = (dist / maxDist) * (waveDurationMs * 0.65);
+      setTimeout(() => this._flashReceiver(n), delay);
+    });
+  }
+
+  _emitRing(pub) {
+    const { palette, radius, waveDurationMs } = this.opts;
+    const ring = document.createElementNS(NS, 'circle');
+    ring.setAttribute('cx', pub.x);
+    ring.setAttribute('cy', pub.y);
+    ring.setAttribute('r', '6');
+    ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', palette.publisher);
+    ring.setAttribute('stroke-width', '1.4');
+    ring.setAttribute('opacity', '0.55');
+    ring.style.transition =
+      `r ${waveDurationMs}ms cubic-bezier(0.2, 0.65, 0.25, 0.95),` +
+      ` opacity ${waveDurationMs}ms ease-out,` +
+      ` stroke-width ${waveDurationMs}ms ease-out`;
+    this.svg.appendChild(ring);
+    requestAnimationFrame(() => {
+      ring.setAttribute('r', String(radius * 1.18));
+      ring.setAttribute('opacity', '0');
+      ring.setAttribute('stroke-width', '0.4');
+    });
+    setTimeout(() => ring.remove(), waveDurationMs + 120);
+  }
+
+  _flashReceiver(node) {
+    if (node.killed) return;
+    const { palette, nodeRadius } = this.opts;
+    node.core.setAttribute('fill', palette.receiver);
+    node.core.setAttribute('stroke', palette.receiver);
+    node.core.setAttribute('r', String(nodeRadius * 1.4));
+    node.membrane.setAttribute('stroke', palette.receiver);
+    setTimeout(() => {
+      if (node.killed) return;
+      node.core.setAttribute('fill', palette.idleFill);
+      node.core.setAttribute('stroke', palette.idleStroke);
+      node.core.setAttribute('r', String(nodeRadius));
+      node.membrane.setAttribute('stroke', palette.idleStroke);
+    }, 360);
   }
 }
 
