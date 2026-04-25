@@ -46,6 +46,14 @@
     'agents_synced'=> 2104,
     'blocks_made'  => 47,
     'llm_saved_usd'=> 1842.50,
+    'ingestion'    => [4, 18, 67, 142, 218, 281, 312, 298, 274, 245, 218, 192, 168, 149, 134, 121, 109, 98, 88, 79, 71, 64, 57, 51, 46, 41, 37, 33, 30, 27],
+    'block_events' => [
+      ['agent' => 'metamask-bot-04',    'method' => 'eth_sendTransaction', 'chain' => 'evm:1',     'when' => '4m ago'],
+      ['agent' => 'rabby-guard-12',     'method' => 'eth_signTypedData_v4','chain' => 'evm:8453',  'when' => '11m ago'],
+      ['agent' => 'phantom-relay-07',   'method' => 'eth_sendTransaction', 'chain' => 'evm:1',     'when' => '23m ago'],
+      ['agent' => 'agentkit-sentinel',  'method' => 'eth_signTypedData_v4','chain' => 'evm:42161', 'when' => '38m ago'],
+      ['agent' => 'wallet-shield-21',   'method' => 'eth_sendTransaction', 'chain' => 'evm:10',    'when' => '52m ago'],
+    ],
   ],
 
   'mirrors' => [
@@ -260,11 +268,94 @@
                 </div>
             </section>
 
-            {* placeholder until 6e *}
-            <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network impact</div>
-                <p class="text-fg-dim text-[13px] mt-3 italic">panel arrives in commit 6e</p>
-            </div>
+            {* ----------- NETWORK IMPACT PANEL ----------- *}
+            {var $maxIng = max($ab['impact']['ingestion'])}
+            <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
+
+                <header class="px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network impact</span>
+                        <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 text-immune-500">
+                            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+                            Live
+                        </span>
+                    </div>
+                    <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">Since publish</span>
+                </header>
+
+                {* Counters strip *}
+                <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-ink-line/40 border-b border-ink-line/40">
+                    <div class="px-6 py-5">
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Cache hits</div>
+                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{$ab['impact']['cache_hits']|number(0, '.', ',')}</div>
+                        <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-1">+1,247 / hr</div>
+                    </div>
+                    <div class="px-6 py-5">
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Agents synced</div>
+                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{$ab['impact']['agents_synced']|number(0, '.', ',')}</div>
+                        <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">of 2,180 online</div>
+                    </div>
+                    <div class="px-6 py-5">
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Attacks blocked</div>
+                        <div class="font-mono text-[22px] text-threat-300 tabular-nums leading-none">{$ab['impact']['blocks_made']}</div>
+                        <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">tx-level intercepts</div>
+                    </div>
+                    <div class="px-6 py-5">
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">USD protected</div>
+                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">${$ab['impact']['llm_saved_usd']|number(2, '.', ',')}</div>
+                        <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">tx value at intercept</div>
+                    </div>
+                </div>
+
+                {* Ingestion sparkline *}
+                <div class="px-7 py-6 border-b border-ink-line/40">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary">Ingestion rate</span>
+                        <span class="font-mono text-[10px] text-fg-dim">first 30 min, hits/sec</span>
+                    </div>
+                    <svg viewBox="0 0 600 90" preserveAspectRatio="none" class="w-full h-[90px]" aria-hidden="true">
+                        <line x1="0" y1="89" x2="600" y2="89" stroke="rgba(232,232,227,0.06)" stroke-width="1"/>
+                        {var $barW = 600 / count($ab['impact']['ingestion'])}
+                        {foreach $ab['impact']['ingestion'] as $i => $v}
+                            {var $h = ($v / $maxIng) * 78}
+                            {var $x = $i * $barW + 1}
+                            <rect x="{$x}" y="{89 - $h}" width="{$barW - 2}" height="{$h}" fill="rgba(122, 184, 122, 0.55)" rx="0.5"/>
+                        {/foreach}
+                    </svg>
+                    <div class="flex justify-between mt-2 font-mono text-[9.5px] text-fg-dim">
+                        <span>t+0</span>
+                        <span>t+10m</span>
+                        <span>t+20m</span>
+                        <span>t+30m</span>
+                    </div>
+                </div>
+
+                {* Recent intercepts *}
+                <div class="px-7 py-6">
+                    <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Recent intercepts</div>
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-ink-line/40">
+                                <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pb-2.5">Agent</th>
+                                <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pb-2.5">Method</th>
+                                <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pb-2.5">Chain</th>
+                                <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pb-2.5">When</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {foreach $ab['impact']['block_events'] as $e}
+                            <tr class="border-b border-ink-line/30 last:border-0">
+                                <td class="py-2.5 font-mono text-[12px] text-fg-secondary">{$e['agent']}</td>
+                                <td class="py-2.5 font-mono text-[12px] text-fg-tertiary">{$e['method']}</td>
+                                <td class="py-2.5 font-mono text-[11.5px] text-fg-tertiary">{$e['chain']}</td>
+                                <td class="py-2.5 font-mono text-[11.5px] text-fg-tertiary text-right">{$e['when']}</td>
+                            </tr>
+                        {/foreach}
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
 
             {* placeholder until 6f *}
             <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
