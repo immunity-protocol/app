@@ -158,11 +158,59 @@
         {* ----------- MAIN COLUMN (panels fill in 6c-6f) ----------- *}
         <div class="space-y-10 min-w-0">
 
-            {* placeholder until 6c *}
-            <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Envelope</div>
-                <p class="text-fg-dim text-[13px] mt-3 italic">panel arrives in commit 6c</p>
-            </div>
+            {* ----------- ENVELOPE PANEL ----------- *}
+            <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
+
+                <header class="px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Envelope</span>
+                        <span class="font-mono text-[10px] text-fg-dim">v1</span>
+                    </div>
+                    <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">Signed payload</span>
+                </header>
+
+                <div class="px-7 py-6 space-y-7">
+
+                    {* Primary matcher *}
+                    <div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary">Primary matcher</span>
+                            <span class="font-mono text-[9.5px] uppercase tracking-widest2 text-accent-soft px-1.5 py-0.5 rounded-sm bg-accent/5 border border-accent/15">{$ab['envelope']['primary']['kind']}</span>
+                        </div>
+                        <div class="font-mono text-[13px] text-fg-primary bg-ink-sunken/60 border border-ink-line/40 rounded-sm px-4 py-3 break-all">{$ab['envelope']['primary']['value']}</div>
+                    </div>
+
+                    {* Secondary matchers *}
+                    <div>
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-3">Secondary matchers</div>
+                        <ul class="space-y-2.5">
+                            {foreach $ab['envelope']['secondary'] as $m}
+                                <li class="flex items-start gap-3">
+                                    <span class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary px-1.5 py-0.5 rounded-sm bg-ink-elevated/60 border border-ink-line/40 shrink-0 mt-0.5">{$m['kind']}</span>
+                                    <code class="font-mono text-[12.5px] text-fg-secondary break-all min-w-0">{$m['value']}</code>
+                                </li>
+                            {/foreach}
+                        </ul>
+                    </div>
+
+                    {* Scope *}
+                    <div>
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-3">Scope</div>
+                        <div class="flex flex-wrap gap-2">
+                            {foreach $ab['envelope']['scope'] as $chain}
+                                <span class="font-mono text-[11px] text-fg-secondary px-2 py-1 rounded-sm bg-ink-elevated/60 border border-ink-line/50">{$chain}</span>
+                            {/foreach}
+                        </div>
+                    </div>
+
+                    {* Exception *}
+                    <div class="flex items-baseline gap-3">
+                        <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary">Exception clause</span>
+                        <span class="font-mono text-[12px] text-fg-dim">{$ab['envelope']['exception']}</span>
+                    </div>
+
+                </div>
+            </section>
 
             {* placeholder until 6d *}
             <div class="border border-ink-line/60 rounded-sm p-7 bg-ink-elevated/20">
