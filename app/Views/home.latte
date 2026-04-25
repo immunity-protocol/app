@@ -113,8 +113,8 @@ window.addEventListener('DOMContentLoaded', () => {
             <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">01</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network status</span>
-            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-immune-500">Live</span>
+            <span id="live-pulse" class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+            <span id="live-label" class="font-mono text-[10.5px] uppercase tracking-widest2 text-immune-500">Live</span>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-y-10 md:gap-0">
@@ -124,31 +124,31 @@ window.addEventListener('DOMContentLoaded', () => {
                     <span>Antibodies active</span>
                     <span class="inline-flex h-1 w-1 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
                 </div>
-                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">312</div>
+                <div data-stat="antibodies_active" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">312</div>
                 <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
                     <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    +14 in 1h
+                    <span data-delta="antibodies_active">+14 in 1h</span>
                 </div>
             </div>
 
             <div class="md:px-7 md:border-r md:border-ink-line/60">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Agents online</div>
-                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">1,247</div>
+                <div data-stat="agents_online" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">1,247</div>
                 <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
                     <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    +8 in 1h
+                    <span data-delta="agents_online">+8 in 1h</span>
                 </div>
             </div>
 
             <div class="md:px-7 md:border-r md:border-ink-line/60">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Cache hits / hr</div>
-                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">18,492</div>
+                <div data-stat="cache_hits_per_hour" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">18,492</div>
                 <div class="font-mono text-[11px] text-fg-tertiary mt-3">avg 5.1 / agent</div>
             </div>
 
             <div class="md:px-7 md:border-r md:border-ink-line/60">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">LLM calls saved</div>
-                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">4,217</div>
+                <div data-stat="llm_calls_saved" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">4,217</div>
                 <div class="font-mono text-[11px] text-fg-tertiary mt-3">
                     <span class="text-immune-500">≈ $8,920</span> in compute
                 </div>
@@ -156,10 +156,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
             <div class="md:px-7 md:last:pr-0">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Value protected</div>
-                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">$248,300</div>
+                <div data-stat-money="value_protected_usd" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">$248,300</div>
                 <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
                     <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    +$4,200 in 1h
+                    <span data-delta-money="value_protected_usd">+$4,200 in 1h</span>
                 </div>
             </div>
 
@@ -713,5 +713,68 @@ window.addEventListener('DOMContentLoaded', () => {
 
     </div>
 </section>
+
+<script src="{asset('/javascripts/live.js')}"></script>
+<script>
+(function () {
+  const STATS_URL = '/api/network/stats';
+  const HEARTBEAT_URL = '/api/network/heartbeat-status';
+
+  function fmtNumber(v) {
+    if (v === null || v === undefined || v === '') return '-';
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '-';
+    return n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  }
+  function fmtMoney(v) {
+    if (v === null || v === undefined || v === '') return '-';
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '-';
+    return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  }
+  function fmtDelta(v, money) {
+    if (v === null || v === undefined || v === '') return '';
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '';
+    const sign = n >= 0 ? '+' : '-';
+    const abs = Math.abs(n);
+    return sign + (money ? '$' : '') + abs.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' in 1h';
+  }
+
+  Live.poll(STATS_URL, 4000, function (data) {
+    const tiles = data.tiles || {};
+    document.querySelectorAll('[data-stat]').forEach(function (el) {
+      const m = el.getAttribute('data-stat');
+      if (tiles[m]) el.textContent = fmtNumber(tiles[m].value);
+    });
+    document.querySelectorAll('[data-stat-money]').forEach(function (el) {
+      const m = el.getAttribute('data-stat-money');
+      if (tiles[m]) el.textContent = fmtMoney(tiles[m].value);
+    });
+    document.querySelectorAll('[data-delta]').forEach(function (el) {
+      const m = el.getAttribute('data-delta');
+      if (tiles[m]) el.textContent = fmtDelta(tiles[m].delta_1h, false);
+    });
+    document.querySelectorAll('[data-delta-money]').forEach(function (el) {
+      const m = el.getAttribute('data-delta-money');
+      if (tiles[m]) el.textContent = fmtDelta(tiles[m].delta_1h, true);
+    });
+  });
+
+  Live.poll(HEARTBEAT_URL, 4000, function (data) {
+    const pulse = document.getElementById('live-pulse');
+    const label = document.getElementById('live-label');
+    if (!pulse || !label) return;
+    const age = data.age_seconds;
+    let color, text;
+    if (age === null || age === undefined) { color = 'bg-fg-tertiary'; text = 'OFFLINE'; }
+    else if (age < 30) { color = 'bg-immune-500'; text = 'LIVE'; }
+    else if (age < 120) { color = 'bg-amber-500'; text = 'STALE'; }
+    else { color = 'bg-red-500'; text = 'OFFLINE'; }
+    pulse.className = 'inline-flex h-1.5 w-1.5 rounded-full pulse-soft ' + color;
+    label.textContent = text;
+  });
+})();
+</script>
 
 {/block}
