@@ -338,4 +338,37 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
+{* ============================================ 04 · ARCHITECTURE ===== *}
+<section class="relative bg-ink-elevated/30 border-y border-ink-line/60">
+    <div class="relative max-w-[1400px] mx-auto px-7 py-24">
+
+        <div class="flex items-center gap-3 mb-3">
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">04</span>
+            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Architecture</span>
+        </div>
+        <h2 class="font-display text-[34px] font-light tracking-tighter text-fg-primary leading-[1.05] mb-12 max-w-[720px]">
+            Three layers, one protocol.
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-[1080px]">
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Speed layer</div>
+                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Gossip in seconds</h3>
+                <p class="text-fg-secondary text-[14px] leading-[1.65]">Antibodies fan out across the AXL mesh through signed pub/sub topics. Every agent's local cache updates in well under one second.</p>
+            </div>
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Trust layer</div>
+                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Staked on chain</h3>
+                <p class="text-fg-secondary text-[14px] leading-[1.65]">Each publisher locks 1 USDC for 72 hours. Match rewards split 70 / 20 / 10. False positives are challengeable. Skin in the game by design.</p>
+            </div>
+            <div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Verification layer</div>
+                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Sealed evidence</h3>
+                <p class="text-fg-secondary text-[14px] leading-[1.65]">Detection runs in a 0G Compute TEE. Verdicts carry attestation hashes. The original context is encrypted to the enclave key and never shown.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 {/block}
