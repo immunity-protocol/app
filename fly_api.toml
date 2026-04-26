@@ -5,16 +5,13 @@ primary_region = 'yyz'
   dockerfile = '.flyio/Dockerfile.app'
 
 [env]
-  APP_ENV     = 'production'
-  APP_DEBUG   = 'false'
+  APP_ENV      = 'production'
+  APP_DEBUG    = 'false'
   APP_TIMEZONE = 'UTC'
-  MODE        = 'API'
-  DB_HOST     = 'immunity-db.internal'
-  DB_PORT     = '5432'
-  DB_NAME     = 'immunity'
-  DB_USERNAME = 'dev'
+  MODE         = 'API'
 
-# DB_PASSWORD and CRON_TOKEN are injected via `fly secrets set`.
+# DATABASE_URL and CRON_TOKEN are injected via `fly secrets set`. The app's
+# Kernel parses DATABASE_URL into the discrete DB_* vars config.yml expects.
 
 [http_service]
   internal_port = 80
