@@ -128,6 +128,11 @@ abstract class Kernel
             putenv('MODE=WEB');
         }
 
+        // Fly Postgres hands out a single DATABASE_URL secret. Explode it into
+        // the discrete DB_* env vars that config.yml's !env directives expect.
+        // Local docker-compose keeps using DB_HOST/DB_NAME/etc directly.
+        $this->applyDatabaseUrl();
+
         $this->config = Configuration::fromYamlFile(ROOT_DIR . '/config.yml', [
             'render' => RenderConfig::class,
             'mailer' => MailerConfig::class,
@@ -137,5 +142,37 @@ abstract class Kernel
         /** @var RenderConfig $renderConfig */
         $renderConfig = $this->config->section('render') ?? RenderConfig::fromArray([]);
         $this->renderEngine = $renderConfig->createEngine(ROOT_DIR);
+    }
+
+    /**
+     * Parse DATABASE_URL (postgres://user:pass@host:port/db) and inject the
+     * pieces into $_ENV so config.yml's !env directives find them. Idempotent:
+     * already-set DB_* vars take precedence over what we extract here.
+     */
+    private function applyDatabaseUrl(): void
+    {
+        $url = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL') ?: null;
+        if (!is_string($url) || $url === '') {
+            return;
+        }
+        $parts = parse_url($url);
+        if (!is_array($parts)) {
+            return;
+        }
+        $set = static function (string $key, ?string $value): void {
+            if ($value === null || $value === '') {
+                return;
+            }
+            if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+                return;
+            }
+            $_ENV[$key] = $value;
+            putenv($key . '=' . $value);
+        };
+        $set('DB_HOST',     $parts['host']     ?? null);
+        $set('DB_PORT',     isset($parts['port']) ? (string) $parts['port'] : null);
+        $set('DB_USERNAME', isset($parts['user']) ? rawurldecode($parts['user']) : null);
+        $set('DB_PASSWORD', isset($parts['pass']) ? rawurldecode($parts['pass']) : null);
+        $set('DB_NAME',     isset($parts['path']) ? ltrim($parts['path'], '/') : null);
     }
 }
