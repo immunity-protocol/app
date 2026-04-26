@@ -717,8 +717,8 @@ window.addEventListener('DOMContentLoaded', () => {
 <script src="{asset('/javascripts/live.js')}"></script>
 <script>
 (function () {
-  const STATS_URL = '/api/network/stats';
-  const HEARTBEAT_URL = '/api/network/heartbeat-status';
+  const STATS_URL = '/api/v1/network/stats';
+  const HEARTBEAT_URL = '/api/v1/network/heartbeat-status';
 
   function fmtNumber(v) {
     if (v === null || v === undefined || v === '') return '-';
