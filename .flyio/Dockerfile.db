@@ -1,8 +1,0 @@
-# Postgres-only image for immunity-db.
-FROM postgres:15-bookworm
-
-# Mount sql/ tree at startup so 0-init-database.sql + per-domain files run
-# on first boot of an empty volume. Subsequent migrations run via the app
-# (php bin/init-database.php) once data exists - production uses a fresh
-# init since this is a hackathon mock dataset.
-COPY sql /docker-entrypoint-initdb.d
