@@ -12,6 +12,7 @@ use Zephyrus\Core\Config\Configuration;
 use Zephyrus\Core\Config\DatabaseConfig;
 
 Dotenv::createImmutable(ROOT_DIR)->safeLoad();
+Db::applyDatabaseUrl();
 
 $config = Configuration::fromYamlFile(ROOT_DIR . '/config.yml');
 if ($config->database === null) {

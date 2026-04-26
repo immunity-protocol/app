@@ -21,6 +21,7 @@ use Dotenv\Dotenv;
 use Zephyrus\Core\Config\Configuration;
 
 Dotenv::createImmutable(ROOT_DIR)->safeLoad();
+Db::applyDatabaseUrl();
 $config = Configuration::fromYamlFile(ROOT_DIR . '/config.yml');
 if ($config->database === null) {
     fwrite(STDERR, "ERROR: no database section in config.yml\n");

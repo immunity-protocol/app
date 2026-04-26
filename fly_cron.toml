@@ -1,3 +1,8 @@
+# fly.toml app configuration file generated for immunity-cron on 2026-04-25T20:45:02-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
 app = 'immunity-cron'
 primary_region = 'yyz'
 
@@ -5,18 +10,13 @@ primary_region = 'yyz'
   dockerfile = '.flyio/Dockerfile.app'
 
 [env]
-  APP_ENV     = 'production'
-  APP_DEBUG   = 'false'
+  APP_DEBUG = 'false'
+  APP_ENV = 'production'
   APP_TIMEZONE = 'UTC'
-  MODE        = 'CRON'
-
-# CRON_TOKEN injected via `fly secrets set`. The cron tier does not need DB
-# access; it just calls the API tier over internal DNS.
-
-# No http_service - this app runs supercronic and does not serve traffic.
+  MODE = 'CRON'
 
 [processes]
-  cron = "/usr/local/bin/supercronic /var/www/html/.flyio/crontab"
+  cron = '/usr/local/bin/supercronic /var/www/html/.flyio/crontab'
 
 [[vm]]
   size = 'shared-cpu-1x'

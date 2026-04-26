@@ -1,3 +1,8 @@
+# fly.toml app configuration file generated for immunity-web on 2026-04-25T20:44:55-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
 app = 'immunity-web'
 primary_region = 'yyz'
 
@@ -5,14 +10,10 @@ primary_region = 'yyz'
   dockerfile = '.flyio/Dockerfile.app'
 
 [env]
-  APP_ENV      = 'production'
-  APP_DEBUG    = 'false'
+  APP_DEBUG = 'false'
+  APP_ENV = 'production'
   APP_TIMEZONE = 'UTC'
-  MODE         = 'WEB'
-
-# DATABASE_URL and CRON_TOKEN are injected via `fly secrets set` - never
-# commit the values. The app's Kernel parses DATABASE_URL into the discrete
-# DB_* vars that config.yml expects.
+  MODE = 'WEB'
 
 [http_service]
   internal_port = 80
