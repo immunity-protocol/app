@@ -1,8 +1,3 @@
-# fly.toml app configuration file generated for immunity-api on 2026-04-25T20:44:59-04:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
-
 app = 'immunity-api'
 primary_region = 'yyz'
 
@@ -10,10 +5,20 @@ primary_region = 'yyz'
   dockerfile = '.flyio/Dockerfile.app'
 
 [env]
-  APP_DEBUG = 'false'
-  APP_ENV = 'production'
+  APP_ENV      = 'production'
+  APP_DEBUG    = 'false'
   APP_TIMEZONE = 'UTC'
-  MODE = 'API'
+  MODE         = 'API'
+
+# DATABASE_URL and CRON_TOKEN are injected via `fly secrets set`. The app's
+# Kernel parses DATABASE_URL into the discrete DB_* vars config.yml expects.
+
+# Two processes from the same image:
+#   app  = Apache serving /v1/* and /health
+#   cron = supercronic reading .flyio/crontab and POSTing to immunity-api.internal/v1/internal/tick
+[processes]
+  app  = "apache2-foreground"
+  cron = "/usr/local/bin/supercronic /var/www/html/.flyio/crontab"
 
 [http_service]
   internal_port = 80
@@ -21,6 +26,7 @@ primary_region = 'yyz'
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 1
+  processes = ['app']
 
   [http_service.concurrency]
     type = 'connections'
@@ -30,3 +36,9 @@ primary_region = 'yyz'
 [[vm]]
   size = 'shared-cpu-1x'
   memory = '512mb'
+  processes = ['app']
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '256mb'
+  processes = ['cron']
