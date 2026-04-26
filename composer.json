@@ -13,16 +13,13 @@
     "prefer-stable": true,
     "repositories": [
         {
-            "type": "path",
-            "url": "../zephyrus2",
-            "options": {
-                "symlink": false
-            }
+            "type": "vcs",
+            "url": "https://github.com/zephyrus-framework/core.git"
         }
     ],
     "require": {
         "php": "^8.4",
-        "zephyrus-framework/core": "@dev",
+        "zephyrus-framework/core": "dev-dev",
         "ext-pdo": "*",
         "ext-intl": "*",
         "ext-sodium": "*",
