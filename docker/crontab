@@ -1,0 +1,6 @@
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Local-dev cron: every minute, hit the api service's tick endpoint.
+# Inside the docker network the api service resolves to "immunity_api".
+* * * * * curl -sS -X POST -H "X-CRON-TOKEN: ${CRON_TOKEN}" http://immunity_api/v1/internal/tick >/dev/null
