@@ -4,7 +4,7 @@ Provisioning and deployment guide for the Immunity stack on Fly.io.
 
 Apps:
 - `immunity-db` - Fly **managed Postgres cluster** (created via `fly pg create`, no app config in this repo)
-- `immunity-web` - WEB tier serving the public site at `app.immunity-protocol.com` plus the internal `/api/v1/*` endpoints the home JS polls
+- `immunity-web` - WEB tier serving the public site at `immunity-protocol.com` plus the internal `/api/v1/*` endpoints the home JS polls
 - `immunity-api` - API tier serving the public developer surface at `api.immunity-protocol.com/v1/*` plus the cron-only `/v1/internal/tick`
 - `immunity-cron` - CRON tier running supercronic; calls `immunity-api.internal/v1/internal/tick` once per minute
 
@@ -88,11 +88,16 @@ fly logs -a immunity-cron   # confirm cron is hitting the tick endpoint every mi
 ## 7) Custom domains (when DNS is ready)
 
 ```bash
-fly certs add app.immunity-protocol.com -a immunity-web
+fly certs add immunity-protocol.com -a immunity-web
 fly certs add api.immunity-protocol.com -a immunity-api
 ```
 
-Add the AAAA / A records that `fly certs show` recommends.
+For the apex (`immunity-protocol.com`):
+- `A` record pointing at the IPv4 Fly returns from `fly ips list -a immunity-web`
+- `AAAA` record pointing at the IPv6
+- (CNAME flattening at the registrar also works if your DNS provider supports it)
+
+For the subdomain (`api.immunity-protocol.com`): a CNAME to `immunity-api.fly.dev` is the cleanest.
 
 ## Maintenance
 
