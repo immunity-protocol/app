@@ -19,15 +19,16 @@ DO
 $do$
     DECLARE
         _sch text;
+        _usr text := current_user;
     BEGIN
         FOR _sch IN
             SELECT nspname FROM pg_namespace
             WHERE nspname NOT LIKE 'pg_%' AND nspname <> 'information_schema'
         LOOP
-            EXECUTE format('GRANT ALL PRIVILEGES ON SCHEMA %I TO dev', _sch);
-            EXECUTE format('GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA %I TO dev', _sch);
-            EXECUTE format('GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA %I TO dev', _sch);
-            EXECUTE format('GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA %I TO dev', _sch);
+            EXECUTE format('GRANT ALL PRIVILEGES ON SCHEMA %I TO %I', _sch, _usr);
+            EXECUTE format('GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA %I TO %I', _sch, _usr);
+            EXECUTE format('GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA %I TO %I', _sch, _usr);
+            EXECUTE format('GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA %I TO %I', _sch, _usr);
         END LOOP;
     END
 $do$;
