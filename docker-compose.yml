@@ -3,7 +3,7 @@ services:
     build:
       context: "./docker/services/php"
     container_name: "immunity_webserver"
-    restart: 'always'
+    restart: 'no'
     ports:
       - "80:80"
       - "443:443"
@@ -20,7 +20,7 @@ services:
     build:
       context: "./docker/services/php"
     container_name: "immunity_api"
-    restart: 'always'
+    restart: 'no'
     ports:
       - "8081:80"
     environment:
@@ -32,27 +32,25 @@ services:
       - ./:/var/www/html
 
   cron:
-    image: "alpine:3.20"
+    build:
+      context: "./docker/services/php"
     container_name: "immunity_cron"
-    restart: 'always'
-    depends_on:
-      - api
+    restart: 'no'
     environment:
+      MODE: "CRON"
       CRON_TOKEN: "${CRON_TOKEN:-localdev-cron-token}"
-    command: >
-      sh -c '
-        apk add --no-cache curl >/dev/null;
-        while true; do
-          curl -sS -X POST -H "X-CRON-TOKEN: $$CRON_TOKEN" http://api/internal/tick || true;
-          sleep 60;
-        done
-      '
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - database
+      - api
+    command: ["/usr/local/bin/supercronic", "/var/www/html/docker/crontab"]
 
   database:
     build:
       context: "./docker/services/postgres"
     container_name: ${DB_HOST}
-    restart: 'always'
+    restart: 'no'
     ports:
       - "5432:5432"
     volumes:
