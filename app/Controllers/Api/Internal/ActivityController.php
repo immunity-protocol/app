@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api;
+namespace App\Controllers\Api\Internal;
 
 use App\Models\Event\Services\ActivityService;
 use Zephyrus\Http\Request;
@@ -13,7 +13,7 @@ final class ActivityController extends Controller
 {
     private ActivityService $activity;
 
-    #[Get('/api/activity')]
+    #[Get('/activity')]
     public function index(Request $request): Response
     {
         $limit = (int) ($request->query('limit') ?? 25);

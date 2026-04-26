@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api;
+namespace App\Controllers\Api\Public;
 
 use App\Models\Antibody\Services\EntryService;
 use App\Models\Antibody\Services\MirrorService;
@@ -18,7 +18,7 @@ final class AntibodyController extends Controller
     private BlockEventService $blocks;
     private PublisherService $publishers;
 
-    #[Get('/api/antibody/{immId}')]
+    #[Get('/antibody/{immId}')]
     public function show(string $immId): Response
     {
         $this->entries ??= new EntryService();

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api\Feed;
+namespace App\Controllers\Api\Public\Feed;
 
-use App\Controllers\Api\Controller;
+use App\Controllers\Api\Public\Controller;
 use App\Models\Antibody\Services\EntryService;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;

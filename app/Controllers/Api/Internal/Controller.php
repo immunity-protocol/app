@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\Internal;
 
-use App\Controllers\Api\Controller as ApiController;
-use Zephyrus\Routing\Attribute\Middleware;
+use Zephyrus\Controller\Controller as BaseController;
+use Zephyrus\Routing\Attribute\RequiresEnv;
+use Zephyrus\Routing\Attribute\Root;
 
 /**
- * Base for /internal/* endpoints. Inherits the API tier #[RequiresEnv] from
- * App\Controllers\Api\Controller and additionally requires the cron-token
- * middleware to pass.
+ * Base for the WEB tier's internal API surface (consumed by the home page's
+ * live-polling JS). Same-origin under app.immunity-protocol.com so no CORS.
+ *
+ * Routes registered on subclasses are prefixed with /api/v1 from #[Root]
+ * and only registered when MODE=WEB.
  */
-#[Middleware('cron')]
-abstract class Controller extends ApiController
+#[Root('/api/v1')]
+#[RequiresEnv('MODE', 'WEB')]
+abstract class Controller extends BaseController
 {
 }

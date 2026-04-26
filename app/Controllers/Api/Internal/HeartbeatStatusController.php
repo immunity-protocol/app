@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api\Network;
+namespace App\Controllers\Api\Internal;
 
-use App\Controllers\Api\Controller;
 use App\Models\Network\Services\StatService;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;
@@ -24,7 +23,7 @@ final class HeartbeatStatusController extends Controller
 
     private StatService $stats;
 
-    #[Get('/api/network/heartbeat-status')]
+    #[Get('/network/heartbeat-status')]
     public function index(): Response
     {
         $this->stats ??= new StatService();

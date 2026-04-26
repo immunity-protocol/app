@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api\Internal;
+namespace App\Controllers\Api\Public\Internal;
 
 use App\Models\Core\Db;
 use App\Models\Mock\Ticker;

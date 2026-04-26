@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api\Network;
+namespace App\Controllers\Api\Internal;
 
-use App\Controllers\Api\Controller;
 use App\Models\Network\Services\StatService;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;
 
-final class StatsController extends Controller
+final class NetworkStatsController extends Controller
 {
     private const METRICS = [
         'antibodies_active',
@@ -21,7 +20,7 @@ final class StatsController extends Controller
 
     private StatService $stats;
 
-    #[Get('/api/network/stats')]
+    #[Get('/network/stats')]
     public function index(): Response
     {
         $this->stats ??= new StatService();

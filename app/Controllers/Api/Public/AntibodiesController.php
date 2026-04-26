@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api;
+namespace App\Controllers\Api\Public;
 
 use App\Models\Antibody\Services\EntryService;
 use Zephyrus\Http\Request;
@@ -13,7 +13,7 @@ final class AntibodiesController extends Controller
 {
     private EntryService $entries;
 
-    #[Get('/api/antibodies')]
+    #[Get('/antibodies')]
     public function index(Request $request): Response
     {
         $type = $this->normalize($request->query('type'));
