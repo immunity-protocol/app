@@ -1,0 +1,14 @@
+{
+  "name": "immunity-indexer-scripts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Node helpers for the PHP indexer worker (e.g. 0G Storage downloads).",
+  "type": "module",
+  "scripts": {
+    "og-download": "node og-download.mjs"
+  },
+  "dependencies": {
+    "@0gfoundation/0g-ts-sdk": "^0.4.0",
+    "ethers": "^6.13.0"
+  }
+}

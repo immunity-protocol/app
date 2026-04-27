@@ -9,4 +9,6 @@ xdebug/
 node_modules/
 package.json
 package-lock.json
+!scripts/package.json
+!scripts/package-lock.json
 .phpunit.cache/
