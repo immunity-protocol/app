@@ -21,6 +21,8 @@ primary_region = 'yyz'
 # DATABASE_URL is injected via `fly secrets set`. The Kernel parses it into
 # the discrete DB_* vars config.yml expects. ETH_RPC_URL can be overridden
 # with a paid mainnet RPC via `fly secrets set` for higher ENS throughput.
+# MORALIS_API_KEY is also a Fly secret — without it, the indexer logs a
+# warning and writes NULL value_at_risk_usd for all events.
 
 [processes]
   indexer = "/bin/sh -c 'cd /var/www/html/scripts && (test -d node_modules || npm install --legacy-peer-deps --omit=dev --no-audit --no-fund) && exec php /var/www/html/bin/indexer.php'"
