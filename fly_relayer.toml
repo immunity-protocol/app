@@ -1,0 +1,38 @@
+app = 'immunity-relayer'
+primary_region = 'yyz'
+
+[build]
+  dockerfile = '.flyio/Dockerfile.app'
+
+[env]
+  APP_ENV                   = 'production'
+  APP_DEBUG                 = 'false'
+  APP_TIMEZONE              = 'UTC'
+  MODE                      = 'RELAYER'
+  RELAYER_POLL_INTERVAL_MS  = '2000'
+  RELAYER_MAX_RETRIES       = '5'
+  RELAYER_BATCH_SIZE        = '10'
+  RELAYER_BACKOFF_BASE_MS   = '5000'
+  RELAYER_REAP_INTERVAL_SEC = '60'
+  RELAYER_REAP_STALE_SEC    = '300'
+  RELAYER_BRIDGE_TIMEOUT_SEC = '90'
+
+# Required Fly secrets:
+#   DATABASE_URL                       - shared with immunity-indexer / immunity-api
+#   SEPOLIA_RPC_URL                    - Alchemy / Infura HTTPS RPC for Sepolia
+#   RELAYER_PRIVATE_KEY_SEPOLIA        - hot wallet authorized via Mirror.setRelayer()
+# Optional:
+#   BASE_SEPOLIA_RPC_URL, RELAYER_PRIVATE_KEY_BASE_SEPOLIA  - when Base mirror lands
+
+[processes]
+  relayer = "/bin/sh -c 'exec php /var/www/html/bin/relayer.php'"
+
+# No HTTP service: the relayer is a write-only worker.
+# Memory ceiling is enforced inside RelayerSupervisor; we restart on exit.
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '256mb'
+  processes = ['relayer']
+
+[deploy]
+  strategy = 'immediate'
