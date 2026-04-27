@@ -120,6 +120,36 @@ class EntryBroker extends Broker
     }
 
     /**
+     * @return array<string, int> map of status -> count
+     */
+    public function countByStatus(): array
+    {
+        $rows = $this->select(
+            "SELECT status::text AS status, count(*) AS n FROM antibody.entry GROUP BY status"
+        );
+        $out = ['active' => 0, 'challenged' => 0, 'expired' => 0, 'slashed' => 0];
+        foreach ($rows as $r) {
+            $out[$r->status] = (int) $r->n;
+        }
+        return $out;
+    }
+
+    /**
+     * @return array<string, int> map of verdict -> count
+     */
+    public function countByVerdict(): array
+    {
+        $rows = $this->select(
+            "SELECT verdict::text AS verdict, count(*) AS n FROM antibody.entry GROUP BY verdict"
+        );
+        $out = ['malicious' => 0, 'suspicious' => 0];
+        foreach ($rows as $r) {
+            $out[$r->verdict] = (int) $r->n;
+        }
+        return $out;
+    }
+
+    /**
      * Page-number paginated, multi-value filter list for the explorer UI.
      *
      * @param array<int, string> $types     antibody.entry_type values
