@@ -36,6 +36,8 @@
 
     <div class="hr-fade mb-8"></div>
 
+    <form id="antibody-filters" method="get" action="/antibodies">
+
     {* ================================================ SEARCH BAR ===== *}
     <div class="mb-8">
         <div class="relative">
@@ -44,7 +46,10 @@
                 <path d="m20 20-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
             <input
+                id="antibody-search"
+                name="q"
                 type="search"
+                value="{$filters->search}"
                 placeholder="Search by IMM ID, primary matcher, address, ENS, structural marker..."
                 class="w-full bg-ink-elevated/40 border border-ink-line/80 rounded-sm pl-11 pr-32 py-3 text-[14px] text-fg-primary placeholder:text-fg-dim font-mono focus:border-fg-tertiary focus:bg-ink-elevated/70 focus:outline-none transition-colors"
             >
@@ -284,6 +289,8 @@
         </div>
 
     </div>
+
+    </form>
 
 </section>
 {/block}
