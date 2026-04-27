@@ -67,21 +67,18 @@
             <div>
                 <div class="flex items-center justify-between mb-3">
                     <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Type</span>
-                    <button class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-fg-secondary transition-colors">Clear</button>
+                    {if $filters->types !== []}
+                        <a href="?{$filters->toQueryString(['type' => null, 'page' => null])}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-fg-secondary transition-colors">Clear</a>
+                    {/if}
                 </div>
                 <div class="space-y-1.5">
-                    {var $typeFacets = [
-                      ['key'=>'ADDRESS',      'count'=>187, 'checked'=>true],
-                      ['key'=>'CALL_PATTERN', 'count'=>24,  'checked'=>true],
-                      ['key'=>'BYTECODE',     'count'=>18,  'checked'=>false],
-                      ['key'=>'GRAPH',        'count'=>12,  'checked'=>false],
-                      ['key'=>'SEMANTIC',     'count'=>71,  'checked'=>true],
-                    ]}
-                    {foreach $typeFacets as $f}
+                    {var $typeOptions = ['address', 'call_pattern', 'bytecode', 'graph', 'semantic']}
+                    {foreach $typeOptions as $tk}
+                        {var $checked = in_array($tk, $filters->types, true)}
                         <label class="flex items-center gap-2.5 cursor-pointer group">
-                            <input type="checkbox" {if $f['checked']}checked{/if} class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-accent checked:border-accent shrink-0 transition-colors">
-                            <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1 truncate">{$f['key']}</span>
-                            <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">{$f['count']}</span>
+                            <input type="checkbox" name="type[]" value="{$tk}" {if $checked}checked{/if} class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-accent checked:border-accent shrink-0 transition-colors">
+                            <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1 truncate">{strtoupper($tk)}</span>
+                            <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">{$facets['type'][$tk] ?? 0}</span>
                         </label>
                     {/foreach}
                 </div>
@@ -91,16 +88,15 @@
             <div>
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Verdict</div>
                 <div class="space-y-1.5">
-                    <label class="flex items-center gap-2.5 cursor-pointer group">
-                        <input type="checkbox" checked class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-threat-500 checked:border-threat-500 shrink-0 transition-colors">
-                        <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1">Malicious</span>
-                        <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">278</span>
-                    </label>
-                    <label class="flex items-center gap-2.5 cursor-pointer group">
-                        <input type="checkbox" class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-caution-500 checked:border-caution-500 shrink-0 transition-colors">
-                        <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1">Suspicious</span>
-                        <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">34</span>
-                    </label>
+                    {var $verdictOptions = [['malicious', 'Malicious', 'threat-500'], ['suspicious', 'Suspicious', 'caution-500']]}
+                    {foreach $verdictOptions as [$vk, $vlabel, $vtone]}
+                        {var $checked = in_array($vk, $filters->verdicts, true)}
+                        <label class="flex items-center gap-2.5 cursor-pointer group">
+                            <input type="checkbox" name="verdict[]" value="{$vk}" {if $checked}checked{/if} class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-{$vtone} checked:border-{$vtone} shrink-0 transition-colors">
+                            <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1">{$vlabel}</span>
+                            <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">{$facets['verdict'][$vk] ?? 0}</span>
+                        </label>
+                    {/foreach}
                 </div>
             </div>
 
