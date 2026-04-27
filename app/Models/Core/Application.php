@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models\Core;
 
+use App\Models\Demo\PlaygroundSession;
 use Zephyrus\Core\App;
 use Zephyrus\Core\ApplicationBuilder;
 use Zephyrus\Formatting\Formatter;
 use Zephyrus\Rendering\Asset;
 use Zephyrus\Security\AuthGuardMiddleware;
 use Zephyrus\Security\HeaderTokenGuard;
+use Zephyrus\Security\PredicateAuthGuard;
 
 /**
  * Application entry point.
@@ -60,6 +62,26 @@ final class Application extends Kernel
             );
             $builder = $builder->registerMiddleware('cron', new AuthGuardMiddleware($guard));
         }
+
+        // /playground (judge tier): page + Section-1/2 endpoints. Granted by
+        // posting PLAYGROUND_PASSWORD to /playground/login.
+        $builder = $builder->registerMiddleware(
+            'playground',
+            new AuthGuardMiddleware(
+                new PredicateAuthGuard(static fn () => PlaygroundSession::hasJudge()),
+            ),
+        );
+
+        // Section 3 + destructive endpoints (kill agents, manual queue insert,
+        // scenario triggers). Granted by posting ADMIN_PASSWORD to
+        // /playground/admin-login on top of an existing judge session.
+        $builder = $builder->registerMiddleware(
+            'admin',
+            new AuthGuardMiddleware(
+                new PredicateAuthGuard(static fn () => PlaygroundSession::hasAdmin()),
+            ),
+        );
+
         return $builder;
     }
 }
