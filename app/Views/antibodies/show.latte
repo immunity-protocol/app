@@ -11,6 +11,7 @@
  * agent list) get placeholder values until those streams land.
  *}
 {var $primaryMatcher = $entry->primary_matcher}
+{var $hasMatcher = is_object($primaryMatcher) || (is_array($primaryMatcher) && $primaryMatcher !== [])}
 {var $primaryKind = match($entry->type) {
   'address'      => 'address',
   'call_pattern' => 'call_pattern',
@@ -19,7 +20,7 @@
   'semantic'     => 'semantic',
   default        => 'unknown',
 }}
-{var $primaryValue = match(true) {
+{var $primaryValue = !$hasMatcher ? '(envelope not yet hydrated from 0G Storage)' : match(true) {
   $entry->type === 'address'      => $primaryMatcher->address ?? '',
   $entry->type === 'call_pattern' => ($primaryMatcher->selector ?? '') . ' ' . implode(', ', (array) ($primaryMatcher->args ?? [])),
   $entry->type === 'bytecode'     => $primaryMatcher->runtime_hash ?? '',
@@ -51,10 +52,10 @@
   ],
 
   'evidence' => [
-    'reasoning'       => $entry->redacted_reasoning ?? '(no reasoning recorded)',
-    'tee_attestation' => '0x' . bin2hex($entry->attestation),
-    'evidence_cid'    => '0x' . bin2hex($entry->evidence_cid),
-    'sealed'          => true,
+    'reasoning'       => $entry->redacted_reasoning ?? null,
+    'tee_attestation' => \App\Models\Core\Hex::isZero($entry->attestation) ? null : \App\Models\Core\Hex::toHex($entry->attestation),
+    'evidence_cid'    => \App\Models\Core\Hex::isZero($entry->evidence_cid) ? null : \App\Models\Core\Hex::toHex($entry->evidence_cid),
+    'sealed'          => !\App\Models\Core\Hex::isZero($entry->attestation),
   ],
 
   'impact' => [
@@ -251,8 +252,12 @@
                     {* Reasoning excerpt *}
                     <div>
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-3">Reasoning excerpt</div>
-                        <div class="text-[13.5px] text-fg-secondary leading-[1.7] whitespace-pre-line">{$ab['evidence']['reasoning']}</div>
-                        <p class="font-mono text-[10px] text-fg-dim mt-4 italic">Full evidence (TEE-sealed) is fetchable by holders of the unsealing key. Public mirror carries hash only.</p>
+                        {if $ab['evidence']['reasoning'] !== null && $ab['evidence']['reasoning'] !== ''}
+                            <div class="text-[13.5px] text-fg-secondary leading-[1.7] whitespace-pre-line">{$ab['evidence']['reasoning']}</div>
+                            <p class="font-mono text-[10px] text-fg-dim mt-4 italic">Full evidence (TEE-sealed) is fetchable by holders of the unsealing key. Public mirror carries hash only.</p>
+                        {else}
+                            <div class="text-[13px] text-fg-dim italic">(no reasoning recorded)</div>
+                        {/if}
                     </div>
 
                     {* Attestation + CID grid *}
@@ -260,18 +265,22 @@
 
                         <div>
                             <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-2">TEE attestation</div>
-                            <div class="font-mono text-[11.5px] text-fg-secondary bg-ink-sunken/60 border border-ink-line/40 rounded-sm px-3 py-2 break-all">{$ab['evidence']['tee_attestation']}</div>
+                            {if $ab['evidence']['tee_attestation'] !== null}
+                                <div class="font-mono text-[11.5px] text-fg-secondary bg-ink-sunken/60 border border-ink-line/40 rounded-sm px-3 py-2 break-all">{$ab['evidence']['tee_attestation']}</div>
+                            {else}
+                                <div class="font-mono text-[11.5px] text-fg-dim italic px-3 py-2">(none recorded)</div>
+                            {/if}
                         </div>
 
                         <div>
                             <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-2">Evidence CID</div>
-                            <div class="flex items-center gap-2">
-                                <code class="font-mono text-[11.5px] text-fg-secondary bg-ink-sunken/60 border border-ink-line/40 rounded-sm px-3 py-2 break-all min-w-0 flex-1">{$ab['evidence']['evidence_cid']}</code>
-                                <a href="https://ipfs.io/ipfs/{$ab['evidence']['evidence_cid']}" target="_blank" rel="noopener" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors shrink-0 inline-flex items-center gap-1" aria-label="Open on IPFS">
-                                    IPFS
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
-                                </a>
-                            </div>
+                            {if $ab['evidence']['evidence_cid'] !== null}
+                                <div class="flex items-center gap-2">
+                                    <code class="font-mono text-[11.5px] text-fg-secondary bg-ink-sunken/60 border border-ink-line/40 rounded-sm px-3 py-2 break-all min-w-0 flex-1">{$ab['evidence']['evidence_cid']}</code>
+                                </div>
+                            {else}
+                                <div class="font-mono text-[11.5px] text-fg-dim italic px-3 py-2">(envelope not yet uploaded)</div>
+                            {/if}
                         </div>
                     </div>
 
