@@ -9,6 +9,7 @@ use App\Models\Indexer\Workers\EnsResolutionWorker;
 use App\Models\Indexer\Workers\EventPoller;
 use App\Models\Indexer\Workers\ExpirySweep;
 use App\Models\Indexer\Workers\HydrationWorker;
+use App\Models\Indexer\Workers\PricingRetryWorker;
 use App\Models\Indexer\Workers\StatRefresher;
 use Throwable;
 
@@ -42,6 +43,7 @@ class Supervisor
         private readonly ?EnsResolutionWorker $ens,
         private readonly StatRefresher $statRefresher,
         private readonly Cadence $cadence,
+        private readonly ?PricingRetryWorker $pricingRetry = null,
         private readonly int $pollIntervalMs = 2000,
         private readonly int $maxHydrationJobs = 5,
         private readonly int $memoryCeilingMb = 256,
@@ -99,6 +101,14 @@ class Supervisor
                     $this->statRefresher->run();
                 } catch (Throwable $e) {
                     $this->log("stat-refresh error: " . $e->getMessage());
+                }
+            }
+
+            if ($this->pricingRetry !== null && $this->cadence->due('pricing_retry', 60)) {
+                try {
+                    $this->pricingRetry->tick();
+                } catch (Throwable $e) {
+                    $this->log("pricing-retry error: " . $e->getMessage());
                 }
             }
 

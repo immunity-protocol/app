@@ -23,6 +23,8 @@ use App\Models\Core\NetworkConfig;
 use App\Models\Event\Brokers\ContractEventBroker;
 use App\Models\Indexer\Brokers\HydrationQueueBroker;
 use App\Models\Indexer\Brokers\StateBroker;
+use App\Models\Indexer\Brokers\TokenPriceCacheBroker;
+use App\Models\Indexer\Pricing\MoralisPriceService;
 use App\Models\Indexer\Chain\EventDecoder;
 use App\Models\Indexer\Chain\JsonRpcClient;
 use App\Models\Indexer\Chain\RegistryAbi;
@@ -41,10 +43,12 @@ use App\Models\Indexer\Workers\EnsResolutionWorker;
 use App\Models\Indexer\Workers\EventPoller;
 use App\Models\Indexer\Workers\ExpirySweep;
 use App\Models\Indexer\Workers\HydrationWorker;
+use App\Models\Indexer\Workers\PricingRetryWorker;
 use App\Models\Indexer\Workers\StatRefresher;
 use App\Models\Network\Brokers\StatBroker;
 use Dotenv\Dotenv;
 use Ens\EnsService;
+use Moralis\MoralisService;
 use Zephyrus\Core\Config\Configuration;
 
 Dotenv::createImmutable(ROOT_DIR)->safeLoad();
@@ -74,9 +78,20 @@ $queueBroker = new HydrationQueueBroker($db);
 $contractEventBroker = new ContractEventBroker($db);
 $statBroker = new StatBroker($db);
 
+// Moralis pricing is optional — if no API key is configured the service is
+// not constructed and handlers fall back to NULL value_at_risk_usd.
+$moralisApiKey  = getenv('MORALIS_API_KEY') ?: '';
+$priceCacheBroker = new TokenPriceCacheBroker($db);
+$pricingService = $moralisApiKey === ''
+    ? null
+    : new MoralisPriceService(new MoralisService($moralisApiKey), $priceCacheBroker);
+if ($pricingService === null) {
+    fwrite(STDERR, "indexer: MORALIS_API_KEY not set; price lookups disabled\n");
+}
+
 $publishedHandler   = new AntibodyPublishedHandler($db, $queueBroker);
-$checkSettledHandler = new CheckSettledHandler($db, $network);
-$matchedHandler     = new AntibodyMatchedHandler($db, $network);
+$checkSettledHandler = new CheckSettledHandler($db, $network, $pricingService);
+$matchedHandler     = new AntibodyMatchedHandler($db, $network, $pricingService);
 $stakeReleasedH     = new StakeReleasedHandler($db);
 $stakeSweptH        = new StakeSweptHandler($db);
 $slashedH           = new AntibodySlashedHandler($db);
@@ -122,6 +137,10 @@ $statRefresher = new StatRefresher($db, $statBroker);
 $cadence = new Cadence();
 $bootstrap = new BackfillBootstrap($stateBroker, $deployBlock);
 
+$pricingRetry = $pricingService === null
+    ? null
+    : new PricingRetryWorker($db, $pricingService);
+
 $supervisor = new Supervisor(
     bootstrap: $bootstrap,
     poller: $poller,
@@ -130,6 +149,7 @@ $supervisor = new Supervisor(
     ens: $ensWorker,
     statRefresher: $statRefresher,
     cadence: $cadence,
+    pricingRetry: $pricingRetry,
     pollIntervalMs: $pollIntervalMs,
     maxHydrationJobs: $hydrationConc,
 );
