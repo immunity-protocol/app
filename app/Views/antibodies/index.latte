@@ -303,4 +303,49 @@
     </form>
 
 </section>
+
+<script>
+(function () {
+  const form = document.getElementById('antibody-filters');
+  if (!form) return;
+  // Reset to page 1 on any filter change so we don't land past the new last page.
+  function resetPage() {
+    let pageInput = form.querySelector('input[name=page]');
+    if (!pageInput) {
+      pageInput = document.createElement('input');
+      pageInput.type = 'hidden';
+      pageInput.name = 'page';
+      form.appendChild(pageInput);
+    }
+    pageInput.value = '1';
+  }
+  form.addEventListener('change', function (e) {
+    const t = e.target;
+    if (!t || t.disabled) return;
+    if (t.matches('input[type=checkbox], input[type=radio], select')) {
+      resetPage();
+      form.submit();
+    }
+  });
+  // Number inputs (severity) submit on Enter or blur, not on every keystroke.
+  form.querySelectorAll('input[type=number]').forEach(function (el) {
+    el.addEventListener('blur', function () {
+      resetPage();
+      form.submit();
+    });
+  });
+  // "/" focuses the search field.
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+    const tag = (document.activeElement || {}).tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    const search = document.getElementById('antibody-search');
+    if (search) {
+      e.preventDefault();
+      search.focus();
+    }
+  });
+})();
+</script>
+
 {/block}
