@@ -64,9 +64,11 @@ CREATE TABLE antibody.mirror
     chain_id          integer NOT NULL,
     chain_name        varchar(32) NOT NULL,
     mirror_tx_hash    bytea NOT NULL,
+    log_index         integer NOT NULL DEFAULT 0,
     mirrored_at       timestamptz NOT NULL DEFAULT now(),
     status            antibody.mirror_status NOT NULL DEFAULT 'active',
-    relayer_address   bytea NOT NULL
+    relayer_address   bytea NOT NULL,
+    UNIQUE (mirror_tx_hash, log_index)
 );
 
 CREATE UNIQUE INDEX mirror_active_unique_idx
