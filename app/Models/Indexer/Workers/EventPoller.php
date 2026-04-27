@@ -7,64 +7,46 @@ namespace App\Models\Indexer\Workers;
 use App\Models\Indexer\Brokers\StateBroker;
 use App\Models\Indexer\Chain\EventDecoder;
 use App\Models\Indexer\Chain\JsonRpcClient;
-use App\Models\Indexer\Chain\RegistryAbi;
 use App\Models\Indexer\Entities\State;
-use App\Models\Indexer\Handlers\AntibodyMatchedHandler;
-use App\Models\Indexer\Handlers\AntibodyPublishedHandler;
-use App\Models\Indexer\Handlers\AntibodySlashedHandler;
-use App\Models\Indexer\Handlers\AuditEventHandler;
-use App\Models\Indexer\Handlers\CheckSettledHandler;
-use App\Models\Indexer\Handlers\StakeReleasedHandler;
-use App\Models\Indexer\Handlers\StakeSweptHandler;
 use Throwable;
 
 /**
- * Reads new Registry logs since `indexer.state.last_processed_block` and
- * dispatches each to the appropriate handler. One eth_getLogs call per tick.
+ * Reads new contract logs since `indexer.state.last_processed_block` for the
+ * given chain and dispatches each decoded event to the matching handler.
+ * One eth_getLogs call per tick.
  *
  * Stops at `head - confirmations` to avoid reorg risk near the chain tip.
  * If the gap is larger than `chunkSize`, only that chunk is processed this
  * tick; the next tick continues from the new last_processed_block.
+ *
+ * Generic over the contract: the handler map (`array<string, callable>`)
+ * is built per chain by the bootstrap. Same class drives the 0G Registry
+ * pollers and the per-chain Mirror pollers.
  */
 class EventPoller
 {
     /** @var array<string, callable(array):bool> */
-    private array $dispatch = [];
+    private array $dispatch;
 
+    /**
+     * @param array<string, callable(array):bool> $handlers
+     */
     public function __construct(
         private readonly JsonRpcClient $rpc,
-        private readonly RegistryAbi $abi,
         private readonly EventDecoder $decoder,
         private readonly StateBroker $state,
         private readonly int $chainId,
-        private readonly string $registryAddress,
-        AntibodyPublishedHandler $publishedHandler,
-        CheckSettledHandler $checkSettledHandler,
-        AntibodyMatchedHandler $antibodyMatchedHandler,
-        StakeReleasedHandler $stakeReleasedHandler,
-        StakeSweptHandler $stakeSweptHandler,
-        AntibodySlashedHandler $antibodySlashedHandler,
-        AuditEventHandler $auditHandler,
+        private readonly string $contractAddress,
+        array $handlers,
         private readonly int $confirmations = 2,
         private readonly int $chunkSize = 5000,
     ) {
-        $this->dispatch = [
-            'AntibodyPublished' => fn (array $d) => $publishedHandler->handle($d),
-            'CheckSettled'      => fn (array $d) => $checkSettledHandler->handle($d),
-            'AntibodyMatched'   => fn (array $d) => $antibodyMatchedHandler->handle($d),
-            'StakeReleased'     => fn (array $d) => $stakeReleasedHandler->handle($d),
-            'StakeSwept'        => fn (array $d) => $stakeSweptHandler->handle($d),
-            'AntibodySlashed'   => fn (array $d) => $antibodySlashedHandler->handle($d),
-        ];
-        // Audit handler covers everything else known to the ABI.
-        $auditEvents = [
-            'Deposited', 'Withdrew', 'TreasuryWithdrawn', 'Seeded',
-            'OwnershipTransferred', 'AddressBlocked', 'CallPatternBlocked',
-            'BytecodeBlocked', 'GraphTaintAdded', 'SemanticPatternAdded',
-        ];
-        foreach ($auditEvents as $name) {
-            $this->dispatch[$name] = fn (array $d) => $auditHandler->handle($d);
-        }
+        $this->dispatch = $handlers;
+    }
+
+    public function chainId(): int
+    {
+        return $this->chainId;
     }
 
     /**
@@ -90,7 +72,7 @@ class EventPoller
         $logs = $this->rpc->getLogs([
             'fromBlock' => JsonRpcClient::intToHex($fromBlock),
             'toBlock'   => JsonRpcClient::intToHex($toBlock),
-            'address'   => $this->registryAddress,
+            'address'   => $this->contractAddress,
         ]);
 
         $handled = 0;
@@ -112,7 +94,7 @@ class EventPoller
                 // Skip the row but advance the cursor; a transient handler
                 // bug should not block the whole indexer. Real errors land
                 // in stderr where the supervisor surfaces them.
-                fwrite(STDERR, "[EventPoller] handler '$name' failed at block " . $decoded['blockNumber']
+                fwrite(STDERR, "[EventPoller chain=$this->chainId] handler '$name' failed at block " . $decoded['blockNumber']
                     . " logIndex " . $decoded['logIndex'] . ': ' . $e->getMessage() . PHP_EOL);
             }
         }

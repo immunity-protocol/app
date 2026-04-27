@@ -97,20 +97,29 @@ $stakeSweptH        = new StakeSweptHandler($db);
 $slashedH           = new AntibodySlashedHandler($db);
 $auditH             = new AuditEventHandler($contractEventBroker);
 
+$registryHandlers = [
+    'AntibodyPublished' => fn (array $d) => $publishedHandler->handle($d),
+    'CheckSettled'      => fn (array $d) => $checkSettledHandler->handle($d),
+    'AntibodyMatched'   => fn (array $d) => $matchedHandler->handle($d),
+    'StakeReleased'     => fn (array $d) => $stakeReleasedH->handle($d),
+    'StakeSwept'        => fn (array $d) => $stakeSweptH->handle($d),
+    'AntibodySlashed'   => fn (array $d) => $slashedH->handle($d),
+];
+foreach ([
+    'Deposited', 'Withdrew', 'TreasuryWithdrawn', 'Seeded',
+    'OwnershipTransferred', 'AddressBlocked', 'CallPatternBlocked',
+    'BytecodeBlocked', 'GraphTaintAdded', 'SemanticPatternAdded',
+] as $auditName) {
+    $registryHandlers[$auditName] = fn (array $d) => $auditH->handle($d);
+}
+
 $poller = new EventPoller(
     rpc: $rpc,
-    abi: $abi,
     decoder: $decoder,
     state: $stateBroker,
     chainId: $network->chainId,
-    registryAddress: $network->registryAddress,
-    publishedHandler: $publishedHandler,
-    checkSettledHandler: $checkSettledHandler,
-    antibodyMatchedHandler: $matchedHandler,
-    stakeReleasedHandler: $stakeReleasedH,
-    stakeSweptHandler: $stakeSweptH,
-    antibodySlashedHandler: $slashedH,
-    auditHandler: $auditH,
+    contractAddress: $network->registryAddress,
+    handlers: $registryHandlers,
     confirmations: $confirmations,
     chunkSize: $backfillChunk,
 );
