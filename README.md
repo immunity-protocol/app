@@ -16,14 +16,16 @@ docker compose up
 
 Then open [http://localhost](http://localhost).
 
-To run without Docker:
+The compose stack runs four services:
 
-```bash
-composer install
-php -S localhost:8080 -t public
-```
+| Service | Purpose |
+|---|---|
+| `database` | Postgres 15 with the application schema |
+| `webserver` | Apache + PHP serving the Latte frontend on `:80` |
+| `api` | Apache + PHP serving the REST API on `:8081` |
+| `indexer` | Long-running PHP worker that reads on-chain events from the deployed 0G Galileo Registry, hydrates 0G Storage envelopes, refreshes network metrics every 60s, and reverse-resolves publisher ENS names. No separate seeder is needed — the indexer backfills from the contract's deploy block on cold start. |
 
-Requires PHP 8.4+ with `mbstring`, `pdo`, `intl`, and `sodium` extensions.
+Requires PHP 8.4+ with `mbstring`, `pdo`, `intl`, and `sodium` extensions if you ever need to run `composer` outside Docker.
 
 ## Deployment (Fly.io)
 
@@ -73,12 +75,71 @@ Inside the machine, `psql -h localhost -U immunity -d immunity` opens the live d
 - `.flyio/vhosts/default.conf` — Apache vhost pointing at `public/`
 - `.flyio/php-production.ini` — production php.ini overrides
 
+## Indexer
+
+`bin/indexer.php` is a single PHP CLI process running multiple cadence-aware loops:
+
+| Loop | Cadence | Concern |
+|---|---|---|
+| EventPoller | 2s (configurable) | `eth_getLogs` against the Galileo Registry, dispatch to handlers |
+| HydrationWorker | 2s, capped at N jobs/tick | Drain `indexer.hydration_queue`, fetch envelope JSON via `node scripts/og-download.mjs`, fill `primary_matcher`/`redacted_reasoning` on the antibody row |
+| ExpirySweep | 60s | `UPDATE antibody.entry SET status='expired' WHERE expires_at < now()` (the contract emits no expiry event) |
+| EnsResolutionWorker | 30s | Reverse-resolve `antibody.publisher.address` → ENS name via `ophelios/php-ethereum-ens`, cached with TTL in Postgres |
+| StatRefresher | 60s | Recompute the 5 dashboard metrics from real DB state and insert into `network.stat` (drives the "Live" indicator) |
+
+### Local
+
+```bash
+docker compose up indexer        # builds the image (Node 20 + 0G SDK) and starts the worker
+docker compose logs -f indexer   # see boot, summary stats, errors
+```
+
+### Reset state
+
+```bash
+docker compose exec database psql -U dev -d immunity -c "
+  TRUNCATE event.activity, event.block_event, event.check_event,
+           event.contract_event, event.sweep_event,
+           antibody.mirror, antibody.entry, antibody.publisher,
+           indexer.hydration_queue, indexer.state, network.stat
+    RESTART IDENTITY CASCADE;"
+docker compose restart indexer   # backfills from the deploy block again
+```
+
+### Configuration
+
+All env vars have safe testnet defaults; override via `.env` or `docker-compose.yml`:
+
+| Env var | Default |
+|---|---|
+| `OG_RPC_URL` | `https://evmrpc-testnet.0g.ai` |
+| `OG_REGISTRY_ADDRESS` | `0x45Ee45Ca358b3fc9B1b245a8f1c1C3128caC8e48` |
+| `OG_STORAGE_INDEXER` | `https://indexer-storage-testnet-turbo.0g.ai` |
+| `ETH_RPC_URL` | `https://eth.llamarpc.com` (mainnet, ENS only) |
+| `INDEXER_POLL_INTERVAL_MS` | `2000` |
+| `INDEXER_HYDRATION_CONCURRENCY` | `5` (jobs per tick, sequential) |
+| `INDEXER_BACKFILL_CHUNK` | `5000` (blocks per `eth_getLogs` call) |
+| `INDEXER_CONFIRMATIONS` | `2` (head depth treated as final) |
+
+### Known limitations
+
+- 0G Storage hydration may briefly lag the on-chain event ingest (it runs in the same loop, capped per tick). Antibody rows appear immediately with NULL `primary_matcher`; the worker fills it shortly.
+- Expiry status flips up to 60 seconds after `expires_at`. The contract intentionally emits no expiry event.
+- Reorg policy is N=2 confirmations (testnet-grade). Mainnet would need a deeper window and a hash-based detector; revisit before mainnet deploy.
+- ENS reverse resolution depends on a public Ethereum mainnet RPC and is best-effort. Failures back off for 24h.
+
 ## Project layout
 
 ```
 app/
   Controllers/   Route controllers (auto-discovered via attributes)
-  Models/        Domain models, services, brokers, mock data
+  Models/        Domain models, services, brokers, indexer worker code
+bin/
+  indexer.php    Long-running indexer process (CLI bootstrap + Supervisor loop)
+scripts/
+  og-download.mjs  Node helper around @0gfoundation/0g-ts-sdk for envelope downloads
+tests/
+  fixtures/Mock/ Mock data factories (kept here for use by integration tests)
   Views/         Latte templates
 config.yml       Application configuration
 docker/          Docker service definitions
