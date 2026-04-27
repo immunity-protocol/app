@@ -25,7 +25,8 @@ class PendingJob extends Entity
     public string $keccak_id;
     public int $target_chain_id;
     public string $job_type;
-    public string $payload = '{}';
+    /** Raw jsonb cell - may arrive as stdClass, array, or string depending on the PDO driver. Use payloadArray(). */
+    public mixed $payload = '{}';
     public string $enqueued_at;
     public string $next_attempt_at;
     public int $attempts = 0;
@@ -49,7 +50,16 @@ class PendingJob extends Entity
      */
     public function payloadArray(): array
     {
-        $decoded = json_decode($this->payload, true);
-        return is_array($decoded) ? $decoded : [];
+        if (is_array($this->payload)) {
+            return $this->payload;
+        }
+        if (is_object($this->payload)) {
+            return json_decode((string) json_encode($this->payload), true) ?: [];
+        }
+        if (is_string($this->payload)) {
+            $decoded = json_decode($this->payload, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        return [];
     }
 }
