@@ -52,6 +52,15 @@ RUN set -e; \
       "https://github.com/aptible/supercronic/releases/download/v${SUPERCRONIC_VERSION}/supercronic-linux-${sc_arch}"; \
     chmod +x /usr/local/bin/supercronic
 
+
+# Node 20 + scripts/ Node deps for the indexer's 0G Storage hydration helper.
+# Harmless on web/api (those tiers never invoke node).
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+ && apt-get install -y --no-install-recommends nodejs \
+ && rm -rf /var/lib/apt/lists/*
+RUN cd /var/www/html/scripts \
+ && npm install --legacy-peer-deps --omit=dev --no-audit --no-fund
+
 EXPOSE 80
 
 # Default to Apache foreground; the CRON tier overrides this in fly_cron.toml.
