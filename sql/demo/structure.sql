@@ -1,0 +1,5 @@
+-- ##################################################################################################################
+-- DEMO FLEET STATE
+-- Tables used by the demo orchestration: agent command queue, fleet pause/resume flag, agent heartbeat.
+-- Populated by the demo agent containers in /Users/dtucker/www/immunity-demo and the /playground UI.
+-- ##################################################################################################################
