@@ -47,17 +47,15 @@ class PendingJobsBroker extends Broker
      */
     public function claimNextReady(): ?PendingJob
     {
-        $this->db->beginTransaction();
-        try {
+        $claimedId = $this->db->transaction(function () {
             $row = $this->selectOne(
-                "SELECT * FROM mirror.pending_jobs
+                "SELECT id FROM mirror.pending_jobs
                   WHERE status = 'pending' AND next_attempt_at <= now()
                   ORDER BY enqueued_at ASC
                   LIMIT 1
                   FOR UPDATE SKIP LOCKED"
             );
             if ($row === null) {
-                $this->db->commit();
                 return null;
             }
             $this->db->query(
@@ -66,17 +64,18 @@ class PendingJobsBroker extends Broker
                         attempts   = attempts + 1,
                         claimed_at = now()
                   WHERE id = ?",
-                [$row->id]
+                [(int) $row->id]
             );
-            $this->db->commit();
-        } catch (\Throwable $e) {
-            $this->db->rollback();
-            throw $e;
+            return (int) $row->id;
+        });
+
+        if ($claimedId === null) {
+            return null;
         }
-        // Re-read to get the post-update view.
+        // Re-read outside the claim tx to get the post-update view.
         $fresh = $this->selectOne(
             "SELECT * FROM mirror.pending_jobs WHERE id = ?",
-            [(int) $row->id]
+            [$claimedId]
         );
         return $fresh === null ? null : PendingJob::build($fresh);
     }
