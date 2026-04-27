@@ -27,3 +27,17 @@ CREATE INDEX commands_pending_idx
 
 CREATE INDEX commands_scheduled_at_idx ON demo.commands (scheduled_at DESC);
 CREATE INDEX commands_result_status_idx ON demo.commands (result_status);
+
+-- ##################################################################################################################
+-- FLEET_STATE (singleton row holding the global ambient pause flag)
+-- ##################################################################################################################
+CREATE TABLE demo.fleet_state
+(
+    id              smallint    PRIMARY KEY DEFAULT 1,
+    ambient_paused  boolean     NOT NULL DEFAULT false,
+    paused_at       timestamptz,
+    CONSTRAINT fleet_state_singleton CHECK (id = 1)
+);
+
+INSERT INTO demo.fleet_state (id, ambient_paused) VALUES (1, false)
+    ON CONFLICT DO NOTHING;
