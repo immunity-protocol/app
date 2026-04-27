@@ -13,14 +13,19 @@ class HydrationQueueBroker extends Broker
     /**
      * Enqueue a hydration job. Idempotent on (antibody_keccak_id) for jobs
      * still pending; we do not re-enqueue if a pending row already exists.
+     *
+     * Accepts hex strings (without the 0x prefix) and writes bytea via the
+     * Postgres \x literal form.
      */
-    public function enqueue(string $keccakIdBytes, string $evidenceCidBytes): void
+    public function enqueueHex(string $keccakIdHex, string $evidenceCidHex): void
     {
+        $keccakBytea = '\\x' . self::cleanHex($keccakIdHex);
+        $evidenceBytea = '\\x' . self::cleanHex($evidenceCidHex);
         $exists = $this->selectOne(
             "SELECT id FROM indexer.hydration_queue
               WHERE antibody_keccak_id = ? AND status = ?
               LIMIT 1",
-            [$keccakIdBytes, HydrationJob::STATUS_PENDING]
+            [$keccakBytea, HydrationJob::STATUS_PENDING]
         );
         if ($exists !== null) {
             return;
@@ -29,8 +34,16 @@ class HydrationQueueBroker extends Broker
             "INSERT INTO indexer.hydration_queue
                 (antibody_keccak_id, evidence_cid, status)
              VALUES (?, ?, ?)",
-            [$keccakIdBytes, $evidenceCidBytes, HydrationJob::STATUS_PENDING]
+            [$keccakBytea, $evidenceBytea, HydrationJob::STATUS_PENDING]
         );
+    }
+
+    private static function cleanHex(string $hex): string
+    {
+        if (str_starts_with($hex, '0x') || str_starts_with($hex, '0X')) {
+            $hex = substr($hex, 2);
+        }
+        return strtolower($hex);
     }
 
     /**
