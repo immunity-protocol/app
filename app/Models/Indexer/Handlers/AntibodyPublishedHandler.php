@@ -166,10 +166,11 @@ class AntibodyPublishedHandler
             $this->queue->enqueueHex($keccakIdHex, $evidenceCidHex);
         }
 
-        // Stash the full event args for the relayer; the matching auxiliary
-        // event (AddressBlocked / CallPatternBlocked / ...) fires later in
-        // the same tx and will drain this buffer to enqueue mirror jobs.
-        if ($inserted && $this->envelopeBuffer !== null) {
+        // Stash the full event args for the relayer on every observation
+        // (including replays/backfills): the auxiliary event drains the
+        // buffer and enqueues mirror jobs, which are idempotent on
+        // (keccak, chain, type). Gating on $inserted would break backfills.
+        if ($this->envelopeBuffer !== null) {
             $this->envelopeBuffer->stash($keccakIdHex, $a);
         }
 
