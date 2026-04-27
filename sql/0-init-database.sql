@@ -12,6 +12,7 @@
 \ir ./network/init.sql
 \ir ./event/init.sql
 \ir ./indexer/init.sql
+\ir ./mirror/init.sql
 
 -- ##################################################################################################################
 -- GRANTS
