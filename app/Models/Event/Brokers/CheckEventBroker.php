@@ -64,4 +64,39 @@ class CheckEventBroker extends Broker
         $row = $this->selectOne($sql, array_values($data));
         return (int) $row->id;
     }
+
+    /**
+     * Record value-at-risk on every check_event matching the given tx_hash,
+     * and propagate the same value into event.block_event.value_protected_usd
+     * (when a block landed for that check). Returns the number of check_event
+     * rows updated; 0 means we accepted the report but found no matching tx
+     * (out-of-order: the report arrived before the indexer ingested it).
+     *
+     * Idempotent: setting the same value twice is a no-op DB-wise.
+     */
+    public function setValueAtRisk(string $txHashHex, string $valueUsd): int
+    {
+        $txHashHex = strtolower($txHashHex);
+        if (str_starts_with($txHashHex, '0x')) {
+            $txHashHex = substr($txHashHex, 2);
+        }
+        $bytea = '\\x' . $txHashHex;
+
+        $stmt = $this->db->query(
+            "UPDATE event.check_event
+                SET value_at_risk_usd = ?::numeric(20, 6)
+              WHERE tx_hash = ?",
+            [$valueUsd, $bytea]
+        );
+        $updated = $stmt->rowCount();
+
+        $this->db->query(
+            "UPDATE event.block_event
+                SET value_protected_usd = ?::numeric(20, 6)
+              WHERE tx_hash = ?",
+            [$valueUsd, $bytea]
+        );
+
+        return $updated;
+    }
 }
