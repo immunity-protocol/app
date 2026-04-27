@@ -110,7 +110,7 @@ class AntibodyMatchedHandler
 
             $this->db->query(
                 "INSERT INTO event.activity (event_type, entry_id, payload, actor, occurred_at)
-                 VALUES ('protected'::event.activity_type, ?, jsonb_build_object('agent', ?), ?, now())",
+                 VALUES ('protected'::event.activity_type, ?, jsonb_build_object('agent', ?::text), ?, now())",
                 [$entryId, '0x' . $agentHex, '0x' . $agentHex]
             );
         }
