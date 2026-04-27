@@ -253,25 +253,40 @@
 
         {* Showing N of M *}
         <div class="font-mono text-[11px] uppercase tracking-widest2 text-fg-tertiary">
-            Showing <span class="text-fg-secondary tabular-nums">1</span> to <span class="text-fg-secondary tabular-nums">30</span> of <span class="text-fg-secondary tabular-nums">312</span>
+            Showing <span class="text-fg-secondary tabular-nums">{$pagination->showingFrom}</span> to <span class="text-fg-secondary tabular-nums">{$pagination->showingTo}</span> of <span class="text-fg-secondary tabular-nums">{$pagination->total}</span>
         </div>
 
         {* Page controls *}
         <nav class="flex items-center gap-1" aria-label="Pagination">
-            <button class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim px-3 py-1.5 rounded-sm cursor-not-allowed" disabled aria-label="Previous page">
-                <span aria-hidden="true">&larr;</span> Prev
-            </button>
+            {if $pagination->hasPrev}
+                <a href="?{$filters->toQueryString(['page' => $pagination->prevPage])}" class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary px-3 py-1.5 rounded-sm hover:bg-ink-elevated/60 transition-colors" aria-label="Previous page">
+                    <span aria-hidden="true">&larr;</span> Prev
+                </a>
+            {else}
+                <span class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim px-3 py-1.5 rounded-sm cursor-not-allowed" aria-label="Previous page" aria-disabled="true">
+                    <span aria-hidden="true">&larr;</span> Prev
+                </span>
+            {/if}
 
-            <button class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm bg-accent/10 text-accent border border-accent/30" aria-current="page">1</button>
-            <button class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">2</button>
-            <button class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">3</button>
-            <button class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">4</button>
-            <span class="font-mono text-[12px] text-fg-dim px-1 select-none">...</span>
-            <button class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">11</button>
+            {foreach $pagination->pageLinks as $pl}
+                {if $pl === '...'}
+                    <span class="font-mono text-[12px] text-fg-dim px-1 select-none">...</span>
+                {elseif $pl === $pagination->page}
+                    <span class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm bg-accent/10 text-accent border border-accent/30" aria-current="page">{$pl}</span>
+                {else}
+                    <a href="?{$filters->toQueryString(['page' => $pl])}" class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">{$pl}</a>
+                {/if}
+            {/foreach}
 
-            <button class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary px-3 py-1.5 rounded-sm hover:bg-ink-elevated/60 transition-colors" aria-label="Next page">
-                Next <span aria-hidden="true">&rarr;</span>
-            </button>
+            {if $pagination->hasNext}
+                <a href="?{$filters->toQueryString(['page' => $pagination->nextPage])}" class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary px-3 py-1.5 rounded-sm hover:bg-ink-elevated/60 transition-colors" aria-label="Next page">
+                    Next <span aria-hidden="true">&rarr;</span>
+                </a>
+            {else}
+                <span class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim px-3 py-1.5 rounded-sm cursor-not-allowed" aria-label="Next page" aria-disabled="true">
+                    Next <span aria-hidden="true">&rarr;</span>
+                </span>
+            {/if}
         </nav>
 
         {* Per page *}
