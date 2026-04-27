@@ -15,7 +15,7 @@ use RuntimeException;
  * indexer can decode AntibodyMirrored / AntibodyUnmirrored / AddressBlocked
  * events emitted by Mirror contracts.
  */
-class MirrorAbi
+class MirrorAbi implements EventAbi
 {
     /** @var array<int, array<string, mixed>> */
     private array $abi;

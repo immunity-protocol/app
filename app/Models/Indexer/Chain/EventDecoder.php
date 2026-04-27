@@ -16,7 +16,7 @@ use RuntimeException;
  */
 class EventDecoder
 {
-    public function __construct(private readonly RegistryAbi $abi)
+    public function __construct(private readonly EventAbi $abi)
     {
     }
 

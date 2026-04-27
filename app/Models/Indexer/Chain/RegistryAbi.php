@@ -12,7 +12,7 @@ use RuntimeException;
  * topic0 (keccak256 of the canonical event signature). Pure-data class with
  * no side effects.
  */
-class RegistryAbi
+class RegistryAbi implements EventAbi
 {
     /**
      * Galileo deploy block — kept here because it's a per-deploy artifact, not
