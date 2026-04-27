@@ -24,6 +24,7 @@ CREATE TABLE event.check_event
     cache_hit          boolean NOT NULL,
     tee_used           boolean NOT NULL,
     value_at_risk_usd  numeric(20, 6),
+    pricing_failed     boolean NOT NULL DEFAULT false,
     occurred_at        timestamptz NOT NULL DEFAULT now(),
     tx_hash            bytea,
     log_index          integer,
@@ -35,6 +36,11 @@ CREATE INDEX check_event_agent_id_idx           ON event.check_event (agent_id);
 CREATE INDEX check_event_matched_entry_id_idx   ON event.check_event (matched_entry_id);
 CREATE INDEX check_event_decision_idx           ON event.check_event (decision);
 CREATE INDEX check_event_cache_hit_idx          ON event.check_event (cache_hit);
+-- Partial index drives the pricing retry worker — narrows scans to rows that
+-- still need a USD value backfilled.
+CREATE INDEX check_event_pricing_retry_idx
+    ON event.check_event (pricing_failed)
+    WHERE pricing_failed = true;
 
 -- ##################################################################################################################
 -- BLOCK_EVENT (denormalized: subset of check_event where decision = block)
@@ -45,7 +51,8 @@ CREATE TABLE event.block_event
     check_event_id       bigint NOT NULL REFERENCES event.check_event (id) ON DELETE CASCADE,
     entry_id             bigint NOT NULL REFERENCES antibody.entry (id) ON DELETE CASCADE,
     agent_id             varchar(128) NOT NULL,
-    value_protected_usd  numeric(20, 6) NOT NULL,
+    value_protected_usd  numeric(20, 6),
+    pricing_failed       boolean NOT NULL DEFAULT false,
     tx_hash_attempt      bytea,
     chain_id             integer NOT NULL,
     occurred_at          timestamptz NOT NULL DEFAULT now(),
@@ -57,6 +64,9 @@ CREATE TABLE event.block_event
 CREATE INDEX block_event_occurred_at_idx ON event.block_event (occurred_at DESC);
 CREATE INDEX block_event_entry_id_idx    ON event.block_event (entry_id);
 CREATE INDEX block_event_chain_id_idx    ON event.block_event (chain_id);
+CREATE INDEX block_event_pricing_retry_idx
+    ON event.block_event (pricing_failed)
+    WHERE pricing_failed = true;
 
 -- ##################################################################################################################
 -- ACTIVITY (denormalized activity feed for the landing page)
