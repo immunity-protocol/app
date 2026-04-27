@@ -64,12 +64,17 @@ class CheckSettledHandler
             $pricingFailed = $valueAtRisk === null;
         }
 
+        $tokenAddressBytea = $tokenAddress === null
+            ? null
+            : '\\x' . strtolower(self::stripHex($tokenAddress));
+
         $row = $this->db->query(
             <<<'SQL'
             INSERT INTO event.check_event (
                 agent_id, tx_kind, chain_id, decision, confidence,
                 matched_entry_id, cache_hit, tee_used, value_at_risk_usd,
-                pricing_failed, occurred_at, tx_hash, log_index
+                pricing_failed, token_address, token_amount, origin_chain_id,
+                occurred_at, tx_hash, log_index
             )
             VALUES (
                 ?, 'unknown', ?, ?::event.check_decision, NULL,
@@ -77,7 +82,8 @@ class CheckSettledHandler
                     (SELECT id FROM antibody.entry WHERE keccak_id = ? LIMIT 1)
                 ELSE NULL END,
                 ?, false, ?,
-                ?, to_timestamp(?), ?, ?
+                ?, ?, ?, ?,
+                to_timestamp(?), ?, ?
             )
             ON CONFLICT (tx_hash, log_index) DO NOTHING
             RETURNING id
@@ -91,6 +97,9 @@ class CheckSettledHandler
                 $cacheHit ? 't' : 'f',
                 $valueAtRisk,
                 $pricingFailed ? 't' : 'f',
+                $tokenAddressBytea,
+                $tokenAmount,
+                $originChain === 0 ? null : $originChain,
                 $occurredAt,
                 '\\x' . $txHashHex,
                 (int) $decoded['logIndex'],
