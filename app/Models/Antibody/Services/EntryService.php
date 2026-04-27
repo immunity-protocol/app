@@ -67,4 +67,65 @@ readonly class EntryService
     {
         return $this->broker->countByType();
     }
+
+    /**
+     * @return array<string, int>
+     */
+    public function countByStatus(): array
+    {
+        return $this->broker->countByStatus();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function countByVerdict(): array
+    {
+        return $this->broker->countByVerdict();
+    }
+
+    /**
+     * Page-number paginated, multi-value filter list for the explorer UI.
+     *
+     * @param array<int, string> $types
+     * @param array<int, string> $statuses
+     * @param array<int, string> $verdicts
+     * @return Entry[]
+     */
+    public function findPage(
+        array $types = [],
+        array $statuses = [],
+        array $verdicts = [],
+        ?string $search = null,
+        ?string $range = null,
+        ?int $sevMin = null,
+        ?int $sevMax = null,
+        ?string $publisher = null,
+        int $perPage = 30,
+        int $page = 1,
+    ): array {
+        return Entry::buildArray($this->broker->findPage(
+            $types, $statuses, $verdicts, $search, $range, $sevMin, $sevMax, $publisher, $perPage, $page
+        ));
+    }
+
+    /**
+     * @param array<int, string> $types
+     * @param array<int, string> $statuses
+     * @param array<int, string> $verdicts
+     */
+    public function countAll(
+        array $types = [],
+        array $statuses = [],
+        array $verdicts = [],
+        ?string $search = null,
+        ?string $range = null,
+        ?int $sevMin = null,
+        ?int $sevMax = null,
+        ?string $publisher = null,
+    ): int {
+        return $this->broker->countAll(
+            $types, $statuses, $verdicts, $search, $range, $sevMin, $sevMax, $publisher
+        );
+    }
 }
