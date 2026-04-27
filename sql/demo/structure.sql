@@ -41,3 +41,20 @@ CREATE TABLE demo.fleet_state
 
 INSERT INTO demo.fleet_state (id, ambient_paused) VALUES (1, false)
     ON CONFLICT DO NOTHING;
+
+-- ##################################################################################################################
+-- AGENT_HEARTBEAT (one row per running agent; UPSERT on startup and every 60s)
+-- Lets the explorer substitute the curated display name for hex addresses.
+-- ##################################################################################################################
+CREATE TABLE demo.agent_heartbeat
+(
+    agent_id      varchar(64)  PRIMARY KEY,
+    role          varchar(32)  NOT NULL,
+    address       bytea        NOT NULL,
+    display_name  varchar(128) NOT NULL,
+    last_seen     timestamptz  NOT NULL DEFAULT now()
+);
+
+CREATE INDEX agent_heartbeat_address_idx   ON demo.agent_heartbeat (address);
+CREATE INDEX agent_heartbeat_role_idx      ON demo.agent_heartbeat (role);
+CREATE INDEX agent_heartbeat_last_seen_idx ON demo.agent_heartbeat (last_seen DESC);
