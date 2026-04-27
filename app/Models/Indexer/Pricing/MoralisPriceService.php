@@ -25,6 +25,16 @@ final class MoralisPriceService
     private const NATIVE = '0x0000000000000000000000000000000000000000';
 
     /**
+     * Token address (lowercase) => static USD price string + decimals. Bypasses
+     * Moralis entirely for tokens with no listing (mock testnet tokens, demo
+     * fixtures). Sourced from the `INDEXER_PRICE_OVERRIDES` env var, parsed once
+     * per process. Format: {"0xabc..": "1.000000", ...}; decimals default to 6.
+     *
+     * @var array<string, array{price:string, decimals:int}>|null
+     */
+    private static ?array $priceOverrides = null;
+
+    /**
      * Map of evm chain id => [moralis chain identifier, wrapped-native address].
      *
      * Native-token transactions arrive with `tokenAddress = 0x0`; we look up
@@ -61,6 +71,11 @@ final class MoralisPriceService
     ): ?string {
         if ($tokenAmount === '' || $tokenAmount === '0') {
             return '0';
+        }
+
+        $override = $this->resolveOverride($tokenAddress);
+        if ($override !== null) {
+            return $this->compute($tokenAmount, $override['price'], $hintDecimals ?? $override['decimals']);
         }
 
         $resolved = $this->resolveAddress($tokenAddress, $chainId);
@@ -104,6 +119,54 @@ final class MoralisPriceService
             }
             return null;
         }
+    }
+
+    /**
+     * @return array{price:string, decimals:int}|null
+     */
+    private function resolveOverride(string $tokenAddress): ?array
+    {
+        if (self::$priceOverrides === null) {
+            self::$priceOverrides = self::loadPriceOverrides();
+        }
+        return self::$priceOverrides[strtolower($tokenAddress)] ?? null;
+    }
+
+    /**
+     * @return array<string, array{price:string, decimals:int}>
+     */
+    private static function loadPriceOverrides(): array
+    {
+        $raw = $_ENV['INDEXER_PRICE_OVERRIDES'] ?? getenv('INDEXER_PRICE_OVERRIDES') ?: '';
+        if (!is_string($raw) || $raw === '') {
+            return [];
+        }
+        try {
+            $decoded = json_decode($raw, true, 8, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            return [];
+        }
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($decoded as $address => $entry) {
+            if (!is_string($address) || $address === '') {
+                continue;
+            }
+            if (is_string($entry) || is_int($entry) || is_float($entry)) {
+                $map[strtolower($address)] = ['price' => (string) $entry, 'decimals' => 6];
+                continue;
+            }
+            if (is_array($entry) && isset($entry['price'])) {
+                $map[strtolower($address)] = [
+                    'price'    => (string) $entry['price'],
+                    'decimals' => isset($entry['decimals']) ? (int) $entry['decimals'] : 6,
+                ];
+            }
+        }
+        return $map;
     }
 
     /**
