@@ -24,7 +24,10 @@ CREATE TABLE event.check_event
     cache_hit          boolean NOT NULL,
     tee_used           boolean NOT NULL,
     value_at_risk_usd  numeric(20, 6),
-    occurred_at        timestamptz NOT NULL DEFAULT now()
+    occurred_at        timestamptz NOT NULL DEFAULT now(),
+    tx_hash            bytea,
+    log_index          integer,
+    UNIQUE (tx_hash, log_index)
 );
 
 CREATE INDEX check_event_occurred_at_idx        ON event.check_event (occurred_at DESC);
