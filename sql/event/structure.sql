@@ -87,3 +87,21 @@ CREATE TABLE event.sweep_event
 
 CREATE INDEX sweep_event_occurred_at_idx ON event.sweep_event (occurred_at DESC);
 CREATE INDEX sweep_event_sweeper_idx     ON event.sweep_event (sweeper);
+
+-- ##################################################################################################################
+-- CONTRACT_EVENT (generic audit log for Registry events with no dedicated table)
+-- ##################################################################################################################
+CREATE TABLE event.contract_event
+(
+    id            bigserial PRIMARY KEY,
+    event_name    varchar(64) NOT NULL,
+    payload       jsonb       NOT NULL DEFAULT '{}'::jsonb,
+    block_number  bigint      NOT NULL,
+    tx_hash       bytea       NOT NULL,
+    log_index     integer     NOT NULL,
+    occurred_at   timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (tx_hash, log_index)
+);
+
+CREATE INDEX contract_event_occurred_at_idx ON event.contract_event (occurred_at DESC);
+CREATE INDEX contract_event_event_name_idx  ON event.contract_event (event_name);
