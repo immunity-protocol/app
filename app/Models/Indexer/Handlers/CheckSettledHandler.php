@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Indexer\Handlers;
 
 use App\Models\Core\NetworkConfig;
+use App\Models\Indexer\Pricing\MoralisPriceService;
 use Zephyrus\Data\Database;
 
 /**
@@ -24,6 +25,7 @@ class CheckSettledHandler
     public function __construct(
         private readonly Database $db,
         private readonly NetworkConfig $network,
+        private readonly ?MoralisPriceService $pricing = null,
     ) {
     }
 
@@ -42,20 +44,40 @@ class CheckSettledHandler
         $occurredAt = (int) $a['timestamp'];
         $txHashHex = strtolower(self::stripHex((string) $decoded['txHash']));
 
+        // New telemetry fields are present post-redeploy. For the old contract
+        // they're absent, in which case we skip pricing and write NULL — the
+        // retry worker won't pick up rows that have nothing to price either.
+        $valueAtRisk = null;
+        $pricingFailed = false;
+        $tokenAddress = isset($a['tokenAddress']) ? (string) $a['tokenAddress'] : null;
+        $tokenAmount  = isset($a['tokenAmount'])  ? (string) $a['tokenAmount']  : null;
+        $originChain  = isset($a['originChainId']) ? (int) $a['originChainId']  : 0;
+
+        if (
+            $this->pricing !== null
+            && $tokenAddress !== null
+            && $tokenAmount !== null
+            && $tokenAmount !== '0'
+            && $originChain !== 0
+        ) {
+            $valueAtRisk = $this->pricing->priceUsd($tokenAddress, $originChain, $tokenAmount);
+            $pricingFailed = $valueAtRisk === null;
+        }
+
         $row = $this->db->query(
             <<<'SQL'
             INSERT INTO event.check_event (
                 agent_id, tx_kind, chain_id, decision, confidence,
                 matched_entry_id, cache_hit, tee_used, value_at_risk_usd,
-                occurred_at, tx_hash, log_index
+                pricing_failed, occurred_at, tx_hash, log_index
             )
             VALUES (
                 ?, 'unknown', ?, ?::event.check_decision, NULL,
                 CASE WHEN ? THEN
                     (SELECT id FROM antibody.entry WHERE keccak_id = ? LIMIT 1)
                 ELSE NULL END,
-                ?, false, NULL,
-                to_timestamp(?), ?, ?
+                ?, false, ?,
+                ?, to_timestamp(?), ?, ?
             )
             ON CONFLICT (tx_hash, log_index) DO NOTHING
             RETURNING id
@@ -67,6 +89,8 @@ class CheckSettledHandler
                 $cacheHit ? 't' : 'f',
                 '\\x' . $antibodyIdHex,
                 $cacheHit ? 't' : 'f',
+                $valueAtRisk,
+                $pricingFailed ? 't' : 'f',
                 $occurredAt,
                 '\\x' . $txHashHex,
                 (int) $decoded['logIndex'],
