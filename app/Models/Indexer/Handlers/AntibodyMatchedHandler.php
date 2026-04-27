@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Indexer\Handlers;
 
 use App\Models\Core\NetworkConfig;
+use App\Models\Indexer\Pricing\MoralisPriceService;
 use Zephyrus\Data\Database;
 
 /**
@@ -24,6 +25,7 @@ class AntibodyMatchedHandler
     public function __construct(
         private readonly Database $db,
         private readonly NetworkConfig $network,
+        private readonly ?MoralisPriceService $pricing = null,
     ) {
     }
 
@@ -81,17 +83,37 @@ class AntibodyMatchedHandler
             return false;
         }
 
+        // Telemetry fields are added post-redeploy; tolerate the old shape.
+        $tokenAddress = isset($a['tokenAddress']) ? (string) $a['tokenAddress'] : null;
+        $tokenAmount  = isset($a['tokenAmount'])  ? (string) $a['tokenAmount']  : null;
+        $originChain  = isset($a['originChainId']) ? (int) $a['originChainId']  : 0;
+
+        $valueProtected = null;
+        $pricingFailed = false;
+        if (
+            $this->pricing !== null
+            && $tokenAddress !== null
+            && $tokenAmount !== null
+            && $tokenAmount !== '0'
+            && $originChain !== 0
+        ) {
+            $valueProtected = $this->pricing->priceUsd($tokenAddress, $originChain, $tokenAmount);
+            $pricingFailed = $valueProtected === null;
+        }
+
         $row = $this->db->query(
             "INSERT INTO event.block_event
-                (check_event_id, entry_id, agent_id, value_protected_usd,
+                (check_event_id, entry_id, agent_id, value_protected_usd, pricing_failed,
                  tx_hash_attempt, chain_id, occurred_at, tx_hash, log_index)
-             VALUES (?, ?, ?, 0, NULL, ?, now(), ?, ?)
+             VALUES (?, ?, ?, ?, ?, NULL, ?, now(), ?, ?)
              ON CONFLICT (tx_hash, log_index) DO NOTHING
              RETURNING id",
             [
                 $checkEventId,
                 $entryId,
                 '0x' . $agentHex,
+                $valueProtected,
+                $pricingFailed ? 't' : 'f',
                 $this->network->chainId,
                 '\\x' . $txHashHex,
                 (int) $decoded['logIndex'],
