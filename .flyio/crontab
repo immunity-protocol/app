@@ -1,5 +1,7 @@
 # Immunity CRON tier - schedules to call the API tier on internal DNS.
-# Loaded by supercronic in the immunity-cron Fly machine.
-
-# Mock network ticker: every minute, simulates one round of activity.
-* * * * * curl -sS -X POST -H "X-CRON-TOKEN: ${CRON_TOKEN}" http://immunity-api.internal/v1/internal/tick >/dev/null
+# Loaded by supercronic in the immunity-api cron process.
+#
+# No scheduled HTTP tasks at the moment. The on-chain indexer
+# (immunity-indexer Fly app) drives all live data hydration; this crontab
+# stays as scaffolding for any future scheduled HTTP-call jobs that aren't
+# a fit for the long-running worker.
