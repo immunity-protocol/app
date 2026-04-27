@@ -128,4 +128,20 @@ readonly class EntryService
             $types, $statuses, $verdicts, $search, $range, $sevMin, $sevMax, $publisher
         );
     }
+
+    /**
+     * Real per-antibody network-impact metrics, computed from event tables.
+     *
+     * @return array{
+     *   cache_hits: int,
+     *   agents_synced: int,
+     *   blocks_made: int,
+     *   value_protected_usd: string,
+     *   ingestion: list<int>
+     * }
+     */
+    public function impactFor(int $entryId): array
+    {
+        return $this->broker->impactFor($entryId);
+    }
 }

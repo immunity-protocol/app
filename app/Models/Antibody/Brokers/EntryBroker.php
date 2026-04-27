@@ -150,6 +150,90 @@ class EntryBroker extends Broker
     }
 
     /**
+     * Per-antibody network-impact metrics for the detail page. Reads from
+     * event.check_event and event.block_event referencing this entry id.
+     *
+     * @return array{
+     *   cache_hits: int,
+     *   agents_synced: int,
+     *   blocks_made: int,
+     *   value_protected_usd: string,
+     *   ingestion: list<int>
+     * }
+     */
+    public function impactFor(int $entryId): array
+    {
+        return [
+            'cache_hits' => (int) $this->selectValue(
+                "SELECT count(*) FROM event.check_event
+                  WHERE matched_entry_id = ? AND cache_hit = true",
+                [$entryId]
+            ),
+            'agents_synced' => (int) $this->selectValue(
+                "SELECT count(DISTINCT agent_id) FROM event.check_event
+                  WHERE matched_entry_id = ?",
+                [$entryId]
+            ),
+            'blocks_made' => (int) $this->selectValue(
+                "SELECT count(*) FROM event.block_event WHERE entry_id = ?",
+                [$entryId]
+            ),
+            'value_protected_usd' => (string) ($this->selectValue(
+                "SELECT COALESCE(SUM(value_protected_usd), 0)::text
+                   FROM event.block_event WHERE entry_id = ?",
+                [$entryId]
+            ) ?? '0'),
+            'ingestion' => $this->buildIngestionHistogram($entryId, 30),
+        ];
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function buildIngestionHistogram(int $entryId, int $buckets): array
+    {
+        $rows = $this->select(
+            "WITH e AS (
+                SELECT id, created_at FROM antibody.entry WHERE id = ?
+            ),
+            spans AS (
+                SELECT
+                    GREATEST(
+                        EXTRACT(EPOCH FROM (now() - (SELECT created_at FROM e))) * 1000,
+                        1
+                    )::bigint AS span_ms
+            )
+            SELECT
+                LEAST(
+                    ?::int - 1,
+                    GREATEST(0,
+                        FLOOR(
+                            EXTRACT(EPOCH FROM (c.occurred_at - e.created_at)) * 1000
+                            / GREATEST(s.span_ms / ?::int, 1)
+                        )::int
+                    )
+                ) AS bucket,
+                count(*) AS n
+              FROM event.check_event c
+              CROSS JOIN e
+              CROSS JOIN spans s
+             WHERE c.matched_entry_id = e.id
+             GROUP BY bucket
+             ORDER BY bucket",
+            [$entryId, $buckets, $buckets]
+        );
+
+        $out = array_fill(0, $buckets, 0);
+        foreach ($rows as $r) {
+            $idx = (int) $r->bucket;
+            if ($idx >= 0 && $idx < $buckets) {
+                $out[$idx] = (int) $r->n;
+            }
+        }
+        return $out;
+    }
+
+    /**
      * Page-number paginated, multi-value filter list for the explorer UI.
      *
      * @param array<int, string> $types     antibody.entry_type values
