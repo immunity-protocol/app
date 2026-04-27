@@ -28,12 +28,15 @@ use App\Models\Indexer\Brokers\TokenPriceCacheBroker;
 use App\Models\Indexer\Pricing\MoralisPriceService;
 use App\Models\Indexer\Chain\EventDecoder;
 use App\Models\Indexer\Chain\JsonRpcClient;
+use App\Models\Indexer\Chain\MirrorAbi;
 use App\Models\Indexer\Chain\RegistryAbi;
 use App\Models\Indexer\Console\Cadence;
 use App\Models\Indexer\Console\Supervisor;
 use App\Models\Indexer\Handlers\AntibodyMatchedHandler;
+use App\Models\Indexer\Handlers\AntibodyMirroredHandler;
 use App\Models\Indexer\Handlers\AntibodyPublishedHandler;
 use App\Models\Indexer\Handlers\AntibodySlashedHandler;
+use App\Models\Indexer\Handlers\AntibodyUnmirroredHandler;
 use App\Models\Indexer\Handlers\AuditEventHandler;
 use App\Models\Indexer\Handlers\CheckSettledHandler;
 use App\Models\Indexer\Handlers\MirrorEnqueueHandler;
@@ -135,7 +138,7 @@ foreach ([
     };
 }
 
-$poller = new EventPoller(
+$ogPoller = new EventPoller(
     rpc: $rpc,
     decoder: $decoder,
     state: $stateBroker,
@@ -145,6 +148,42 @@ $poller = new EventPoller(
     confirmations: $confirmations,
     chunkSize: $backfillChunk,
 );
+
+// One poller + bootstrap per Mirror chain. Each Mirror exposes the same event
+// surface (AntibodyMirrored / AntibodyUnmirrored / etc), so we share MirrorAbi
+// across chains and just rebind the per-chain handlers.
+$mirrorAbi      = new MirrorAbi();
+$mirrorDecoder  = new EventDecoder($mirrorAbi);
+$mirrorPollers  = [];
+$mirrorBoots    = [];
+foreach ($mirrorNetworks->all() as $chain) {
+    if ($chain->rpcUrl === '') {
+        fwrite(STDERR, "indexer: skipping chain {$chain->chainId} ({$chain->name}): no RPC URL configured\n");
+        continue;
+    }
+    $mirrorRpc      = new JsonRpcClient($chain->rpcUrl);
+    $mirroredH      = new AntibodyMirroredHandler($db, $chain->chainId, $chain->name);
+    $unmirroredH    = new AntibodyUnmirroredHandler($db, $chain->chainId);
+    $mirrorHandlers = [
+        'AntibodyMirrored'   => fn (array $d) => $mirroredH->handle($d),
+        'AntibodyUnmirrored' => fn (array $d) => $unmirroredH->handle($d),
+    ];
+    foreach (['AddressBlocked', 'CallPatternBlocked', 'BytecodeBlocked', 'GraphTaintAdded',
+              'SemanticPatternAdded', 'AdminTransferred', 'RelayerSet'] as $auxName) {
+        $mirrorHandlers[$auxName] = fn (array $d) => $auditH->handle($d);
+    }
+    $mirrorPollers[] = new EventPoller(
+        rpc: $mirrorRpc,
+        decoder: $mirrorDecoder,
+        state: $stateBroker,
+        chainId: $chain->chainId,
+        contractAddress: $chain->mirrorAddress,
+        handlers: $mirrorHandlers,
+        confirmations: $confirmations,
+        chunkSize: $backfillChunk,
+    );
+    $mirrorBoots[] = new BackfillBootstrap($stateBroker, $chain->chainId, $chain->deployBlock);
+}
 
 $nodeBridge = new NodeBridge(
     scriptPath: ROOT_DIR . '/scripts/og-download.mjs',
@@ -167,15 +206,15 @@ if ($network->ensRpcUrl !== '') {
 
 $statRefresher = new StatRefresher($db, $statBroker);
 $cadence = new Cadence();
-$bootstrap = new BackfillBootstrap($stateBroker, $network->chainId, $deployBlock);
+$ogBootstrap = new BackfillBootstrap($stateBroker, $network->chainId, $deployBlock);
 
 $pricingRetry = $pricingService === null
     ? null
     : new PricingRetryWorker($db, $pricingService);
 
 $supervisor = new Supervisor(
-    bootstrap: $bootstrap,
-    poller: $poller,
+    bootstraps: array_merge([$ogBootstrap], $mirrorBoots),
+    pollers: array_merge([$ogPoller], $mirrorPollers),
     hydration: $hydrationWorker,
     expiry: $expirySweep,
     ens: $ensWorker,

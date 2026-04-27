@@ -35,9 +35,13 @@ class Supervisor
     private int $totalHydrated = 0;
     private int $totalExpired = 0;
 
+    /**
+     * @param BackfillBootstrap[] $bootstraps  one per chain (0G + each Mirror chain)
+     * @param EventPoller[]       $pollers     one per chain (same order is fine; pollers are independent)
+     */
     public function __construct(
-        private readonly BackfillBootstrap $bootstrap,
-        private readonly EventPoller $poller,
+        private readonly array $bootstraps,
+        private readonly array $pollers,
         private readonly HydrationWorker $hydration,
         private readonly ExpirySweep $expiry,
         private readonly ?EnsResolutionWorker $ens,
@@ -53,13 +57,16 @@ class Supervisor
     public function run(): int
     {
         $this->installSignalHandlers();
-        $boot = $this->bootstrap->bootstrap();
-        $this->log(sprintf(
-            "boot: last_processed_block=%d mode=%s seeded=%s",
-            $boot['last_processed_block'],
-            $boot['mode'],
-            $boot['seeded'] ? 'yes' : 'no'
-        ));
+        foreach ($this->bootstraps as $bootstrap) {
+            $boot = $bootstrap->bootstrap();
+            $this->log(sprintf(
+                "boot chain=%d last_processed_block=%d mode=%s seeded=%s",
+                (int) ($boot['chain_id'] ?? 0),
+                $boot['last_processed_block'],
+                $boot['mode'],
+                $boot['seeded'] ? 'yes' : 'no'
+            ));
+        }
 
         $intervalSec = max(0.05, $this->pollIntervalMs / 1000.0);
 
@@ -67,10 +74,12 @@ class Supervisor
             $start = microtime(true);
             $this->iterations++;
 
-            try {
-                $this->totalEvents += $this->poller->tick();
-            } catch (Throwable $e) {
-                $this->log("event-poller error: " . $e->getMessage());
+            foreach ($this->pollers as $poller) {
+                try {
+                    $this->totalEvents += $poller->tick();
+                } catch (Throwable $e) {
+                    $this->log("event-poller chain=" . $poller->chainId() . " error: " . $e->getMessage());
+                }
             }
 
             try {
