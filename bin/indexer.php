@@ -19,6 +19,7 @@ define('ROOT_DIR', dirname(__DIR__));
 require ROOT_DIR . '/vendor/autoload.php';
 
 use App\Models\Core\Db;
+use App\Models\Core\MirrorNetworkRegistry;
 use App\Models\Core\NetworkConfig;
 use App\Models\Event\Brokers\ContractEventBroker;
 use App\Models\Indexer\Brokers\HydrationQueueBroker;
@@ -35,8 +36,11 @@ use App\Models\Indexer\Handlers\AntibodyPublishedHandler;
 use App\Models\Indexer\Handlers\AntibodySlashedHandler;
 use App\Models\Indexer\Handlers\AuditEventHandler;
 use App\Models\Indexer\Handlers\CheckSettledHandler;
+use App\Models\Indexer\Handlers\MirrorEnqueueHandler;
 use App\Models\Indexer\Handlers\StakeReleasedHandler;
 use App\Models\Indexer\Handlers\StakeSweptHandler;
+use App\Models\Mirror\Brokers\PendingJobsBroker;
+use App\Models\Mirror\MirrorEnvelopeBuffer;
 use App\Models\Indexer\Storage\NodeBridge;
 use App\Models\Indexer\Workers\BackfillBootstrap;
 use App\Models\Indexer\Workers\EnsResolutionWorker;
@@ -89,7 +93,14 @@ if ($pricingService === null) {
     fwrite(STDERR, "indexer: MORALIS_API_KEY not set; price lookups disabled\n");
 }
 
-$publishedHandler   = new AntibodyPublishedHandler($db, $queueBroker);
+// Mirror enqueue plumbing: AntibodyPublished stashes the full envelope, the
+// matching auxiliary event drains the buffer and writes a job per chain.
+$mirrorNetworks    = MirrorNetworkRegistry::default();
+$pendingJobsBroker = new PendingJobsBroker($db);
+$envelopeBuffer    = new MirrorEnvelopeBuffer();
+$mirrorEnqueue     = new MirrorEnqueueHandler($pendingJobsBroker, $mirrorNetworks, $envelopeBuffer);
+
+$publishedHandler   = new AntibodyPublishedHandler($db, $queueBroker, $envelopeBuffer);
 $checkSettledHandler = new CheckSettledHandler($db, $network, $pricingService);
 $matchedHandler     = new AntibodyMatchedHandler($db, $network, $pricingService);
 $stakeReleasedH     = new StakeReleasedHandler($db);
@@ -105,12 +116,23 @@ $registryHandlers = [
     'StakeSwept'        => fn (array $d) => $stakeSweptH->handle($d),
     'AntibodySlashed'   => fn (array $d) => $slashedH->handle($d),
 ];
+// Audit-only events (no mirror dispatch).
 foreach ([
     'Deposited', 'Withdrew', 'TreasuryWithdrawn', 'Seeded',
-    'OwnershipTransferred', 'AddressBlocked', 'CallPatternBlocked',
-    'BytecodeBlocked', 'GraphTaintAdded', 'SemanticPatternAdded',
+    'OwnershipTransferred',
 ] as $auditName) {
     $registryHandlers[$auditName] = fn (array $d) => $auditH->handle($d);
+}
+// Auxiliary events: write to the audit log, then drain the envelope buffer to
+// enqueue mirror jobs. Both branches must run.
+foreach ([
+    'AddressBlocked', 'CallPatternBlocked', 'BytecodeBlocked',
+    'GraphTaintAdded', 'SemanticPatternAdded',
+] as $auxName) {
+    $registryHandlers[$auxName] = function (array $d) use ($auditH, $mirrorEnqueue): bool {
+        $auditH->handle($d);
+        return $mirrorEnqueue->handle($d);
+    };
 }
 
 $poller = new EventPoller(

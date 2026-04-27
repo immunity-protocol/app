@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Indexer\Handlers;
 
 use App\Models\Indexer\Brokers\HydrationQueueBroker;
+use App\Models\Mirror\MirrorEnvelopeBuffer;
 use Zephyrus\Data\Database;
 
 /**
@@ -44,6 +45,7 @@ class AntibodyPublishedHandler
     public function __construct(
         private readonly Database $db,
         private readonly HydrationQueueBroker $queue,
+        private readonly ?MirrorEnvelopeBuffer $envelopeBuffer = null,
     ) {
     }
 
@@ -162,6 +164,13 @@ class AntibodyPublishedHandler
         // Enqueue 0G Storage hydration unless evidenceCid is empty.
         if (!self::isZeroHex($evidenceCidHex)) {
             $this->queue->enqueueHex($keccakIdHex, $evidenceCidHex);
+        }
+
+        // Stash the full event args for the relayer; the matching auxiliary
+        // event (AddressBlocked / CallPatternBlocked / ...) fires later in
+        // the same tx and will drain this buffer to enqueue mirror jobs.
+        if ($inserted && $this->envelopeBuffer !== null) {
+            $this->envelopeBuffer->stash($keccakIdHex, $a);
         }
 
         unset($decoded['blockNumber'], $decoded['logIndex']);
