@@ -78,6 +78,33 @@ services:
           && (test -d node_modules || npm install --legacy-peer-deps --omit=dev --no-audit --no-fund) \
           && exec php /var/www/html/bin/indexer.php
 
+  relayer:
+    build:
+      context: "./docker/services/php"
+    container_name: "immunity_relayer"
+    restart: 'no'
+    environment:
+      MODE: "RELAYER"
+      SEPOLIA_RPC_URL: "${SEPOLIA_RPC_URL:-}"
+      BASE_SEPOLIA_RPC_URL: "${BASE_SEPOLIA_RPC_URL:-}"
+      RELAYER_PRIVATE_KEY_SEPOLIA: "${RELAYER_PRIVATE_KEY_SEPOLIA:-}"
+      RELAYER_PRIVATE_KEY_BASE_SEPOLIA: "${RELAYER_PRIVATE_KEY_BASE_SEPOLIA:-}"
+      RELAYER_POLL_INTERVAL_MS: "${RELAYER_POLL_INTERVAL_MS:-2000}"
+      RELAYER_MAX_RETRIES: "${RELAYER_MAX_RETRIES:-5}"
+      RELAYER_BATCH_SIZE: "${RELAYER_BATCH_SIZE:-10}"
+      RELAYER_BACKOFF_BASE_MS: "${RELAYER_BACKOFF_BASE_MS:-5000}"
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - database
+    command:
+      - "sh"
+      - "-c"
+      - |
+        cd /var/www/html/scripts \
+          && (test -d node_modules || npm install --legacy-peer-deps --omit=dev --no-audit --no-fund) \
+          && exec php /var/www/html/bin/relayer.php
+
   database:
     build:
       context: "./docker/services/postgres"
