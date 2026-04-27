@@ -4,28 +4,56 @@ declare(strict_types=1);
 
 namespace App\Controllers\Web;
 
+use App\Controllers\Web\Antibody\AntibodyFilters;
+use App\Controllers\Web\Antibody\Pagination;
 use App\Models\Antibody\Services\EntryService;
 use App\Models\Antibody\Services\MirrorService;
 use App\Models\Antibody\Services\PublisherService;
 use App\Models\Event\Services\BlockEventService;
+use Zephyrus\Http\Request;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;
 
 final class AntibodyController extends Controller
 {
     #[Get('/antibodies')]
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $filters = AntibodyFilters::fromRequest($request);
         $entries = new EntryService();
-        $rows = $entries->findRecent(30);
-        $totals = [
-            'active'   => $entries->countFiltered(status: 'active'),
-            'expired'  => $entries->countFiltered(status: 'expired'),
-            'slashed'  => $entries->countFiltered(status: 'slashed'),
-        ];
+
+        $total = $entries->countAll(
+            $filters->types, $filters->statuses, $filters->verdicts,
+            $filters->search, $filters->range,
+            $filters->sevMin, $filters->sevMax, $filters->publisher
+        );
+        $rows = $entries->findPage(
+            $filters->types, $filters->statuses, $filters->verdicts,
+            $filters->search, $filters->range,
+            $filters->sevMin, $filters->sevMax, $filters->publisher,
+            $filters->perPage, $filters->page
+        );
+        $pagination = Pagination::compute($total, $filters->page, $filters->perPage);
+
+        $statusCounts = $entries->countByStatus();
+        $typeCounts = $entries->countByType();
+        $verdictCounts = $entries->countByVerdict();
+
         return $this->render('antibodies/index', [
-            'rows'   => $rows,
-            'totals' => $totals,
+            'rows'       => $rows,
+            'total'      => $total,
+            'filters'    => $filters,
+            'pagination' => $pagination,
+            'totals'     => [
+                'active'  => $statusCounts['active']  ?? 0,
+                'expired' => $statusCounts['expired'] ?? 0,
+                'slashed' => $statusCounts['slashed'] ?? 0,
+            ],
+            'facets' => [
+                'type'    => $typeCounts,
+                'status'  => $statusCounts,
+                'verdict' => $verdictCounts,
+            ],
         ]);
     }
 
