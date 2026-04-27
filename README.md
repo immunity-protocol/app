@@ -128,6 +128,32 @@ All env vars have safe testnet defaults; override via `.env` or `docker-compose.
 - Reorg policy is N=2 confirmations (testnet-grade). Mainnet would need a deeper window and a hash-based detector; revisit before mainnet deploy.
 - ENS reverse resolution depends on a public Ethereum mainnet RPC and is best-effort. Failures back off for 24h.
 
+## Value-protected telemetry
+
+The Registry contract's `CheckSettled` event carries `(agent, antibodyId, wasMatch, fee, timestamp)` only — no value channel. To populate the per-antibody and system-wide "value protected" metrics, agents (or any trusted reporter) post the at-risk USD amount of the blocked transaction to a small internal endpoint:
+
+```
+POST /v1/internal/value-protected
+Header: X-CRON-TOKEN: <secret>
+Body  : { "tx_hash": "0x…", "value_at_risk_usd": "12345.67" }
+```
+
+Behavior:
+- Looks up `event.check_event` rows by `tx_hash` and stamps `value_at_risk_usd`.
+- Mirrors the value into `event.block_event.value_protected_usd` for blocks tied to that tx.
+- 200 with `{updated: N}` when at least one row matched; 202 when no row matched yet (out-of-order arrival; the SDK can retry or skip).
+- Idempotent: reposting the same value is a no-op.
+
+The aggregate dashboard tile (`value_protected_usd`) reads `SUM(value_protected_usd)` from `event.block_event` via the indexer's `StatRefresher`, so once telemetry arrives the home + dashboard tiles light up automatically.
+
+For demo seeding (no SDK telemetry yet), use the bundled CLI:
+
+```bash
+docker compose exec api php bin/record-value-protected.php <tx_hash> <usd>
+```
+
+SDK integration is out of scope for this repo. The follow-up in `~/www/immunity-sdk` is to extend `settleCheck()` to POST `{tx_hash, valueAtRiskUsd}` after the chain confirms the block, derived from the SDK's `ProposedTx.value` * a USD oracle quote, best-effort (a failed POST does not affect the on-chain block).
+
 ## Project layout
 
 ```
