@@ -62,6 +62,10 @@ services:
       INDEXER_BACKFILL_CHUNK: "${INDEXER_BACKFILL_CHUNK:-5000}"
       INDEXER_CONFIRMATIONS: "${INDEXER_CONFIRMATIONS:-2}"
       MORALIS_API_KEY: "${MORALIS_API_KEY:-}"
+      # Mirror chain RPCs are read from config/mirror-network.json. Empty
+      # values cause the per-chain poller to log a warning and skip.
+      SEPOLIA_RPC_URL: "${SEPOLIA_RPC_URL:-}"
+      BASE_SEPOLIA_RPC_URL: "${BASE_SEPOLIA_RPC_URL:-}"
     volumes:
       - ./:/var/www/html
     depends_on:
