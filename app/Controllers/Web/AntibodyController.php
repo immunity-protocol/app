@@ -68,12 +68,14 @@ final class AntibodyController extends Controller
         $mirrors = (new MirrorService())->findByEntryId($entry->id);
         $blocks = (new BlockEventService())->findRecentByEntryId($entry->id, 10);
         $publisher = (new PublisherService())->findByAddressHex(bin2hex($entry->publisher));
+        $impact = $entries->impactFor($entry->id);
         return $this->render('antibodies/show', [
             'id'        => $id,
             'entry'     => $entry,
             'mirrors'   => $mirrors,
             'blocks'    => $blocks,
             'publisher' => $publisher,
+            'impact'    => $impact,
         ]);
     }
 }

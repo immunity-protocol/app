@@ -58,12 +58,12 @@
   ],
 
   'impact' => [
-    'cache_hits'   => $publisher !== null ? $publisher->successful_blocks * 300 : 0,
-    'agents_synced'=> $publisher !== null ? $publisher->successful_blocks * 25 : 0,
-    'blocks_made'  => count($blocks),
-    'llm_saved_usd'=> $publisher !== null ? (float) $publisher->total_earned_usdc : 0.0,
-    'ingestion'    => array_fill(0, 30, 1),
-    'block_events' => array_map(fn ($b) => [
+    'cache_hits'         => $impact['cache_hits'],
+    'agents_synced'      => $impact['agents_synced'],
+    'blocks_made'        => $impact['blocks_made'],
+    'value_protected_usd'=> (float) $impact['value_protected_usd'],
+    'ingestion'          => $impact['ingestion'],
+    'block_events'       => array_map(fn ($b) => [
       'agent'  => $b->agent_id,
       'method' => 'check()',
       'chain'  => 'evm:' . $b->chain_id,
@@ -298,12 +298,12 @@
                     <div class="px-6 py-5">
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Cache hits</div>
                         <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{format('decimal', $ab['impact']['cache_hits'], 0)}</div>
-                        <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-1">+1,247 / hr</div>
+                        <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">SDK check() matches</div>
                     </div>
                     <div class="px-6 py-5">
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Agents synced</div>
                         <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{format('decimal', $ab['impact']['agents_synced'], 0)}</div>
-                        <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">of 2,180 online</div>
+                        <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">distinct callers</div>
                     </div>
                     <div class="px-6 py-5">
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Attacks blocked</div>
@@ -312,8 +312,8 @@
                     </div>
                     <div class="px-6 py-5">
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">USD protected</div>
-                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{format('money', $ab['impact']['llm_saved_usd'])}</div>
-                        <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">tx value at intercept</div>
+                        <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{format('money', $ab['impact']['value_protected_usd'])}</div>
+                        <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">{$ab['impact']['blocks_made'] === 0 ? 'no blocks recorded yet' : 'sum of tx value at intercept'}</div>
                     </div>
                 </div>
 
