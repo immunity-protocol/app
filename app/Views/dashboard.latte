@@ -109,13 +109,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <div class="hr-fade mb-10"></div>
 
-    {* ============== STATS BAR ============== *}
+    {* ============== STATS BAR (live; values come from /api/v1/network/stats) ============== *}
     {var $stats = [
-      ['label' => 'Nodes online',         'value' => 60,      'fmt' => 'count', 'delta' => '+3 in 24h',     'tone' => 'immune'],
-      ['label' => 'Antibodies active',    'value' => 312,     'fmt' => 'count', 'delta' => '+47 today',     'tone' => 'immune'],
-      ['label' => 'Mints / minute',       'value' => 4.7,     'fmt' => 'rate',  'delta' => '+0.8 vs avg',   'tone' => 'immune'],
-      ['label' => 'Attacks blocked, 24h', 'value' => 1284,    'fmt' => 'count', 'delta' => '+212 vs prev',  'tone' => 'threat'],
-      ['label' => 'Value protected, 24h', 'value' => 248312,  'fmt' => 'money', 'delta' => '+$31,420 vs prev', 'tone' => 'accent'],
+      ['label' => 'Nodes online',         'metric' => 'agents_online',       'fmt' => 'count', 'tone' => 'immune'],
+      ['label' => 'Antibodies active',    'metric' => 'antibodies_active',   'fmt' => 'count', 'tone' => 'immune'],
+      ['label' => 'Cache hits / hour',    'metric' => 'cache_hits_per_hour', 'fmt' => 'count', 'tone' => 'immune'],
+      ['label' => 'LLM calls saved',      'metric' => 'llm_calls_saved',     'fmt' => 'count', 'tone' => 'threat'],
+      ['label' => 'Value protected',      'metric' => 'value_protected_usd', 'fmt' => 'money', 'tone' => 'accent'],
     ]}
 
     <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 grid grid-cols-2 md:grid-cols-5 divide-x divide-ink-line/40 mb-10">
@@ -128,12 +128,11 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="px-6 py-6">
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-2">{$s['label']}</div>
                 <div class="font-mono text-[28px] {$valueTone} tabular-nums leading-none">
-                    {if $s['fmt'] === 'money'}{format('money', $s['value'])}
-                    {elseif $s['fmt'] === 'rate'}{format('decimal', $s['value'], 1)}
-                    {else}{format('decimal', $s['value'], 0)}
+                    {if $s['fmt'] === 'money'}<span data-stat-money="{$s['metric']}">-</span>
+                    {else}<span data-stat="{$s['metric']}">-</span>
                     {/if}
                 </div>
-                <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-2">{$s['delta']}</div>
+                <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-2" data-delta{if $s['fmt'] === 'money'}-money{/if}="{$s['metric']}">&nbsp;</div>
             </div>
         {/foreach}
     </div>
@@ -323,5 +322,47 @@ window.addEventListener('DOMContentLoaded', () => {
     </section>
 
 </section>
+
+<script src="{asset('/javascripts/live.js')}"></script>
+<script>
+(function () {
+  function fmtNumber(v) {
+    if (v === null || v === undefined || v === '') return '-';
+    const n = Number(v);
+    return Number.isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '-';
+  }
+  function fmtMoney(v) {
+    if (v === null || v === undefined || v === '') return '-';
+    const n = Number(v);
+    return Number.isFinite(n) ? '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '-';
+  }
+  function fmtDelta(v, money) {
+    if (v === null || v === undefined || v === '') return ' ';
+    const n = Number(v);
+    if (!Number.isFinite(n)) return ' ';
+    const sign = n >= 0 ? '+' : '-';
+    return sign + (money ? '$' : '') + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' in 1h';
+  }
+  Live.poll('/api/v1/network/stats', 4000, function (data) {
+    const tiles = data.tiles || {};
+    document.querySelectorAll('[data-stat]').forEach(function (el) {
+      const m = el.getAttribute('data-stat');
+      if (tiles[m]) el.textContent = fmtNumber(tiles[m].value);
+    });
+    document.querySelectorAll('[data-stat-money]').forEach(function (el) {
+      const m = el.getAttribute('data-stat-money');
+      if (tiles[m]) el.textContent = fmtMoney(tiles[m].value);
+    });
+    document.querySelectorAll('[data-delta]').forEach(function (el) {
+      const m = el.getAttribute('data-delta');
+      if (tiles[m]) el.textContent = fmtDelta(tiles[m].delta_1h, false);
+    });
+    document.querySelectorAll('[data-delta-money]').forEach(function (el) {
+      const m = el.getAttribute('data-delta-money');
+      if (tiles[m]) el.textContent = fmtDelta(tiles[m].delta_1h, true);
+    });
+  });
+})();
+</script>
 
 {/block}
