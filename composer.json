@@ -15,15 +15,20 @@
         {
             "type": "vcs",
             "url": "https://github.com/zephyrus-framework/core.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/ophelios-studio/php-ethereum-ens.git"
         }
     ],
     "require": {
         "php": "^8.4",
-        "zephyrus-framework/core": "dev-dev",
-        "ext-pdo": "*",
         "ext-intl": "*",
+        "ext-mbstring": "*",
+        "ext-pdo": "*",
         "ext-sodium": "*",
-        "ext-mbstring": "*"
+        "ophelios/php-ethereum-ens": "dev-dev",
+        "zephyrus-framework/core": "dev-dev"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
