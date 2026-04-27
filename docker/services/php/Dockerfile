@@ -18,3 +18,12 @@ RUN set -e; \
     curl -fsSL -o /usr/local/bin/supercronic \
       "https://github.com/aptible/supercronic/releases/download/v${SUPERCRONIC_VERSION}/supercronic-linux-${sc_arch}"; \
     chmod +x /usr/local/bin/supercronic
+
+# Node 20 for the indexer's 0G Storage hydration shell-out helper.
+# The PHP HydrationWorker spawns `node scripts/og-download.mjs <cid>` per
+# pending job; the SDK is TypeScript-only so we run it via Node. The
+# indexer service installs scripts/node_modules at startup against the
+# volume-mounted scripts/package.json (`npm install` is idempotent).
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+ && apt-get install -y --no-install-recommends nodejs \
+ && rm -rf /var/lib/apt/lists/*
