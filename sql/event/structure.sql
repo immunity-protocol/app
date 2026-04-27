@@ -48,7 +48,10 @@ CREATE TABLE event.block_event
     value_protected_usd  numeric(20, 6) NOT NULL,
     tx_hash_attempt      bytea,
     chain_id             integer NOT NULL,
-    occurred_at          timestamptz NOT NULL DEFAULT now()
+    occurred_at          timestamptz NOT NULL DEFAULT now(),
+    tx_hash              bytea,
+    log_index            integer,
+    UNIQUE (tx_hash, log_index)
 );
 
 CREATE INDEX block_event_occurred_at_idx ON event.block_event (occurred_at DESC);
