@@ -288,7 +288,7 @@
             </section>
 
             {* ----------- NETWORK IMPACT PANEL ----------- *}
-            {var $maxIng = max($ab['impact']['ingestion'])}
+            {var $maxIng = max(1, max($ab['impact']['ingestion']))}
             <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
 
                 <header class="px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-4">
@@ -326,11 +326,11 @@
                     </div>
                 </div>
 
-                {* Ingestion sparkline *}
+                {* Ingestion sparkline (real histogram of check_event since publish) *}
                 <div class="px-7 py-6 border-b border-ink-line/40">
                     <div class="flex items-center justify-between mb-3">
                         <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary">Ingestion rate</span>
-                        <span class="font-mono text-[10px] text-fg-dim">first 30 min, hits/sec</span>
+                        <span class="font-mono text-[10px] text-fg-dim">{count($ab['impact']['ingestion'])} buckets across antibody lifetime</span>
                     </div>
                     <svg viewBox="0 0 600 90" preserveAspectRatio="none" class="w-full h-[90px]" aria-hidden="true">
                         <line x1="0" y1="89" x2="600" y2="89" stroke="rgba(232,232,227,0.06)" stroke-width="1"/>
@@ -342,10 +342,8 @@
                         {/foreach}
                     </svg>
                     <div class="flex justify-between mt-2 font-mono text-[9.5px] text-fg-dim">
-                        <span>t+0</span>
-                        <span>t+10m</span>
-                        <span>t+20m</span>
-                        <span>t+30m</span>
+                        <span>publish</span>
+                        <span>now</span>
                     </div>
                 </div>
 
