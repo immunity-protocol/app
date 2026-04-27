@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Models\Event\Brokers;
 
+use App\Models\Core\NetworkConfig;
 use App\Models\Event\Brokers\CheckEventBroker;
 use Tests\IntegrationTestCase;
 
@@ -86,7 +87,7 @@ final class CheckEventValueAtRiskTest extends IntegrationTestCase
         return $this->broker->insert([
             'agent_id'    => '0xagent',
             'tx_kind'     => 'unknown',
-            'chain_id'    => 16602,
+            'chain_id'    => NetworkConfig::galileo()->chainId,
             'decision'    => 'block',
             'cache_hit'   => 'true',
             'tee_used'    => 'false',
@@ -123,8 +124,8 @@ final class CheckEventValueAtRiskTest extends IntegrationTestCase
             "INSERT INTO event.block_event
                 (check_event_id, entry_id, agent_id, value_protected_usd,
                  chain_id, occurred_at, tx_hash, log_index)
-             VALUES (?, ?, '0xagent', 0, 16602, now(), ?, 1)",
-            [$checkId, $entryId, '\\x' . $hex]
+             VALUES (?, ?, '0xagent', 0, ?, now(), ?, 1)",
+            [$checkId, $entryId, NetworkConfig::galileo()->chainId, '\\x' . $hex]
         );
     }
 }

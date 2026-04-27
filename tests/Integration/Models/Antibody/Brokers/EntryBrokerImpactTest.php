@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Models\Antibody\Brokers;
 
 use App\Models\Antibody\Brokers\EntryBroker;
+use App\Models\Core\NetworkConfig;
 use Tests\IntegrationTestCase;
 
 /**
@@ -104,10 +105,10 @@ final class EntryBrokerImpactTest extends IntegrationTestCase
                 agent_id, tx_kind, chain_id, decision, matched_entry_id,
                 cache_hit, tee_used, occurred_at
              ) VALUES (
-                ?, 'unknown', 16602, 'block'::event.check_decision, ?,
+                ?, 'unknown', ?, 'block'::event.check_decision, ?,
                 ?, false, now()
              ) RETURNING id",
-            [$agent, $entryId, $cacheHit ? 'true' : 'false']
+            [$agent, NetworkConfig::galileo()->chainId, $entryId, $cacheHit ? 'true' : 'false']
         )->fetch();
         return (int) $row->id;
     }
@@ -118,8 +119,8 @@ final class EntryBrokerImpactTest extends IntegrationTestCase
             "INSERT INTO event.block_event (
                 check_event_id, entry_id, agent_id, value_protected_usd,
                 chain_id, occurred_at
-             ) VALUES (?, ?, 'agent', ?::numeric(20, 6), 16602, now())",
-            [$checkId, $entryId, $valueUsd]
+             ) VALUES (?, ?, 'agent', ?::numeric(20, 6), ?, now())",
+            [$checkId, $entryId, $valueUsd, NetworkConfig::galileo()->chainId]
         );
     }
 }
