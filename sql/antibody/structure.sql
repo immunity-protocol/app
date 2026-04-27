@@ -91,7 +91,8 @@ CREATE TABLE antibody.publisher
     successful_challenges_won  integer NOT NULL DEFAULT 0,
     challenges_lost            integer NOT NULL DEFAULT 0,
     first_seen_at              timestamptz NOT NULL DEFAULT now(),
-    last_active_at             timestamptz NOT NULL DEFAULT now()
+    last_active_at             timestamptz NOT NULL DEFAULT now(),
+    last_ens_resolved_at       timestamptz
 );
 
 CREATE INDEX publisher_last_active_at_idx       ON antibody.publisher (last_active_at DESC);
