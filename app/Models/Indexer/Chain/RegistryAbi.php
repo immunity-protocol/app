@@ -14,10 +14,12 @@ use RuntimeException;
  */
 class RegistryAbi
 {
-    public const CHAIN_ID = 16602;
-    public const REGISTRY_ADDRESS_DEFAULT = '0x45Ee45Ca358b3fc9B1b245a8f1c1C3128caC8e48';
-
-    /** Galileo deploy block from contracts-0g ignition journal (tx 0xf24d3e5b...). */
+    /**
+     * Galileo deploy block — kept here because it's a per-deploy artifact, not
+     * network-wide config. Override via `OG_REGISTRY_DEPLOY_BLOCK` env var when
+     * the contract is redeployed. (Chain id, registry address, RPC URL, etc.
+     * live on `App\Models\Core\NetworkConfig`.)
+     */
     public const DEPLOY_BLOCK_DEFAULT = 29848000;
 
     /** @var array<int, array<string, mixed>> */

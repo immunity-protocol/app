@@ -10,6 +10,9 @@ use Tests\TestCase;
 
 final class EventDecoderTest extends TestCase
 {
+    /** Address used as a stable test fixture; not a "real" config value. */
+    private const REGISTRY_ADDRESS_FIXTURE = '0x45Ee45Ca358b3fc9B1b245a8f1c1C3128caC8e48';
+
     private RegistryAbi $abi;
     private EventDecoder $decoder;
 
@@ -69,7 +72,7 @@ final class EventDecoderTest extends TestCase
             'blockNumber'    => '0x' . dechex(29900000),
             'transactionHash' => '0x' . str_repeat('1', 64),
             'logIndex'       => '0x5',
-            'address'        => RegistryAbi::REGISTRY_ADDRESS_DEFAULT,
+            'address'        => self::REGISTRY_ADDRESS_FIXTURE,
         ];
         $decoded = $this->decoder->decode($log);
         self::assertNotNull($decoded);
@@ -106,7 +109,7 @@ final class EventDecoderTest extends TestCase
             'blockNumber'    => '0x1',
             'transactionHash' => '0x' . str_repeat('2', 64),
             'logIndex'       => '0x0',
-            'address'        => RegistryAbi::REGISTRY_ADDRESS_DEFAULT,
+            'address'        => self::REGISTRY_ADDRESS_FIXTURE,
         ];
         $decoded = $this->decoder->decode($log);
         self::assertNotNull($decoded);
@@ -139,7 +142,7 @@ final class EventDecoderTest extends TestCase
             'blockNumber'    => '0x2',
             'transactionHash' => '0x' . str_repeat('3', 64),
             'logIndex'       => '0x1',
-            'address'        => RegistryAbi::REGISTRY_ADDRESS_DEFAULT,
+            'address'        => self::REGISTRY_ADDRESS_FIXTURE,
         ];
         $decoded = $this->decoder->decode($log);
         self::assertNotNull($decoded);

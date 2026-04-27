@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Indexer\Handlers;
 
-use App\Models\Indexer\Chain\RegistryAbi;
+use App\Models\Core\NetworkConfig;
 use Zephyrus\Data\Database;
 
 /**
@@ -21,8 +21,10 @@ use Zephyrus\Data\Database;
  */
 class CheckSettledHandler
 {
-    public function __construct(private readonly Database $db)
-    {
+    public function __construct(
+        private readonly Database $db,
+        private readonly NetworkConfig $network,
+    ) {
     }
 
     /**
@@ -60,7 +62,7 @@ class CheckSettledHandler
             SQL,
             [
                 '0x' . $agentHex,
-                RegistryAbi::CHAIN_ID,
+                $this->network->chainId,
                 $decision,
                 $cacheHit ? 't' : 'f',
                 '\\x' . $antibodyIdHex,

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Indexer\Handlers;
 
-use App\Models\Indexer\Chain\RegistryAbi;
+use App\Models\Core\NetworkConfig;
 use Zephyrus\Data\Database;
 
 /**
@@ -21,8 +21,10 @@ use Zephyrus\Data\Database;
  */
 class AntibodyMatchedHandler
 {
-    public function __construct(private readonly Database $db)
-    {
+    public function __construct(
+        private readonly Database $db,
+        private readonly NetworkConfig $network,
+    ) {
     }
 
     /**
@@ -69,7 +71,7 @@ class AntibodyMatchedHandler
                      now(), ?, ?)
                  ON CONFLICT (tx_hash, log_index) DO NOTHING
                  RETURNING id",
-                ['0x' . $agentHex, RegistryAbi::CHAIN_ID, $entryId, '\\x' . $txHashHex, -((int) $decoded['logIndex'])]
+                ['0x' . $agentHex, $this->network->chainId, $entryId, '\\x' . $txHashHex, -((int) $decoded['logIndex'])]
             );
             $r = $insCheck->fetch(\PDO::FETCH_ASSOC);
             $checkEventId = $r === false ? null : (int) $r['id'];
@@ -90,7 +92,7 @@ class AntibodyMatchedHandler
                 $checkEventId,
                 $entryId,
                 '0x' . $agentHex,
-                RegistryAbi::CHAIN_ID,
+                $this->network->chainId,
                 '\\x' . $txHashHex,
                 (int) $decoded['logIndex'],
             ]

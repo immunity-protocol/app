@@ -19,6 +19,7 @@ define('ROOT_DIR', dirname(__DIR__));
 require ROOT_DIR . '/vendor/autoload.php';
 
 use App\Models\Core\Db;
+use App\Models\Core\NetworkConfig;
 use App\Models\Event\Brokers\ContractEventBroker;
 use App\Models\Indexer\Brokers\HydrationQueueBroker;
 use App\Models\Indexer\Brokers\StateBroker;
@@ -57,17 +58,14 @@ if ($config->database === null) {
 
 $db = Db::fromConfig($config->database);
 
-$ogRpcUrl          = getenv('OG_RPC_URL') ?: 'https://evmrpc-testnet.0g.ai';
-$ogRegistryAddress = getenv('OG_REGISTRY_ADDRESS') ?: RegistryAbi::REGISTRY_ADDRESS_DEFAULT;
-$ogStorageIndexer  = getenv('OG_STORAGE_INDEXER') ?: 'https://indexer-storage-testnet-turbo.0g.ai';
-$ethRpcUrl         = getenv('ETH_RPC_URL') ?: 'https://eth.llamarpc.com';
+$network           = NetworkConfig::galileo();
 $pollIntervalMs    = (int) (getenv('INDEXER_POLL_INTERVAL_MS') ?: 2000);
 $hydrationConc     = (int) (getenv('INDEXER_HYDRATION_CONCURRENCY') ?: 5);
 $backfillChunk     = (int) (getenv('INDEXER_BACKFILL_CHUNK') ?: 5000);
 $confirmations     = (int) (getenv('INDEXER_CONFIRMATIONS') ?: 2);
 $deployBlock       = (int) (getenv('OG_REGISTRY_DEPLOY_BLOCK') ?: RegistryAbi::DEPLOY_BLOCK_DEFAULT);
 
-$rpc = new JsonRpcClient($ogRpcUrl);
+$rpc = new JsonRpcClient($network->rpcUrl);
 $abi = new RegistryAbi();
 $decoder = new EventDecoder($abi);
 
@@ -77,8 +75,8 @@ $contractEventBroker = new ContractEventBroker($db);
 $statBroker = new StatBroker($db);
 
 $publishedHandler   = new AntibodyPublishedHandler($db, $queueBroker);
-$checkSettledHandler = new CheckSettledHandler($db);
-$matchedHandler     = new AntibodyMatchedHandler($db);
+$checkSettledHandler = new CheckSettledHandler($db, $network);
+$matchedHandler     = new AntibodyMatchedHandler($db, $network);
 $stakeReleasedH     = new StakeReleasedHandler($db);
 $stakeSweptH        = new StakeSweptHandler($db);
 $slashedH           = new AntibodySlashedHandler($db);
@@ -89,7 +87,7 @@ $poller = new EventPoller(
     abi: $abi,
     decoder: $decoder,
     state: $stateBroker,
-    registryAddress: $ogRegistryAddress,
+    registryAddress: $network->registryAddress,
     publishedHandler: $publishedHandler,
     checkSettledHandler: $checkSettledHandler,
     antibodyMatchedHandler: $matchedHandler,
@@ -103,7 +101,7 @@ $poller = new EventPoller(
 
 $nodeBridge = new NodeBridge(
     scriptPath: ROOT_DIR . '/scripts/og-download.mjs',
-    storageIndexerUrl: $ogStorageIndexer,
+    storageIndexerUrl: $network->storageIndexerUrl,
 );
 
 $hydrationWorker = new HydrationWorker($db, $queueBroker, $nodeBridge);
@@ -111,9 +109,9 @@ $expirySweep = new ExpirySweep($db);
 
 // ENS is best-effort. Disable if no RPC URL.
 $ensWorker = null;
-if ($ethRpcUrl !== '') {
+if ($network->ensRpcUrl !== '') {
     try {
-        $ens = new EnsService($ethRpcUrl);
+        $ens = new EnsService($network->ensRpcUrl);
         $ensWorker = new EnsResolutionWorker($db, $ens);
     } catch (Throwable $e) {
         fwrite(STDERR, "indexer: ENS disabled (" . $e->getMessage() . ")\n");
