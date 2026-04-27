@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\Mock;
 
-use App\Models\Mock\HeartbeatFactory;
-use App\Models\Mock\Seeds;
+use Tests\Fixtures\Mock\HeartbeatFactory;
+use Tests\Fixtures\Mock\Seeds;
 use Tests\TestCase;
 
 final class HeartbeatFactoryTest extends TestCase

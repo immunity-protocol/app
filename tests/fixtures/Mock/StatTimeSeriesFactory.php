@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models\Mock;
+namespace Tests\Fixtures\Mock;
 
 /**
  * Generates 7 days of 1-minute network.stat snapshots for the five tiles

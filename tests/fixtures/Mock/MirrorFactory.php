@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models\Mock;
+namespace Tests\Fixtures\Mock;
 
 /**
  * Generates mock mirror rows for ADDRESS antibodies.

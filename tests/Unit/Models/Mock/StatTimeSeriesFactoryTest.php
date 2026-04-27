@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\Mock;
 
-use App\Models\Mock\Seeds;
-use App\Models\Mock\StatTimeSeriesFactory;
+use Tests\Fixtures\Mock\Seeds;
+use Tests\Fixtures\Mock\StatTimeSeriesFactory;
 use Tests\TestCase;
 
 final class StatTimeSeriesFactoryTest extends TestCase

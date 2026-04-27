@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models\Mock;
+namespace Tests\Fixtures\Mock;
 
 /**
  * Reproducibility helpers for the mock generator.

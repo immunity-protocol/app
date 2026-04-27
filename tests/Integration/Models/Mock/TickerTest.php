@@ -7,7 +7,7 @@ namespace Tests\Integration\Models\Mock;
 use App\Models\Agent\Brokers\HeartbeatBroker;
 use App\Models\Antibody\Brokers\EntryBroker;
 use App\Models\Antibody\Brokers\PublisherBroker;
-use App\Models\Mock\Ticker;
+use Tests\Fixtures\Mock\Ticker;
 use Tests\IntegrationTestCase;
 
 final class TickerTest extends IntegrationTestCase

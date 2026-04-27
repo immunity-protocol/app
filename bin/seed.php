@@ -15,8 +15,8 @@ define('ROOT_DIR', dirname(__DIR__));
 require ROOT_DIR . '/vendor/autoload.php';
 
 use App\Models\Core\Db;
-use App\Models\Mock\Orchestrator;
-use App\Models\Mock\Seeds;
+use Tests\Fixtures\Mock\Orchestrator;
+use Tests\Fixtures\Mock\Seeds;
 use Dotenv\Dotenv;
 use Zephyrus\Core\Config\Configuration;
 

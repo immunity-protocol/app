@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\Mock;
 
-use App\Models\Mock\Seeds;
+use Tests\Fixtures\Mock\Seeds;
 use Tests\TestCase;
 
 final class SeedsTest extends TestCase

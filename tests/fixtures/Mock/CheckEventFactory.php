@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models\Mock;
+namespace Tests\Fixtures\Mock;
 
 /**
  * Generates mock event.check_event rows and the derived event.block_event rows.

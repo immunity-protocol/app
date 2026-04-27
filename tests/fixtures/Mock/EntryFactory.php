@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models\Mock;
+namespace Tests\Fixtures\Mock;
 
 /**
  * Generates mock antibody.entry rows with realistic distributions:

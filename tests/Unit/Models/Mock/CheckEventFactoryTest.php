@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\Mock;
 
-use App\Models\Mock\CheckEventFactory;
-use App\Models\Mock\Seeds;
+use Tests\Fixtures\Mock\CheckEventFactory;
+use Tests\Fixtures\Mock\Seeds;
 use Tests\TestCase;
 
 final class CheckEventFactoryTest extends TestCase

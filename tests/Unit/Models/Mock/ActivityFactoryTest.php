@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\Mock;
 
-use App\Models\Mock\ActivityFactory;
+use Tests\Fixtures\Mock\ActivityFactory;
 use Tests\TestCase;
 
 final class ActivityFactoryTest extends TestCase

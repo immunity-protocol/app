@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models\Mock;
+namespace Tests\Fixtures\Mock;
 
 use App\Models\Agent\Brokers\HeartbeatBroker;
 use App\Models\Antibody\Brokers\EntryBroker;
