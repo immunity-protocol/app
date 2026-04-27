@@ -19,6 +19,10 @@
         {
             "type": "vcs",
             "url": "https://github.com/ophelios-studio/php-ethereum-ens.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/ophelios-studio/php-ethereum-moralis.git"
         }
     ],
     "require": {
@@ -28,6 +32,7 @@
         "ext-pdo": "*",
         "ext-sodium": "*",
         "ophelios/php-ethereum-ens": "dev-dev",
+        "ophelios/php-ethereum-moralis": "dev-main",
         "zephyrus-framework/core": "dev-dev"
     },
     "require-dev": {
