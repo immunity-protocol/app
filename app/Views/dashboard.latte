@@ -132,7 +132,11 @@ window.addEventListener('DOMContentLoaded', () => {
                     {else}<span data-stat="{$s['metric']}">-</span>
                     {/if}
                 </div>
-                <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-2" data-delta{if $s['fmt'] === 'money'}-money{/if}="{$s['metric']}">&nbsp;</div>
+                {if $s['fmt'] === 'money'}
+                    <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-2" data-delta-money="{$s['metric']}">&nbsp;</div>
+                {else}
+                    <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-2" data-delta="{$s['metric']}">&nbsp;</div>
+                {/if}
             </div>
         {/foreach}
     </div>
