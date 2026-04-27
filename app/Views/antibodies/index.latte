@@ -104,17 +104,18 @@
             <div>
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Status</div>
                 <div class="space-y-1.5">
-                    {var $statusFacets = [
-                      ['key'=>'Active',     'count'=>312, 'tone'=>'immune-500',  'checked'=>true],
-                      ['key'=>'Challenged', 'count'=>4,   'tone'=>'caution-500', 'checked'=>false],
-                      ['key'=>'Expired',    'count'=>87,  'tone'=>'fg-tertiary', 'checked'=>false],
-                      ['key'=>'Slashed',    'count'=>3,   'tone'=>'threat-500',  'checked'=>false],
+                    {var $statusOptions = [
+                      ['active',     'Active',     'immune-500'],
+                      ['challenged', 'Challenged', 'caution-500'],
+                      ['expired',    'Expired',    'fg-tertiary'],
+                      ['slashed',    'Slashed',    'threat-500'],
                     ]}
-                    {foreach $statusFacets as $f}
+                    {foreach $statusOptions as [$sk, $slabel, $stone]}
+                        {var $checked = in_array($sk, $filters->statuses, true)}
                         <label class="flex items-center gap-2.5 cursor-pointer group">
-                            <input type="checkbox" {if $f['checked']}checked{/if} class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-{$f['tone']} checked:border-{$f['tone']} shrink-0 transition-colors">
-                            <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1">{$f['key']}</span>
-                            <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">{$f['count']}</span>
+                            <input type="checkbox" name="status[]" value="{$sk}" {if $checked}checked{/if} class="appearance-none w-3.5 h-3.5 border border-ink-strong rounded-sm bg-ink-elevated/60 checked:bg-{$stone} checked:border-{$stone} shrink-0 transition-colors">
+                            <span class="font-mono text-[11.5px] uppercase tracking-widest2 text-fg-secondary group-hover:text-fg-primary transition-colors flex-1">{$slabel}</span>
+                            <span class="font-mono text-[10.5px] text-fg-dim tabular-nums">{$facets['status'][$sk] ?? 0}</span>
                         </label>
                     {/foreach}
                 </div>
@@ -124,9 +125,12 @@
             <div>
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Date range</div>
                 <div class="flex flex-wrap gap-1.5">
-                    {var $ranges = [['k'=>'24h','active'=>false],['k'=>'7d','active'=>true],['k'=>'30d','active'=>false],['k'=>'90d','active'=>false],['k'=>'all','active'=>false]]}
-                    {foreach $ranges as $r}
-                        <button class="px-2.5 py-1 font-mono text-[10.5px] uppercase tracking-widest2 border rounded-sm transition-colors {$r['active'] ? 'bg-accent/15 border-accent/60 text-accent' : 'bg-transparent border-ink-line text-fg-secondary hover:text-fg-primary hover:border-fg-tertiary'}">{$r['k']}</button>
+                    {var $rangeOptions = ['24h', '7d', '30d', '90d', 'all']}
+                    {foreach $rangeOptions as $rk}
+                        {var $active = ($filters->range === $rk) || ($filters->range === null && $rk === 'all')}
+                        <label class="px-2.5 py-1 font-mono text-[10.5px] uppercase tracking-widest2 border rounded-sm transition-colors cursor-pointer {$active ? 'bg-accent/15 border-accent/60 text-accent' : 'bg-transparent border-ink-line text-fg-secondary hover:text-fg-primary hover:border-fg-tertiary'}">
+                            <input type="radio" name="range" value="{$rk}" class="sr-only" {if $active}checked{/if}>{$rk}
+                        </label>
                     {/foreach}
                 </div>
             </div>
