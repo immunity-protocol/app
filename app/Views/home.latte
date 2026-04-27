@@ -150,7 +150,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">LLM calls saved</div>
                 <div data-stat="llm_calls_saved" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">4,217</div>
                 <div class="font-mono text-[11px] text-fg-tertiary mt-3">
-                    <span class="text-immune-500">≈ $8,920</span> in compute
+                    <span class="text-immune-500" data-compute-saved="llm_calls_saved">≈ $0.42</span> in compute
                 </div>
             </div>
 
@@ -740,6 +740,19 @@ window.addEventListener('DOMContentLoaded', () => {
     const abs = Math.abs(n);
     return sign + (money ? '$' : '') + abs.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' in 1h';
   }
+  // 0G Compute pricing for qwen-2.5-7b-instruct: 50 gwei in / 100 gwei out,
+  // ~2k tokens per inference, 0G assumed at ~$0.50 spot. Yields ~$0.0001 per
+  // call. Update if 0G pricing or token value moves materially.
+  const COST_PER_CALL_USD = 0.0001;
+  function fmtComputeSaved(callsSaved) {
+    if (callsSaved === null || callsSaved === undefined || callsSaved === '') return '≈ $0';
+    const n = Number(callsSaved);
+    if (!Number.isFinite(n) || n <= 0) return '≈ $0';
+    const usd = n * COST_PER_CALL_USD;
+    if (usd < 0.01) return '≈ <$0.01';
+    if (usd < 1)    return '≈ $' + usd.toFixed(2);
+    return '≈ $' + usd.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  }
 
   Live.poll(STATS_URL, 4000, function (data) {
     const tiles = data.tiles || {};
@@ -758,6 +771,10 @@ window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-delta-money]').forEach(function (el) {
       const m = el.getAttribute('data-delta-money');
       if (tiles[m]) el.textContent = fmtDelta(tiles[m].delta_1h, true);
+    });
+    document.querySelectorAll('[data-compute-saved]').forEach(function (el) {
+      const m = el.getAttribute('data-compute-saved');
+      if (tiles[m]) el.textContent = fmtComputeSaved(tiles[m].value);
     });
   });
 
