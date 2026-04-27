@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models\Indexer\Handlers;
 
+use App\Models\Core\MirrorNetworkRegistry;
+use App\Models\Mirror\Brokers\PendingJobsBroker;
 use Zephyrus\Data\Database;
 
 /**
@@ -14,8 +16,11 @@ use Zephyrus\Data\Database;
  */
 class AntibodySlashedHandler
 {
-    public function __construct(private readonly Database $db)
-    {
+    public function __construct(
+        private readonly Database $db,
+        private readonly ?PendingJobsBroker $jobs = null,
+        private readonly ?MirrorNetworkRegistry $networks = null,
+    ) {
     }
 
     /**
@@ -57,6 +62,17 @@ class AntibodySlashedHandler
              VALUES ('challenged'::event.activity_type, ?, jsonb_build_object('amount', ?::text), ?, now())",
             [$entryId, $amountUsdc, '0x' . $publisherHex]
         );
+
+        // Enqueue an unmirror job for every configured chain. We don't filter
+        // by `antibody.mirror.status='active'` because the mirror tx may not
+        // have landed yet; the relayer treats Mirror.AntibodyNotMirrored() as
+        // a successful no-op. The (keccak, chain, type) unique constraint
+        // dedupes on replay.
+        if ($this->jobs !== null && $this->networks !== null) {
+            foreach ($this->networks->all() as $chain) {
+                $this->jobs->enqueueUnmirror($keccakIdHex, $chain->chainId);
+            }
+        }
 
         return true;
     }

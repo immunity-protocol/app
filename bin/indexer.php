@@ -105,7 +105,7 @@ $checkSettledHandler = new CheckSettledHandler($db, $network, $pricingService);
 $matchedHandler     = new AntibodyMatchedHandler($db, $network, $pricingService);
 $stakeReleasedH     = new StakeReleasedHandler($db);
 $stakeSweptH        = new StakeSweptHandler($db);
-$slashedH           = new AntibodySlashedHandler($db);
+$slashedH           = new AntibodySlashedHandler($db, $pendingJobsBroker, $mirrorNetworks);
 $auditH             = new AuditEventHandler($contractEventBroker);
 
 $registryHandlers = [
