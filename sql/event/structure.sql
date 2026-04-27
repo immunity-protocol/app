@@ -25,6 +25,13 @@ CREATE TABLE event.check_event
     tee_used           boolean NOT NULL,
     value_at_risk_usd  numeric(20, 6),
     pricing_failed     boolean NOT NULL DEFAULT false,
+    -- Raw tx facts emitted by the new Registry contract (post-redeploy). Stored
+    -- so the PricingRetryWorker can re-price rows whose initial Moralis call
+    -- failed without going back to chain. Columns are nullable for tolerating
+    -- pre-redeploy events that don't carry the new fields.
+    token_address      bytea,
+    token_amount       numeric(78, 0),
+    origin_chain_id    integer,
     occurred_at        timestamptz NOT NULL DEFAULT now(),
     tx_hash            bytea,
     log_index          integer,
@@ -53,6 +60,11 @@ CREATE TABLE event.block_event
     agent_id             varchar(128) NOT NULL,
     value_protected_usd  numeric(20, 6),
     pricing_failed       boolean NOT NULL DEFAULT false,
+    -- Same tx facts as event.check_event — the AntibodyMatched event emits the
+    -- identical trio. Redundant but lets price-retry queries hit one table.
+    token_address        bytea,
+    token_amount         numeric(78, 0),
+    origin_chain_id      integer,
     tx_hash_attempt      bytea,
     chain_id             integer NOT NULL,
     occurred_at          timestamptz NOT NULL DEFAULT now(),
