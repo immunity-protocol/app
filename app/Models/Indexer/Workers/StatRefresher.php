@@ -15,8 +15,9 @@ use Zephyrus\Data\Database;
  * - antibodies_active   : count of antibody.entry where status = active
  * - agents_online       : count of agent.heartbeat with last_seen in last 60s
  * - cache_hits_per_hour : count of event.check_event with cache_hit in last hour
- * - llm_calls_saved     : same as cache_hits_per_hour (each cache hit avoided
- *                         one LLM round-trip, by definition)
+ * - llm_calls_saved     : ALL-TIME count of cache hits — each one avoided a TEE
+ *                         inference round-trip, so the lifetime total is the
+ *                         "compute saved" number we surface on the landing page.
  * - value_protected_usd : SUM(value_protected_usd) on event.block_event since
  *                         the indexer started; v1 has no SDK telemetry channel
  *                         so this stays at 0 until the relayer piles it in.
@@ -51,8 +52,7 @@ class StatRefresher
                    WHERE cache_hit = true AND occurred_at >= now() - interval '1 hour'"
             ),
             'llm_calls_saved'     => $this->scalar(
-                "SELECT count(*) FROM event.check_event
-                   WHERE cache_hit = true AND occurred_at >= now() - interval '1 hour'"
+                "SELECT count(*) FROM event.check_event WHERE cache_hit = true"
             ),
             'value_protected_usd' => $this->scalar(
                 "SELECT COALESCE(SUM(value_protected_usd), 0) FROM event.block_event"

@@ -86,25 +86,33 @@ final class EventDecoderTest extends TestCase
 
     public function testDecodeCheckSettledMixedIndexed(): void
     {
-        // CheckSettled(indexed address agent, indexed bytes32 antibodyId, bool wasMatch, uint256 fee, uint64 timestamp)
+        // CheckSettled(indexed address agent, indexed bytes32 antibodyId,
+        //              indexed address tokenAddress, bool wasMatch, uint256 fee,
+        //              uint256 originChainId, uint256 tokenAmount, uint64 timestamp)
         $event = $this->abi->eventByName('CheckSettled');
         $topic0 = RegistryAbi::topicForEvent($event);
 
         $agent = '0xc11376d56e2ab8dbbd3b2fb36a2a0b2e62ecf600';
         $agentTopic = '0x' . str_pad(substr($agent, 2), 64, '0', STR_PAD_LEFT);
         $antibodyId = '0x' . str_repeat('cd', 32);
+        $tokenAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
+        $tokenTopic = '0x' . str_pad(substr($tokenAddress, 2), 64, '0', STR_PAD_LEFT);
 
         $wasMatch = 1;
         $fee = 200;
+        $originChainId = 1;
+        $tokenAmount = 1_500_000_000;
         $ts = 1745000000;
 
         $data =
             str_pad(dechex($wasMatch), 64, '0', STR_PAD_LEFT)
           . str_pad(dechex($fee), 64, '0', STR_PAD_LEFT)
+          . str_pad(dechex($originChainId), 64, '0', STR_PAD_LEFT)
+          . str_pad(dechex($tokenAmount), 64, '0', STR_PAD_LEFT)
           . str_pad(dechex($ts), 64, '0', STR_PAD_LEFT);
 
         $log = [
-            'topics' => [$topic0, $agentTopic, $antibodyId],
+            'topics' => [$topic0, $agentTopic, $antibodyId, $tokenTopic],
             'data'   => '0x' . $data,
             'blockNumber'    => '0x1',
             'transactionHash' => '0x' . str_repeat('2', 64),
@@ -116,8 +124,11 @@ final class EventDecoderTest extends TestCase
         self::assertSame('CheckSettled', $decoded['event']);
         self::assertSame($agent, $decoded['args']['agent']);
         self::assertSame($antibodyId, $decoded['args']['antibodyId']);
+        self::assertSame($tokenAddress, $decoded['args']['tokenAddress']);
         self::assertTrue($decoded['args']['wasMatch']);
         self::assertSame((string) $fee, $decoded['args']['fee']);
+        self::assertSame((string) $originChainId, $decoded['args']['originChainId']);
+        self::assertSame((string) $tokenAmount, $decoded['args']['tokenAmount']);
         self::assertSame((string) $ts, $decoded['args']['timestamp']);
     }
 
