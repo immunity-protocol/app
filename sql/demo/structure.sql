@@ -3,3 +3,27 @@
 -- Tables used by the demo orchestration: agent command queue, fleet pause/resume flag, agent heartbeat.
 -- Populated by the demo agent containers in /Users/dtucker/www/immunity-demo and the /playground UI.
 -- ##################################################################################################################
+
+-- ##################################################################################################################
+-- COMMANDS (operator-injected actions awaiting pickup by a specific agent)
+-- ##################################################################################################################
+CREATE TABLE demo.commands
+(
+    id             bigserial   PRIMARY KEY,
+    agent_id       varchar(64) NOT NULL,
+    command_type   varchar(64) NOT NULL,
+    payload        jsonb       NOT NULL,
+    scheduled_at   timestamptz NOT NULL DEFAULT now(),
+    picked_up_at   timestamptz,
+    executed_at    timestamptz,
+    result_status  varchar(32) NOT NULL DEFAULT 'pending',
+    result_detail  jsonb
+);
+
+-- Partial index drives the SELECT FOR UPDATE SKIP LOCKED dequeue path.
+CREATE INDEX commands_pending_idx
+    ON demo.commands (agent_id, scheduled_at)
+    WHERE picked_up_at IS NULL;
+
+CREATE INDEX commands_scheduled_at_idx ON demo.commands (scheduled_at DESC);
+CREATE INDEX commands_result_status_idx ON demo.commands (result_status);
