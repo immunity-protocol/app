@@ -1,0 +1,22 @@
+{
+  "11155111": {
+    "name": "sepolia",
+    "rpcUrl": "${SEPOLIA_RPC_URL}",
+    "poolManager": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+    "mirror": "0x1be1Ec2F7E2230f9bB1Aa3d5589bB58F8DfD52c7",
+    "hook": "0xd3335F3d69e97C314350EDA63fB5Ba0163Dd0080",
+    "deployedAt": "2026-04-27T18:34:41Z",
+    "deployBlock": 10744251,
+    "relayerPrivateKeyEnv": "RELAYER_PRIVATE_KEY_SEPOLIA"
+  },
+  "84532": {
+    "name": "base-sepolia",
+    "rpcUrl": "${BASE_SEPOLIA_RPC_URL}",
+    "poolManager": "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408",
+    "mirror": null,
+    "hook": null,
+    "deployedAt": null,
+    "deployBlock": null,
+    "relayerPrivateKeyEnv": "RELAYER_PRIVATE_KEY_BASE_SEPOLIA"
+  }
+}
