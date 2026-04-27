@@ -8,13 +8,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql postgresql-contrib postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Node.js 20 powers scripts/og-download.mjs (HydrationWorker) and
-# scripts/mirror-send.mjs (RelayerWorker). PHP composer has no signing
-# library so the relayer dispatches tx submission to ethers.js via proc_open.
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && rm -rf /var/lib/apt/lists/*
-
 # Locale + timezone defaults.
 ENV TZ="UTC"
 RUN locale-gen en_US.UTF-8 && update-locale
@@ -44,11 +37,6 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 
 # App code.
 COPY . /var/www/html
-
-# Install Node helper deps (ethers, 0g-ts-sdk) into scripts/node_modules so the
-# relayer / hydration workers can spawn them without a runtime npm install.
-RUN cd /var/www/html/scripts \
-    && npm install --legacy-peer-deps --omit=dev --no-audit --no-fund
 
 # Writable directories.
 RUN mkdir -p /var/www/html/cache/latte /var/www/html/temp \
