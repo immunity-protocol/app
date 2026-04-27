@@ -51,8 +51,7 @@
         "test": "vendor/bin/phpunit --stderr",
         "test:unit": "vendor/bin/phpunit --testsuite=unit --stderr",
         "test:integration": "vendor/bin/phpunit --testsuite=integration --stderr",
-        "seed": "php bin/seed.php",
-        "seed:reset": "php bin/seed.php --reset"
+        "indexer": "php bin/indexer.php"
     },
     "config": {
         "sort-packages": true
