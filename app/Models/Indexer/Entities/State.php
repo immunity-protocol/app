@@ -11,7 +11,7 @@ class State extends Entity
     public const MODE_BACKFILLING = 'backfilling';
     public const MODE_LIVE = 'live';
 
-    public int $id = 1;
+    public int $chain_id;
     public int $last_processed_block = 0;
     public string $mode = self::MODE_LIVE;
     public string $last_run_at;

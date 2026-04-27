@@ -10,40 +10,46 @@ use stdClass;
 
 class StateBroker extends Broker
 {
-    public function find(): ?stdClass
+    public function find(int $chainId): ?stdClass
     {
-        return $this->selectOne("SELECT * FROM indexer.state WHERE id = 1");
+        return $this->selectOne(
+            "SELECT * FROM indexer.state WHERE chain_id = ?",
+            [$chainId]
+        );
     }
 
-    public function ensure(int $defaultLastProcessedBlock, string $defaultMode = State::MODE_BACKFILLING): stdClass
+    public function ensure(int $chainId, int $defaultLastProcessedBlock, string $defaultMode = State::MODE_BACKFILLING): stdClass
     {
-        $row = $this->find();
+        $row = $this->find($chainId);
         if ($row !== null) {
             return $row;
         }
         $this->db->query(
-            "INSERT INTO indexer.state (id, last_processed_block, mode, last_run_at)
-             VALUES (1, ?, ?, now())
-             ON CONFLICT (id) DO NOTHING",
-            [$defaultLastProcessedBlock, $defaultMode]
+            "INSERT INTO indexer.state (chain_id, last_processed_block, mode, last_run_at)
+             VALUES (?, ?, ?, now())
+             ON CONFLICT (chain_id) DO NOTHING",
+            [$chainId, $defaultLastProcessedBlock, $defaultMode]
         );
-        return $this->find();
+        return $this->find($chainId);
     }
 
-    public function advance(int $lastProcessedBlock, string $mode): void
+    public function advance(int $chainId, int $lastProcessedBlock, string $mode): void
     {
         $this->db->query(
             "UPDATE indexer.state
                 SET last_processed_block = ?,
                     mode = ?,
                     last_run_at = now()
-              WHERE id = 1",
-            [$lastProcessedBlock, $mode]
+              WHERE chain_id = ?",
+            [$lastProcessedBlock, $mode, $chainId]
         );
     }
 
-    public function touch(): void
+    public function touch(int $chainId): void
     {
-        $this->db->query("UPDATE indexer.state SET last_run_at = now() WHERE id = 1");
+        $this->db->query(
+            "UPDATE indexer.state SET last_run_at = now() WHERE chain_id = ?",
+            [$chainId]
+        );
     }
 }

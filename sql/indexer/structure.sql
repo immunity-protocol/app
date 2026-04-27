@@ -1,13 +1,15 @@
 -- ##################################################################################################################
--- STATE (singleton row tracking the indexer's progress through chain history)
+-- STATE (one row per indexed chain tracking the indexer's progress through history)
 -- ##################################################################################################################
+-- Chain examples: 16602 (0G Galileo Registry), 11155111 (Sepolia Mirror).
+-- Rows are seeded at process start by BackfillBootstrap based on each chain's
+-- deploy block; this table starts empty.
 CREATE TABLE indexer.state
 (
-    id                   smallint PRIMARY KEY DEFAULT 1,
+    chain_id             integer     PRIMARY KEY,
     last_processed_block bigint      NOT NULL DEFAULT 0,
     mode                 varchar(16) NOT NULL DEFAULT 'live',
-    last_run_at          timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT state_singleton CHECK (id = 1)
+    last_run_at          timestamptz NOT NULL DEFAULT now()
 );
 
 -- ##################################################################################################################

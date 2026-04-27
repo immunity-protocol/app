@@ -36,6 +36,7 @@ class EventPoller
         private readonly RegistryAbi $abi,
         private readonly EventDecoder $decoder,
         private readonly StateBroker $state,
+        private readonly int $chainId,
         private readonly string $registryAddress,
         AntibodyPublishedHandler $publishedHandler,
         CheckSettledHandler $checkSettledHandler,
@@ -74,12 +75,12 @@ class EventPoller
         $head = $this->rpc->blockNumber();
         $safeHead = max(0, $head - $this->confirmations);
 
-        $row = $this->state->find();
+        $row = $this->state->find($this->chainId);
         $lastProcessed = $row !== null ? (int) $row->last_processed_block : 0;
         $mode = $row !== null ? (string) $row->mode : State::MODE_LIVE;
 
         if ($lastProcessed >= $safeHead) {
-            $this->state->touch();
+            $this->state->touch($this->chainId);
             return 0;
         }
 
@@ -117,7 +118,7 @@ class EventPoller
         }
 
         $newMode = ($toBlock >= $safeHead) ? State::MODE_LIVE : State::MODE_BACKFILLING;
-        $this->state->advance($toBlock, $newMode);
+        $this->state->advance($this->chainId, $toBlock, $newMode);
         return $handled;
     }
 }

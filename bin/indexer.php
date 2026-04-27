@@ -102,6 +102,7 @@ $poller = new EventPoller(
     abi: $abi,
     decoder: $decoder,
     state: $stateBroker,
+    chainId: $network->chainId,
     registryAddress: $network->registryAddress,
     publishedHandler: $publishedHandler,
     checkSettledHandler: $checkSettledHandler,
@@ -135,7 +136,7 @@ if ($network->ensRpcUrl !== '') {
 
 $statRefresher = new StatRefresher($db, $statBroker);
 $cadence = new Cadence();
-$bootstrap = new BackfillBootstrap($stateBroker, $deployBlock);
+$bootstrap = new BackfillBootstrap($stateBroker, $network->chainId, $deployBlock);
 
 $pricingRetry = $pricingService === null
     ? null
