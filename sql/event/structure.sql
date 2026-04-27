@@ -68,3 +68,22 @@ CREATE TABLE event.activity
 CREATE INDEX activity_occurred_at_idx ON event.activity (occurred_at DESC);
 CREATE INDEX activity_event_type_idx  ON event.activity (event_type);
 CREATE INDEX activity_entry_id_idx    ON event.activity (entry_id);
+
+-- ##################################################################################################################
+-- SWEEP_EVENT (one row per StakeSwept emission from the Registry)
+-- ##################################################################################################################
+CREATE TABLE event.sweep_event
+(
+    id            bigserial PRIMARY KEY,
+    sweeper       bytea          NOT NULL,
+    num_released  integer        NOT NULL,
+    bounty_paid   numeric(20, 6) NOT NULL,
+    occurred_at   timestamptz    NOT NULL DEFAULT now(),
+    block_number  bigint         NOT NULL,
+    tx_hash       bytea          NOT NULL,
+    log_index     integer        NOT NULL,
+    UNIQUE (tx_hash, log_index)
+);
+
+CREATE INDEX sweep_event_occurred_at_idx ON event.sweep_event (occurred_at DESC);
+CREATE INDEX sweep_event_sweeper_idx     ON event.sweep_event (sweeper);
