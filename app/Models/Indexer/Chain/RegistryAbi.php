@@ -20,7 +20,7 @@ class RegistryAbi
      * the contract is redeployed. (Chain id, registry address, RPC URL, etc.
      * live on `App\Models\Core\NetworkConfig`.)
      */
-    public const DEPLOY_BLOCK_DEFAULT = 29848000;
+    public const DEPLOY_BLOCK_DEFAULT = 30057380;
 
     /** @var array<int, array<string, mixed>> */
     private array $abi;
