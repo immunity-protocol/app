@@ -178,7 +178,7 @@
             <div data-pg-enqueue-result class="font-mono text-[10.5px] text-fg-dim mt-3"></div>
         </div>
 
-        <script>
+        <script n:syntax="off">
         (function () {
           const form = document.getElementById('pg-admin-enqueue');
           const out = document.querySelector('[data-pg-enqueue-result]');
@@ -201,7 +201,7 @@
         })();
         </script>
 
-        <script>
+        <script n:syntax="off">
         (function () {
           const result = document.querySelector('[data-pg-admin-result]');
           document.querySelectorAll('[data-pg-admin-action]').forEach((btn) => {
@@ -251,7 +251,7 @@
 {/if}
 
 <script src="{asset('/javascripts/live.js')}"></script>
-<script>
+<script n:syntax="off">
 // Shared card helper: every card has data-pg-card + data-pg-endpoint, contains
 // a [data-pg-form] (for submit) and [data-pg-result] (for output). On submit we
 // POST the form, get a {command_id}, then poll /commands/{id} until terminal.
