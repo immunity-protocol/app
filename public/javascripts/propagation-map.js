@@ -7,8 +7,8 @@
 //   nodeCount        : number of cells (default 60)
 //   radius           : layout radius in viewBox units (default 280)
 //   nodeRadius       : idle node radius (default 4.5)
-//   palette          : color tokens (idle, line, publisher, receiver, killed)
-//   onNodeClick(i, node) : optional callback fired alongside the kill toggle
+//   palette          : color tokens (idle, line, publisher, receiver, offline)
+//   onNodeClick(i, node) : optional callback fired when a node is clicked
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -29,7 +29,7 @@ const DEFAULTS = {
     idleStroke:  'rgba(232, 232, 227, 0.18)',
     publisher:   '#e8d4a0',
     receiver:    '#7ab87a',
-    killed:      'rgba(58, 58, 52, 0.55)',
+    offline:     'rgba(58, 58, 52, 0.55)',
     centerHalo:  'rgba(232, 212, 160, 0.06)',
     spokeStroke: 'rgba(232, 232, 227, 0.04)',
   },
@@ -127,9 +127,8 @@ class PropagationMap {
       hit.style.cursor = 'pointer';
       this.svg.appendChild(hit);
 
-      const node = { i, x, y, angle, core, membrane, hit, killed: false };
+      const node = { i, x, y, angle, core, membrane, hit, offline: false };
       hit.addEventListener('click', () => {
-        this.toggleKill(node.i);
         if (typeof this.opts.onNodeClick === 'function') this.opts.onNodeClick(node.i, node);
       });
       hit.addEventListener('mouseenter', () => this._setHover(node, true));
@@ -157,16 +156,12 @@ class PropagationMap {
     this._triggerWave();
   }
 
-  /** Toggle a node between alive and killed. Killed nodes are skipped by waves. */
-  toggleKill(idx) {
+  /** Mark a node as offline (gray, skipped by waves) or back online. */
+  setOffline(idx, offline) {
     const node = this.nodes[idx];
     if (!node) return;
-    node.killed = !node.killed;
+    node.offline = !!offline;
     this._applyIdleVisual(node);
-  }
-
-  killedCount() {
-    return this.nodes.reduce((n, x) => n + (x.killed ? 1 : 0), 0);
   }
 
   // ========================================================== animation loop
@@ -184,7 +179,7 @@ class PropagationMap {
 
   _triggerWave() {
     if (!this._started) return;
-    const candidates = this.nodes.filter((n) => !n.killed);
+    const candidates = this.nodes.filter((n) => !n.offline);
     if (candidates.length > 0) {
       const pub = candidates[Math.floor(Math.random() * candidates.length)];
       this._emitFromPublisher(pub);
@@ -211,7 +206,7 @@ class PropagationMap {
 
     // Receiver flashes timed by distance from publisher
     this.nodes.forEach((n) => {
-      if (n.i === pub.i || n.killed) return;
+      if (n.i === pub.i || n.offline) return;
       const dx = n.x - pub.x;
       const dy = n.y - pub.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -246,7 +241,7 @@ class PropagationMap {
   }
 
   _flashReceiver(node) {
-    if (node.killed) return;
+    if (node.offline) return;
     const { palette, nodeRadius } = this.opts;
     node.core.setAttribute('fill', palette.receiver);
     node.core.setAttribute('stroke', palette.receiver);
@@ -259,12 +254,12 @@ class PropagationMap {
 
   _applyIdleVisual(node) {
     const { palette, nodeRadius } = this.opts;
-    if (node.killed) {
-      node.core.setAttribute('fill', palette.killed);
-      node.core.setAttribute('stroke', palette.killed);
+    if (node.offline) {
+      node.core.setAttribute('fill', palette.offline);
+      node.core.setAttribute('stroke', palette.offline);
       node.core.setAttribute('r', String(nodeRadius));
       node.core.setAttribute('opacity', '0.55');
-      node.membrane.setAttribute('stroke', palette.killed);
+      node.membrane.setAttribute('stroke', palette.offline);
       node.membrane.setAttribute('opacity', '0.4');
       node.membrane.setAttribute('r', String(nodeRadius + 3));
     } else {
@@ -279,7 +274,7 @@ class PropagationMap {
   }
 
   _setHover(node, hovering) {
-    if (node.killed) return;
+    if (node.offline) return;
     const { nodeRadius, palette } = this.opts;
     if (hovering) {
       node.membrane.setAttribute('r', String(nodeRadius + 5));
