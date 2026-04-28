@@ -240,18 +240,20 @@
                         <div class="font-mono text-[13px] text-fg-primary bg-ink-sunken/60 border border-ink-line/40 rounded-sm px-4 py-3 break-all">{$ab['envelope']['primary']['value']}</div>
                     </div>
 
-                    {* Secondary matchers *}
-                    <div>
-                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-3">Secondary matchers</div>
-                        <ul class="space-y-2.5">
-                            {foreach $ab['envelope']['secondary'] as $m}
-                                <li class="flex items-start gap-3">
-                                    <span class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary px-1.5 py-0.5 rounded-sm bg-ink-elevated/60 border border-ink-line/40 shrink-0 mt-0.5">{$m['kind']}</span>
-                                    <code class="font-mono text-[12.5px] text-fg-secondary break-all min-w-0">{$m['value']}</code>
-                                </li>
-                            {/foreach}
-                        </ul>
-                    </div>
+                    {* Secondary matchers — only rendered when at least one is present. *}
+                    {if count($ab['envelope']['secondary']) > 0}
+                        <div>
+                            <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-3">Secondary matchers</div>
+                            <ul class="space-y-2.5">
+                                {foreach $ab['envelope']['secondary'] as $m}
+                                    <li class="flex items-start gap-3">
+                                        <span class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary px-1.5 py-0.5 rounded-sm bg-ink-elevated/60 border border-ink-line/40 shrink-0 mt-0.5">{$m['kind']}</span>
+                                        <code class="font-mono text-[12.5px] text-fg-secondary break-all min-w-0">{$m['value']}</code>
+                                    </li>
+                                {/foreach}
+                            </ul>
+                        </div>
+                    {/if}
 
                     {* Scope *}
                     <div>
