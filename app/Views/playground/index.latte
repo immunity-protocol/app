@@ -1,0 +1,99 @@
+{layout layouts/main.latte}
+
+{block title}Playground · Immunity{/block}
+
+{block content}
+
+{var $isAdmin = $tier === 'admin'}
+
+<section class="relative bg-ink-base">
+    <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none" aria-hidden="true"></div>
+
+    <div class="relative max-w-[1400px] mx-auto px-7 pt-12 pb-6">
+
+        <div class="flex flex-wrap items-end justify-between gap-6 mb-2">
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Playground</span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-accent">{$tier} tier</span>
+                </div>
+                <h1 class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-[1.05]">
+                    Click. Watch the network respond.
+                </h1>
+                <p class="text-fg-secondary text-[14px] leading-[1.6] mt-3 max-w-[640px]">
+                    Every action below produces real on-chain activity against the Immunity demo fleet. No mocks, no fixtures — what you trigger, the network actually does.
+                </p>
+            </div>
+            <form method="post" action="/playground/logout" class="self-start">
+                <button class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors">
+                    Log out
+                </button>
+            </form>
+        </div>
+
+    </div>
+</section>
+
+{* ============================================ SECTION 1 · STATUS BAR ===== *}
+<section id="playground-status" class="relative bg-ink-sunken border-y border-ink-line/60">
+    <div class="relative max-w-[1400px] mx-auto px-7 py-6">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">01</span>
+            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Fleet status</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">live</span>
+        </div>
+        <p class="text-fg-dim font-mono text-[11px]">Status bar lands here in the next commit.</p>
+    </div>
+</section>
+
+{* ============================================ SECTION 2 · TEST SCENARIOS ===== *}
+<section id="playground-cards" class="relative bg-ink-base">
+    <div class="relative max-w-[1400px] mx-auto px-7 py-12">
+        <div class="flex items-center gap-3 mb-7">
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">02</span>
+            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Test scenarios</span>
+        </div>
+        <p class="text-fg-dim font-mono text-[11px]">Eight interactive cards land here in subsequent commits.</p>
+    </div>
+</section>
+
+{* ============================================ SECTION 3 · PITCH CONTROLS (admin only) ===== *}
+{if $isAdmin}
+<section id="playground-pitch" class="relative bg-ink-elevated/30 border-t border-ink-line/60">
+    <div class="relative max-w-[1400px] mx-auto px-7 py-12">
+        <div class="flex items-center gap-3 mb-7">
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">03</span>
+            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-accent">Pitch controls (admin)</span>
+        </div>
+        <p class="text-fg-dim font-mono text-[11px]">Stage controls land here in subsequent commits.</p>
+    </div>
+</section>
+{else}
+<section class="relative bg-ink-base border-t border-ink-line/60">
+    <div class="relative max-w-[1400px] mx-auto px-7 py-12">
+        <details class="group">
+            <summary class="cursor-pointer inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors">
+                Admin login
+                <svg width="11" height="11" viewBox="0 0 12 12" class="group-open:rotate-90 transition-transform" aria-hidden="true">
+                    <path d="M4 3l4 3-4 3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                </svg>
+            </summary>
+            <form method="post" action="/playground/admin-login" class="mt-4 flex items-center gap-2 max-w-[420px]">
+                <input type="password" name="password" required placeholder="admin password"
+                       class="flex-1 px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+                <button class="px-4 py-2 text-[12px] bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
+                    Upgrade
+                </button>
+            </form>
+            {if session('playground_admin_error')}
+                <p class="font-mono text-[11px] text-threat-300 mt-2">{session('playground_admin_error')}</p>
+            {/if}
+        </details>
+    </div>
+</section>
+{/if}
+
+{/block}
