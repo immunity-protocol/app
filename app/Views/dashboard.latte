@@ -14,6 +14,13 @@ window.addEventListener('DOMContentLoaded', () => {
       autoFire: false,
     });
   }
+  // Click an agent row -> pulse its node on the map. Delegated so it
+  // continues to work after the activity poller swaps row content.
+  document.addEventListener('click', function (ev) {
+    const row = ev.target.closest && ev.target.closest('[data-agent-row]');
+    if (!row || !window.__dashMap) return;
+    window.__dashMap.triggerWaveAt(row.getAttribute('data-agent-row'));
+  });
 });
 </script>
 {/block}
@@ -132,81 +139,50 @@ window.addEventListener('DOMContentLoaded', () => {
             <div id="dash-map" class="relative w-full aspect-square max-w-[640px] mx-auto" aria-label="Live agent propagation map"></div>
         </div>
 
-        {* Dual live feed *}
-        {var $greenFeed = [
-          ['kind' => 'MINT',  'id' => 'IMM-2026-0312', 'pub' => 'huntress.eth',  'when' => '4s ago'],
-          ['kind' => 'HIT',   'id' => 'IMM-2026-0301', 'pub' => 'metamask',      'when' => '6s ago'],
-          ['kind' => 'HIT',   'id' => 'IMM-2026-0289', 'pub' => 'rabby-guard-12','when' => '9s ago'],
-          ['kind' => 'MINT',  'id' => 'IMM-2026-0311', 'pub' => 'sentinel.eth',  'when' => '14s ago'],
-          ['kind' => 'HIT',   'id' => 'IMM-2026-0303', 'pub' => 'agentkit-04',   'when' => '17s ago'],
-          ['kind' => 'MIRROR','id' => 'IMM-2026-0309', 'pub' => 'relayer:base',  'when' => '21s ago'],
-          ['kind' => 'HIT',   'id' => 'IMM-2026-0296', 'pub' => 'phantom-relay-07','when' => '25s ago'],
-          ['kind' => 'MINT',  'id' => 'IMM-2026-0310', 'pub' => 'sentinel.eth',  'when' => '32s ago'],
-        ]}
-        {var $redFeed = [
-          ['kind' => 'BLOCK',     'id' => 'IMM-2026-0312', 'agent' => 'metamask-bot-04',   'method' => 'eth_sendTransaction',  'when' => '11s ago'],
-          ['kind' => 'BLOCK',     'id' => 'IMM-2026-0301', 'agent' => 'rabby-guard-12',    'method' => 'eth_signTypedData_v4', 'when' => '23s ago'],
-          ['kind' => 'CHALLENGE', 'id' => 'IMM-2026-0285', 'agent' => 'wolf.eth',          'method' => 'antibody:dispute',     'when' => '38s ago'],
-          ['kind' => 'BLOCK',     'id' => 'IMM-2026-0303', 'agent' => 'phantom-relay-07',  'method' => 'eth_sendTransaction',  'when' => '52s ago'],
-          ['kind' => 'BLOCK',     'id' => 'IMM-2026-0289', 'agent' => 'agentkit-sentinel', 'method' => 'eth_signTypedData_v4', 'when' => '1m ago'],
-          ['kind' => 'SLASH',     'id' => 'IMM-2026-0290', 'agent' => 'sentinel.eth',      'method' => 'antibody:slash',       'when' => '2m ago'],
-          ['kind' => 'BLOCK',     'id' => 'IMM-2026-0306', 'agent' => 'wallet-shield-21',  'method' => 'eth_sendTransaction',  'when' => '3m ago'],
-        ]}
+        {* ============== AGENT LIST ==============
+           Full demo fleet roster, scrollable, server-rendered for first
+           paint. The dashboard activity poll updates each row in place
+           every 2s so dot color, last-seen, and 24h counters stay live
+           without losing the scroll position.
 
-        <aside class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 flex flex-col">
-
-            {* GREEN STREAM *}
-            <div class="flex-1 flex flex-col min-h-0 border-b border-ink-line/40">
-                <header class="px-5 py-3 border-b border-ink-line/40 flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5">
-                        <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-                        <span class="font-mono text-[10px] uppercase tracking-widest2 text-immune-500">Network</span>
-                    </div>
-                    <span class="font-mono text-[10px] text-fg-dim">mints / hits / mirrors</span>
-                </header>
-                <ul class="divide-y divide-ink-line/30 overflow-hidden">
-                    {foreach $greenFeed as $f}
-                        {var $kindTone = match($f['kind']) {
-                            'MINT'   => 'text-immune-500',
-                            'HIT'    => 'text-immune-300',
-                            'MIRROR' => 'text-accent-soft',
-                        }}
-                        <li class="px-5 py-2.5 flex items-center gap-3 hover:bg-ink-elevated/40 transition-colors">
-                            <span class="font-mono text-[9.5px] uppercase tracking-widest2 {$kindTone} w-14 shrink-0">{$f['kind']}</span>
-                            <a href="/antibody/{$f['id']}" class="font-mono text-[11.5px] text-fg-primary hover:text-accent transition-colors truncate">{$f['id']}</a>
-                            <span class="font-mono text-[10.5px] text-fg-tertiary truncate flex-1 min-w-0">{$f['pub']}</span>
-                            <span class="font-mono text-[10px] text-fg-dim shrink-0 tabular-nums">{$f['when']}</span>
-                        </li>
-                    {/foreach}
-                </ul>
-            </div>
-
-            {* RED STREAM *}
-            <div class="flex-1 flex flex-col min-h-0">
-                <header class="px-5 py-3 border-b border-ink-line/40 flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5">
-                        <span class="inline-flex h-1.5 w-1.5 rounded-full bg-threat-500 pulse-soft" aria-hidden="true"></span>
-                        <span class="font-mono text-[10px] uppercase tracking-widest2 text-threat-500">Threats</span>
-                    </div>
-                    <span class="font-mono text-[10px] text-fg-dim">blocks / challenges / slashes</span>
-                </header>
-                <ul class="divide-y divide-ink-line/30 overflow-hidden">
-                    {foreach $redFeed as $f}
-                        {var $kindTone = match($f['kind']) {
-                            'BLOCK'     => 'text-threat-500',
-                            'CHALLENGE' => 'text-caution-500',
-                            'SLASH'     => 'text-threat-300',
-                        }}
-                        <li class="px-5 py-2.5 flex items-center gap-3 hover:bg-ink-elevated/40 transition-colors">
-                            <span class="font-mono text-[9.5px] uppercase tracking-widest2 {$kindTone} w-16 shrink-0">{$f['kind']}</span>
-                            <a href="/antibody/{$f['id']}" class="font-mono text-[11.5px] text-fg-primary hover:text-accent transition-colors truncate">{$f['id']}</a>
-                            <span class="font-mono text-[10.5px] text-fg-tertiary truncate flex-1 min-w-0">{$f['agent']}</span>
-                            <span class="font-mono text-[10px] text-fg-dim shrink-0 tabular-nums">{$f['when']}</span>
-                        </li>
-                    {/foreach}
-                </ul>
-            </div>
-
+           Click a row -> the corresponding node on the propagation map
+           pulses, so an operator can find any agent visually. *}
+        <aside class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 flex flex-col" data-agent-panel>
+            <header class="px-5 py-3 border-b border-ink-line/40 flex items-center justify-between gap-2 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+                    <span class="font-mono text-[10px] uppercase tracking-widest2 text-immune-500">Agent fleet</span>
+                </div>
+                <span class="font-mono text-[10px] text-fg-dim"><span data-agent-online-count>0</span> / <span data-agent-total-count>{count($agents ?? [])}</span> online</span>
+            </header>
+            <ul class="divide-y divide-ink-line/30 overflow-y-auto max-h-[640px]" data-agent-list>
+            {if count($agents ?? []) === 0}
+                <li class="px-5 py-8 text-center font-mono text-[11px] text-fg-dim italic">
+                    No agents heartbeating. Start the demo fleet to populate this list.
+                </li>
+            {/if}
+            {foreach $agents ?? [] as $a}
+                {var $online = (bool) $a->online}
+                {var $roleUpper = strtoupper((string) $a->role)}
+                {var $roleTone = match($roleUpper) {
+                    'TRADER'    => 'text-fg-secondary',
+                    'WOLF'      => 'text-threat-300',
+                    'PUBLISHER' => 'text-accent-soft',
+                    'WATCHER'   => 'text-immune-300',
+                    'SCENARIO'  => 'text-caution-300',
+                    default     => 'text-fg-tertiary',
+                }}
+                {var $displayName = trim((string) $a->display_name) !== '' ? $a->display_name : $a->agent_id}
+                <li data-agent-row="{$a->agent_id}" class="px-5 py-2.5 flex items-center gap-3 hover:bg-ink-elevated/40 transition-colors cursor-pointer">
+                    <span class="inline-flex h-1.5 w-1.5 rounded-full shrink-0 {if $online}bg-immune-500{else}bg-fg-dim{/if}" aria-hidden="true" data-agent-dot></span>
+                    <span class="font-mono text-[11.5px] text-fg-primary truncate flex-1 min-w-0" data-agent-name>{$displayName}</span>
+                    <span class="font-mono text-[9px] uppercase tracking-widest2 {$roleTone} shrink-0" data-agent-role>{$roleUpper}</span>
+                    <span class="font-mono text-[10.5px] text-fg-secondary tabular-nums shrink-0 w-10 text-right" data-agent-checks title="Checks in the last 24h">{(int) $a->checks_24h}</span>
+                    <span class="font-mono text-[10.5px] tabular-nums shrink-0 w-10 text-right {if $a->blocks_24h > 0}text-threat-300{else}text-fg-dim{/if}" data-agent-blocks title="Blocks in the last 24h">{(int) $a->blocks_24h}</span>
+                    <span class="font-mono text-[10px] text-fg-dim shrink-0 w-14 text-right" data-agent-seen>{format('timeago', $a->last_seen)}</span>
+                </li>
+            {/foreach}
+            </ul>
         </aside>
     </div>
 
