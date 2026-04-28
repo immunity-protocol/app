@@ -37,13 +37,50 @@
 {* ============================================ SECTION 1 · STATUS BAR ===== *}
 <section id="playground-status" class="relative bg-ink-sunken border-y border-ink-line/60">
     <div class="relative max-w-[1400px] mx-auto px-7 py-6">
-        <div class="flex items-center gap-3 mb-4">
+
+        <div class="flex items-center gap-3 mb-5">
             <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">01</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Fleet status</span>
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">live</span>
+            <span data-pg-pulse class="inline-flex h-1.5 w-1.5 rounded-full bg-fg-dim pulse-soft" aria-hidden="true"></span>
+            <span data-pg-state class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">connecting</span>
         </div>
-        <p class="text-fg-dim font-mono text-[11px]">Status bar lands here in the next commit.</p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-y-6 md:gap-0">
+
+            <div class="md:px-5 md:first:pl-0 md:border-r md:border-ink-line/60">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Agents online</div>
+                <div class="font-display text-[28px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">
+                    <span data-pg="agents.online">—</span><span class="text-fg-dim">/</span><span data-pg="agents.total" class="text-fg-tertiary">—</span>
+                </div>
+                <div class="font-mono text-[10px] text-fg-dim mt-2 tabular-nums" data-pg-byrole>traders — · wolves — · publishers —</div>
+            </div>
+
+            <div class="md:px-5 md:border-r md:border-ink-line/60">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Ambient state</div>
+                <div data-pg-ambient class="font-display text-[24px] font-light tracking-tighter text-immune-500 leading-none">running</div>
+                <div data-pg-ambient-since class="font-mono text-[10px] text-fg-dim mt-2"></div>
+            </div>
+
+            <div class="md:px-5 md:border-r md:border-ink-line/60">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Events / min</div>
+                <div data-pg="activity.events_per_min_5min" class="font-display text-[28px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">—</div>
+                <div class="font-mono text-[10px] text-fg-dim mt-2">5min trailing</div>
+            </div>
+
+            <div class="md:px-5 md:border-r md:border-ink-line/60">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Blocks / hr</div>
+                <div data-pg="activity.blocks_last_hour" class="font-display text-[28px] font-light tracking-tighter text-threat-300 leading-none tabular-nums">—</div>
+                <div class="font-mono text-[10px] text-fg-dim mt-2">last 60min</div>
+            </div>
+
+            <div class="md:px-5">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Antibodies</div>
+                <div data-pg="registry.antibodies_active" class="font-display text-[28px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">—</div>
+                <div class="font-mono text-[10px] text-fg-dim mt-2">active in registry</div>
+            </div>
+
+        </div>
     </div>
 </section>
 
@@ -74,7 +111,7 @@
 {else}
 <section class="relative bg-ink-base border-t border-ink-line/60">
     <div class="relative max-w-[1400px] mx-auto px-7 py-12">
-        <details class="group">
+        <details class="group" {if session('playground_admin_error')}open{/if}>
             <summary class="cursor-pointer inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors">
                 Admin login
                 <svg width="11" height="11" viewBox="0 0 12 12" class="group-open:rotate-90 transition-transform" aria-hidden="true">
@@ -95,5 +132,79 @@
     </div>
 </section>
 {/if}
+
+<script src="{asset('/javascripts/live.js')}"></script>
+<script>
+(function () {
+  const STATUS_URL = '/api/v1/playground/status';
+
+  function setText(selector, value, fallback) {
+    document.querySelectorAll(`[data-pg="${selector}"]`).forEach((el) => {
+      el.textContent = (value === null || value === undefined) ? (fallback ?? '—') : String(value);
+    });
+  }
+  function getDeep(obj, path) {
+    return path.split('.').reduce((a, k) => (a && a[k] !== undefined) ? a[k] : null, obj);
+  }
+  function fmtSince(iso) {
+    if (!iso) return '';
+    const t = Date.parse(iso);
+    if (!Number.isFinite(t)) return '';
+    const secs = Math.max(0, Math.floor((Date.now() - t) / 1000));
+    if (secs < 60) return `${secs}s ago`;
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `${mins}m ago`;
+    return `${Math.floor(mins / 60)}h ago`;
+  }
+  function setStateBadge(connected, paused) {
+    const pulse = document.querySelector('[data-pg-pulse]');
+    const label = document.querySelector('[data-pg-state]');
+    if (!pulse || !label) return;
+    if (!connected) {
+      pulse.className = 'inline-flex h-1.5 w-1.5 rounded-full bg-fg-tertiary';
+      label.textContent = 'offline';
+      label.className = 'font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary';
+    } else if (paused) {
+      pulse.className = 'inline-flex h-1.5 w-1.5 rounded-full bg-caution-500 pulse-soft';
+      label.textContent = 'paused';
+      label.className = 'font-mono text-[10.5px] uppercase tracking-widest2 text-caution-500';
+    } else {
+      pulse.className = 'inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft';
+      label.textContent = 'live';
+      label.className = 'font-mono text-[10.5px] uppercase tracking-widest2 text-immune-500';
+    }
+  }
+
+  Live.poll(STATUS_URL, 3000, function (data) {
+    setText('agents.online', getDeep(data, 'agents.online'));
+    setText('agents.total',  getDeep(data, 'agents.total'));
+    setText('activity.events_per_min_5min', getDeep(data, 'activity.events_per_min_5min'));
+    setText('activity.blocks_last_hour',     getDeep(data, 'activity.blocks_last_hour'));
+    setText('registry.antibodies_active',    getDeep(data, 'registry.antibodies_active'));
+
+    const byRole = (data && data.agents && data.agents.by_role) || {};
+    const byRoleEl = document.querySelector('[data-pg-byrole]');
+    if (byRoleEl) {
+      byRoleEl.textContent =
+        `traders ${byRole.trader ?? 0} · wolves ${byRole.wolf ?? 0} · publishers ${byRole.publisher ?? 0} · watcher ${byRole.watcher ?? 0} · scenario ${byRole.scenario ?? 0}`;
+    }
+
+    const ambient = (data && data.ambient) || {};
+    const ambientEl = document.querySelector('[data-pg-ambient]');
+    const ambientSinceEl = document.querySelector('[data-pg-ambient-since]');
+    if (ambientEl) {
+      ambientEl.textContent = ambient.paused ? 'paused' : 'running';
+      ambientEl.className = `font-display text-[24px] font-light tracking-tighter leading-none ${ambient.paused ? 'text-caution-500' : 'text-immune-500'}`;
+    }
+    if (ambientSinceEl) {
+      ambientSinceEl.textContent = ambient.paused && ambient.paused_at
+        ? `since ${fmtSince(ambient.paused_at)}`
+        : '';
+    }
+
+    setStateBadge(true, !!ambient.paused);
+  });
+})();
+</script>
 
 {/block}
