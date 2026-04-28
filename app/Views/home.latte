@@ -228,11 +228,11 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
-{* ============================================ 03 · LIVE ACTIVITY ===== *}
+{* ============================================ 03 · TOP ANTIBODIES ===== *}
 {*
- * Real recent antibodies passed by HomeController::index() via
- * EntryService::findRecent(10). Each is an Entry entity (snake_case
- * properties from antibody.entry).
+ * Top antibodies by cache-hit count, passed by HomeController::index() via
+ * EntryService::findTopByCacheHits(10). Each row is a stdClass with the
+ * pre-joined stats columns (cache_hits, value_protected_usd, last_block_at).
  *}
 
 <section class="relative bg-ink-base">
@@ -243,15 +243,15 @@ window.addEventListener('DOMContentLoaded', () => {
                 <div class="flex items-center gap-3 mb-3">
                     <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">03</span>
                     <span class="font-mono text-[10.5px] text-fg-dim">·</span>
-                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Live activity</span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Top antibodies</span>
                     <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">updating every 4s</span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">by cache hits</span>
                 </div>
                 <h2 class="font-display text-[34px] font-light tracking-tighter text-fg-primary leading-[1.05]">
-                    The network is breathing.
+                    What the network is blocking the most.
                 </h2>
                 <p class="text-fg-secondary text-[14px] leading-[1.6] mt-3 max-w-[520px]">
-                    Every event below is a real artifact: signed, staked, and addressable forever. Click any IMM ID to inspect.
+                    Each row is a published antibody, ranked by how often its matcher has caught a check. Click any IMM ID to inspect.
                 </p>
             </div>
             <a href="/dashboard" class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors inline-flex items-center gap-1.5 self-start">
@@ -261,12 +261,12 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <div class="border-t border-ink-line/60">
-            {if count($recentAntibodies ?? []) === 0}
+            {if count($topAntibodies ?? []) === 0}
                 <div class="py-8 text-center font-mono text-[11.5px] text-fg-dim">
                     No antibodies published yet. The first one will appear here.
                 </div>
             {/if}
-            {foreach $recentAntibodies ?? [] as $i => $ab}
+            {foreach $topAntibodies ?? [] as $i => $ab}
                 {var $verdictDot = $ab->verdict === 'malicious' ? 'bg-threat-500' : 'bg-caution-500'}
                 {var $typeUpper = strtoupper($ab->type)}
                 {var $reasoning = trim((string) ($ab->redacted_reasoning ?? '')) !== ''
@@ -274,12 +274,12 @@ window.addEventListener('DOMContentLoaded', () => {
                     : 'no reasoning recorded'}
                 {var $reasoningTrunc = mb_strlen($reasoning) > 80 ? mb_substr($reasoning, 0, 78) . '…' : $reasoning}
                 {var $publisherDisplay = $ab->publisher_ens
-                    ?? ('0x' . substr(bin2hex($ab->publisher), 0, 6) . '…' . substr(bin2hex($ab->publisher), -4))}
-                {var $isLast = $i === count($recentAntibodies) - 1}
+                    ?? ('0x' . substr($ab->publisher_hex, 0, 6) . '…' . substr($ab->publisher_hex, -4))}
+                {var $isLast = $i === count($topAntibodies) - 1}
                 <a href="/antibody/{$ab->imm_id}" data-event="{$ab->verdict}"
                    class="grid grid-cols-[14px_72px_148px_120px_1fr_180px] gap-4 items-center py-3.5 {$isLast ? '' : 'border-b border-ink-line/40'} hover:bg-ink-elevated/40 transition-colors group">
                     <span class="inline-flex h-1.5 w-1.5 rounded-full {$verdictDot}" aria-label="{$ab->verdict}"></span>
-                    <span class="font-mono text-[11px] text-fg-tertiary tabular-nums">{format('timeago', $ab->created_at)}</span>
+                    <span class="font-mono text-[11px] text-immune-500 tabular-nums text-right pr-2">{format('decimal', $ab->cache_hits, 0)}<span class="text-fg-dim ml-1">hits</span></span>
                     <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors">{$ab->imm_id}</span>
                     <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-secondary">{$typeUpper}</span>
                     <span class="text-fg-secondary text-[13.5px] truncate" title="{$reasoning}">{$reasoningTrunc}</span>

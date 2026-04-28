@@ -13,10 +13,12 @@ final class HomeController extends Controller
     #[Get('/')]
     public function index(): Response
     {
-        // Live activity feed on the landing page. 10 most recent antibodies.
-        $recent = (new EntryService())->findRecent(10);
+        // Top antibodies on the landing - the "what's hot" view (highest
+        // cache hits = most matched threats). Dashboard shows latest-by-id
+        // for the live "what just happened" view.
+        $topAntibodies = (new EntryService())->findTopByCacheHits(10);
         return $this->render('home', [
-            'recentAntibodies' => $recent,
+            'topAntibodies' => $topAntibodies,
         ]);
     }
 }
