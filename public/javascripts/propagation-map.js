@@ -140,8 +140,13 @@ class PropagationMap {
 
   // ============================================================ public API
 
+  /**
+   * Auto-fire entry point. Kept for backwards compatibility with the older
+   * landing-page demo; the dashboard drives waves manually via applyEvents,
+   * so calling start() on the dashboard is a no-op.
+   */
   start() {
-    if (this._started) return;
+    if (this._started || this.opts.autoFire === false) return;
     this._started = true;
     this._scheduleNext(this.opts.firstEventDelayMs);
   }
@@ -151,9 +156,11 @@ class PropagationMap {
     if (this._nextTimer) clearTimeout(this._nextTimer);
   }
 
-  /** Fire one wave immediately. Useful for tests and debug poking. */
+  /** Fire one random wave. Useful for tests and debug poking. */
   triggerNow() {
-    this._triggerWave();
+    const candidates = this.nodes.filter((n) => !n.offline);
+    if (candidates.length === 0) return;
+    this._emitFromPublisher(candidates[Math.floor(Math.random() * candidates.length)]);
   }
 
   /** Mark a node as offline (gray, skipped by waves) or back online. */
@@ -162,6 +169,67 @@ class PropagationMap {
     if (!node) return;
     node.offline = !!offline;
     this._applyIdleVisual(node);
+  }
+
+  /**
+   * Bind agent IDs to node indices. Pass an array of agent_id strings; the
+   * order is the node order. Subsequent applyEvents calls reference agents
+   * by id rather than by raw node index.
+   */
+  setAgentMap(agentIds) {
+    this._agentMap = new Map();
+    agentIds.forEach((id, idx) => {
+      if (idx < this.nodes.length) this._agentMap.set(id, idx);
+    });
+  }
+
+  /**
+   * Set which agents are currently online. Anything not in `onlineSet`
+   * goes gray; agents in the set come back to alive coloring.
+   * `onlineSet` is an array or Set of agent_id strings.
+   */
+  setOnlineSet(onlineSet) {
+    if (!this._agentMap) return;
+    const set = onlineSet instanceof Set ? onlineSet : new Set(onlineSet);
+    this._agentMap.forEach((idx, agentId) => {
+      this.setOffline(idx, !set.has(agentId));
+    });
+  }
+
+  /**
+   * Pulse a node briefly without sending out a propagation wave. Used for
+   * check_event activity (the agent looked something up, but no antibody
+   * was published).
+   */
+  pulseNode(idxOrAgentId) {
+    const idx = typeof idxOrAgentId === 'string'
+      ? (this._agentMap ? this._agentMap.get(idxOrAgentId) : undefined)
+      : idxOrAgentId;
+    if (idx === undefined) return;
+    const node = this.nodes[idx];
+    if (!node || node.offline) return;
+    this._flashReceiver(node);
+  }
+
+  /** Fire a propagation wave from a specific agent / node. */
+  triggerWaveAt(idxOrAgentId) {
+    const idx = typeof idxOrAgentId === 'string'
+      ? (this._agentMap ? this._agentMap.get(idxOrAgentId) : undefined)
+      : idxOrAgentId;
+    if (idx === undefined) return;
+    const node = this.nodes[idx];
+    if (!node || node.offline) return;
+    this._emitFromPublisher(node);
+  }
+
+  /**
+   * Apply a batch of activity events. `checks` produce node pulses;
+   * `blocks` produce full propagation waves. Each event is shaped
+   * `{ agent_id, ... }`.
+   */
+  applyEvents({ checks = [], blocks = [] } = {}) {
+    checks.forEach((c) => this.pulseNode(c.agent_id));
+    blocks.forEach((b) => this.triggerWaveAt(b.agent_id));
   }
 
   // ========================================================== animation loop
