@@ -47,4 +47,22 @@ class HeartbeatBroker extends Broker
     {
         return (int) $this->selectValue("SELECT count(*) FROM demo.agent_heartbeat");
     }
+
+    /**
+     * Pick a random agent_id from the online set, optionally filtered by role.
+     * Returns null if none online.
+     */
+    public function pickRandomOnline(?string $role = null): ?string
+    {
+        $sql = "SELECT agent_id FROM demo.agent_heartbeat
+                 WHERE last_seen >= now() - make_interval(secs => ?)";
+        $params = [self::ONLINE_WINDOW_SECONDS];
+        if ($role !== null) {
+            $sql .= " AND role = ?";
+            $params[] = $role;
+        }
+        $sql .= " ORDER BY random() LIMIT 1";
+        $row = $this->selectOne($sql, $params);
+        return $row !== null ? (string) $row->agent_id : null;
+    }
 }
