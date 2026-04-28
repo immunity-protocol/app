@@ -344,9 +344,9 @@ window.addEventListener('DOMContentLoaded', () => {
 })();
 
 // ============================================================================
-// Dashboard activity poll: drives the propagation map (and, in later passes,
-// the agent list + active registry) from real check / block events.
-// One coordinated tick every 2s. Pauses when the tab is hidden via Live.poll.
+// Dashboard activity poll: drives the propagation map, agent list, and the
+// active-registry table from one coordinated tick every 2s. Pauses when the
+// tab is hidden so we don't burn CPU in background tabs.
 // ============================================================================
 (function () {
   let agentMapBound = false;
@@ -369,6 +369,99 @@ window.addEventListener('DOMContentLoaded', () => {
     window.__dashMap.setOnlineSet(online);
   }
 
+  // ---------------- Active-registry live update ----------------
+
+  const TYPE_TONE = {
+    'ADDRESS':      'text-fg-secondary',
+    'CALL_PATTERN': 'text-caution-300',
+    'BYTECODE':     'text-immune-300',
+    'GRAPH':        'text-accent-soft',
+  };
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  function fmtMoneyCents(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '-';
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function timeAgo(iso) {
+    if (!iso) return '-';
+    const then = Date.parse(iso);
+    if (!Number.isFinite(then)) return '-';
+    const sec = Math.max(0, Math.floor((Date.now() - then) / 1000));
+    if (sec < 60)        return sec + 's ago';
+    if (sec < 3600)      return Math.floor(sec / 60) + 'm ago';
+    if (sec < 86400)     return Math.floor(sec / 3600) + 'h ago';
+    if (sec < 86400 * 7) return Math.floor(sec / 86400) + 'd ago';
+    return new Date(then).toISOString().slice(0, 10);
+  }
+
+  function shortHex(hex) {
+    if (!hex) return '';
+    return '0x' + hex.slice(0, 6) + '…' + hex.slice(-4);
+  }
+
+  function renderRegistryRow(r) {
+    const typeUpper = String(r.type || '').toUpperCase();
+    const typeTone = TYPE_TONE[typeUpper] || 'text-threat-300';
+    const reasoning = r.reasoning && r.reasoning.trim() !== '' ? r.reasoning : 'no reasoning recorded';
+    const trunc = reasoning.length > 70 ? reasoning.slice(0, 68) + '…' : reasoning;
+    const isHexPub = !r.publisher_ens;
+    const publisher = r.publisher_ens || shortHex(r.publisher_hex);
+    const pubCls = isHexPub
+      ? 'font-mono text-[11.5px] text-fg-secondary'
+      : 'text-[12.5px] text-fg-secondary';
+    const cacheHits = Number(r.cache_hits || 0).toLocaleString('en-US');
+    const lastBlock = r.last_block_at ? timeAgo(r.last_block_at) : '-';
+    return (
+      '<tr data-registry-row="' + escapeAttr(r.imm_id) + '" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors group">' +
+        '<td class="pl-7 pr-4 py-3"><a href="/antibody/' + escapeAttr(r.imm_id) + '" class="font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">' + escapeHtml(r.imm_id) + '</a></td>' +
+        '<td class="pr-4 py-3"><span class="font-mono text-[10.5px] uppercase tracking-widest2 ' + typeTone + '">' + escapeHtml(typeUpper) + '</span></td>' +
+        '<td class="pr-6 py-3 max-w-[320px]"><span class="text-[12.5px] text-fg-secondary truncate inline-block max-w-full" title="' + escapeAttr(reasoning) + '">' + escapeHtml(trunc) + '</span></td>' +
+        '<td class="pr-4 py-3"><span class="' + pubCls + '">' + escapeHtml(publisher) + '</span></td>' +
+        '<td class="pr-4 py-3 text-right font-mono text-[12px] text-fg-primary tabular-nums">' + cacheHits + '</td>' +
+        '<td class="pr-4 py-3 text-right font-mono text-[12px] text-immune-500 tabular-nums">' + fmtMoneyCents(r.value_protected_usd) + '</td>' +
+        '<td class="pr-7 py-3 text-right font-mono text-[11px] text-fg-tertiary tabular-nums">' + lastBlock + '</td>' +
+      '</tr>'
+    );
+  }
+
+  function flashRow(tbody, immId) {
+    const row = tbody.querySelector('[data-registry-row="' + CSS.escape(immId) + '"]');
+    if (!row) return;
+    row.style.transition = 'background-color 220ms ease-out';
+    row.style.backgroundColor = 'rgba(232, 212, 160, 0.18)';
+    setTimeout(function () { row.style.backgroundColor = ''; }, 900);
+  }
+
+  function updateRegistry(entries) {
+    const tbody = document.querySelector('[data-registry-body]');
+    if (!tbody || !Array.isArray(entries)) return;
+    const currentIds = Array.from(tbody.querySelectorAll('[data-registry-row]'))
+      .map(function (el) { return el.getAttribute('data-registry-row'); });
+    const nextIds = entries.map(function (e) { return e.imm_id; });
+    const same = currentIds.length === nextIds.length
+      && currentIds.every(function (id, i) { return id === nextIds[i]; });
+    if (same) return;
+    if (entries.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="px-7 py-8 text-center font-mono text-[11.5px] text-fg-dim">No antibodies published yet. Rows will appear as the fleet publishes new threats.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = entries.map(renderRegistryRow).join('');
+    const newIds = nextIds.filter(function (id) { return currentIds.indexOf(id) === -1; });
+    newIds.forEach(function (id) { flashRow(tbody, id); });
+  }
+
+  // ---------------- Poll loop ----------------
+
   function tick() {
     const url = '/api/v1/dashboard/activity' + (cursor ? '?since=' + encodeURIComponent(cursor) : '');
     fetch(url, { headers: { 'Accept': 'application/json' } })
@@ -385,6 +478,7 @@ window.addEventListener('DOMContentLoaded', () => {
             blocks: data.blocks || [],
           });
         }
+        updateRegistry(data.recent_entries || []);
       })
       .catch(function () { /* swallow: next tick will retry */ });
   }
