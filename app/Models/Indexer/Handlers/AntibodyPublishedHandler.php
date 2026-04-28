@@ -89,43 +89,56 @@ class AntibodyPublishedHandler
         $stakeWei = (string) $a['stake'];
         $stakeUsdc = self::weiToUsdc($stakeWei);
 
-        $row = $this->db->query(
-            <<<'SQL'
-            INSERT INTO antibody.entry (
-                keccak_id, imm_id, type, flavor, verdict,
-                confidence, severity, status,
-                primary_matcher, secondary_matchers,
-                context_hash, evidence_cid, embedding_hash, embedding_cid,
-                stake_lock_until, expires_at, publisher, publisher_ens,
-                stake_amount, attestation, seed_source, redacted_reasoning,
-                created_at, updated_at
-            )
-            VALUES (
-                ?, ?, ?::antibody.entry_type, ?, ?::antibody.entry_verdict,
-                ?, ?, 'active'::antibody.entry_status,
-                '{}'::jsonb, '[]'::jsonb,
-                ?, ?, ?, NULL,
-                to_timestamp(?), CASE WHEN ? > 0 THEN to_timestamp(?) ELSE NULL END,
-                ?, NULL,
-                ?, ?, CASE WHEN ? THEN 'admin' ELSE NULL END, NULL,
-                to_timestamp(?), to_timestamp(?)
-            )
-            ON CONFLICT (keccak_id) DO NOTHING
-            RETURNING id
-            SQL,
-            [
-                $keccakIdBytea, $immId, $type, $flavor, $verdict,
-                (int) $a['confidence'], (int) $a['severity'],
-                $contextHashBytea, $evidenceCidBytea, $embeddingHashBytea,
-                $stakeLockUntilSec,
-                $expiresAtSec, $expiresAtSec,
-                $publisherBytea,
-                $stakeUsdc, $attestationBytea,
-                (bool) $a['isSeeded'] ? 't' : 'f',
-                $createdAtSec, $createdAtSec,
-            ]
-        );
-        $inserted = $row->fetch(\PDO::FETCH_ASSOC) !== false;
+        try {
+            $row = $this->db->query(
+                <<<'SQL'
+                INSERT INTO antibody.entry (
+                    keccak_id, imm_id, type, flavor, verdict,
+                    confidence, severity, status,
+                    primary_matcher, secondary_matchers,
+                    context_hash, evidence_cid, embedding_hash, embedding_cid,
+                    stake_lock_until, expires_at, publisher, publisher_ens,
+                    stake_amount, attestation, seed_source, redacted_reasoning,
+                    created_at, updated_at
+                )
+                VALUES (
+                    ?, ?, ?::antibody.entry_type, ?, ?::antibody.entry_verdict,
+                    ?, ?, 'active'::antibody.entry_status,
+                    '{}'::jsonb, '[]'::jsonb,
+                    ?, ?, ?, NULL,
+                    to_timestamp(?), CASE WHEN ? > 0 THEN to_timestamp(?) ELSE NULL END,
+                    ?, NULL,
+                    ?, ?, CASE WHEN ? THEN 'admin' ELSE NULL END, NULL,
+                    to_timestamp(?), to_timestamp(?)
+                )
+                ON CONFLICT (keccak_id) DO NOTHING
+                RETURNING id
+                SQL,
+                [
+                    $keccakIdBytea, $immId, $type, $flavor, $verdict,
+                    (int) $a['confidence'], (int) $a['severity'],
+                    $contextHashBytea, $evidenceCidBytea, $embeddingHashBytea,
+                    $stakeLockUntilSec,
+                    $expiresAtSec, $expiresAtSec,
+                    $publisherBytea,
+                    $stakeUsdc, $attestationBytea,
+                    (bool) $a['isSeeded'] ? 't' : 'f',
+                    $createdAtSec, $createdAtSec,
+                ]
+            );
+            $inserted = $row->fetch(\PDO::FETCH_ASSOC) !== false;
+        } catch (\Throwable $e) {
+            // Most often a Unique violation on imm_id when a registry is
+            // redeployed and emits the same imm_id slot for a fresh keccak.
+            // Treat as "already known, skip insert" and continue so the
+            // mirror enqueue path still fires for the new keccak.
+            if (str_contains((string) $e->getMessage(), 'unique')
+                || str_contains((string) $e->getMessage(), 'duplicate key')) {
+                $inserted = false;
+            } else {
+                throw $e;
+            }
+        }
 
         if ($inserted) {
             // Publisher aggregate: only adjust when this is a new entry (avoid
