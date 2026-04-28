@@ -136,6 +136,30 @@
             </button>
         </div>
 
+        {* Scripted scenarios *}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <button data-pg-admin-action="scenario/01"
+                    class="px-4 py-3 text-left bg-ink-base border border-ink-line/60 hover:border-accent hover:bg-ink-elevated transition-colors rounded-sm">
+                <div class="font-display text-[15px] tracking-tighter text-fg-primary">Scenario 01</div>
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mt-1">Fresh detection</div>
+            </button>
+            <button data-pg-admin-action="scenario/02"
+                    class="px-4 py-3 text-left bg-ink-base border border-ink-line/60 hover:border-accent hover:bg-ink-elevated transition-colors rounded-sm">
+                <div class="font-display text-[15px] tracking-tighter text-fg-primary">Scenario 02</div>
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mt-1">Cache replay</div>
+            </button>
+            <button data-pg-admin-action="scenario/03"
+                    class="px-4 py-3 text-left bg-ink-base border border-ink-line/60 hover:border-accent hover:bg-ink-elevated transition-colors rounded-sm">
+                <div class="font-display text-[15px] tracking-tighter text-fg-primary">Scenario 03</div>
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mt-1">Twitter trigger</div>
+            </button>
+            <button data-pg-admin-action="scenario/04"
+                    class="px-4 py-3 text-left bg-ink-base border border-ink-line/60 hover:border-accent hover:bg-ink-elevated transition-colors rounded-sm">
+                <div class="font-display text-[15px] tracking-tighter text-fg-primary">Scenario 04</div>
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mt-1">Prompt injection</div>
+            </button>
+        </div>
+
         <div data-pg-admin-result class="font-mono text-[10.5px] text-fg-dim mb-4"></div>
 
         <script>
