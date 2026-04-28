@@ -102,6 +102,7 @@
             {include 'playground/cards/03-send-payload.latte', isAdmin => $isAdmin}
             {include 'playground/cards/04-trigger-attack.latte', isAdmin => $isAdmin}
             {include 'playground/cards/05-cache-replay.latte', isAdmin => $isAdmin}
+            {include 'playground/cards/06-mirror-status.latte', isAdmin => $isAdmin}
         </div>
     </div>
 </section>
@@ -194,6 +195,7 @@
 
   function bind(card) {
     const endpoint = card.dataset.pgEndpoint;
+    const method = (card.dataset.pgMethod || 'POST').toUpperCase();
     const form = card.querySelector('[data-pg-form]');
     const panel = card.querySelector('[data-pg-result]');
     if (!form || !panel) return;
@@ -205,11 +207,16 @@
       setResult(panel, '<p class="font-mono text-[10.5px] text-fg-dim">submitting…</p>');
       let resp;
       try {
-        resp = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(body),
-        });
+        if (method === 'GET') {
+          const qs = new URLSearchParams(body).toString();
+          resp = await fetch(`${endpoint}?${qs}`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+        } else {
+          resp = await fetch(endpoint, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(body),
+          });
+        }
       } catch (err) {
         setResult(panel, `<p class="font-mono text-[11px] text-threat-300">network error: ${escapeHtml(String(err))}</p>`);
         return;

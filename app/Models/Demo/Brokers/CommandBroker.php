@@ -73,4 +73,33 @@ class CommandBroker extends Broker
         if ($row === null || !is_string($row->target)) return null;
         return preg_match('/^0x[0-9a-fA-F]{40}$/', $row->target) ? strtolower($row->target) : null;
     }
+
+    /**
+     * Card 6 (cross-chain mirror status). Joins antibody.entry with
+     * antibody.mirror so the playground can show "mirrored on Sepolia at
+     * tx 0x..." per chain.
+     *
+     * @return array{entry: \stdClass, mirrors: array<int, \stdClass>}|null
+     */
+    public function mirrorStatus(string $immId): ?array
+    {
+        $entry = $this->selectOne(
+            "SELECT id, imm_id, type, verdict, status, confidence, severity,
+                    encode(publisher, 'hex') AS publisher_hex, publisher_ens,
+                    created_at, primary_matcher
+               FROM antibody.entry WHERE imm_id = ?",
+            [$immId]
+        );
+        if ($entry === null) return null;
+        $mirrors = $this->select(
+            "SELECT chain_id, chain_name, encode(mirror_tx_hash, 'hex') AS tx_hash_hex,
+                    mirrored_at, status,
+                    encode(relayer_address, 'hex') AS relayer_hex
+               FROM antibody.mirror
+              WHERE entry_id = ?
+              ORDER BY mirrored_at DESC",
+            [$entry->id]
+        );
+        return ['entry' => $entry, 'mirrors' => $mirrors];
+    }
 }

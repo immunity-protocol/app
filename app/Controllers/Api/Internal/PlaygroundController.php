@@ -279,6 +279,48 @@ final class PlaygroundController extends Controller
         return Response::json(['command_id' => $commandId, 'agent_id' => $wolf, 'replayed_imm_id' => $immId, 'target' => $target], 202);
     }
 
+    /**
+     * Card 6 (cross-chain mirror status). Returns the antibody summary plus
+     * per-chain mirror rows. No queue: pure read.
+     */
+    #[Get('/playground/mirror-status')]
+    public function mirrorStatus(Request $request): Response
+    {
+        $immId = (string) $request->parameter('immId', '');
+        if (!preg_match('/^IMM-\d{4}-\d{4}$/', $immId)) {
+            return Response::json(['error' => 'immId must look like IMM-YYYY-NNNN'], 400);
+        }
+        $this->commands ??= new CommandBroker();
+        $data = $this->commands->mirrorStatus($immId);
+        if ($data === null) {
+            return Response::json(['error' => 'antibody not found'], 404);
+        }
+        $mirrors = [];
+        foreach ($data['mirrors'] as $m) {
+            $mirrors[] = [
+                'chain_id'    => (int) $m->chain_id,
+                'chain_name'  => $m->chain_name,
+                'status'      => $m->status,
+                'tx_hash'     => '0x' . $m->tx_hash_hex,
+                'mirrored_at' => $m->mirrored_at,
+                'relayer'     => '0x' . $m->relayer_hex,
+            ];
+        }
+        return Response::json([
+            'imm_id'        => $data['entry']->imm_id,
+            'type'          => $data['entry']->type,
+            'verdict'       => $data['entry']->verdict,
+            'status'        => $data['entry']->status,
+            'confidence'    => (int) $data['entry']->confidence,
+            'severity'      => (int) $data['entry']->severity,
+            'publisher_ens' => $data['entry']->publisher_ens,
+            'publisher'     => '0x' . $data['entry']->publisher_hex,
+            'created_at'    => $data['entry']->created_at,
+            'mirrors'       => $mirrors,
+            'mirror_count'  => count($mirrors),
+        ])->withHeader('Cache-Control', 'no-store');
+    }
+
     private function decodeJsonb(mixed $value): mixed
     {
         if ($value === null || $value === '') {
