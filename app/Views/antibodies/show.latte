@@ -539,7 +539,7 @@
                         <dt class="text-fg-tertiary text-[11.5px]">Network propagation</dt>
                         <dd class="font-mono text-[12px] {$ab['impact']['propagation_seconds'] === null ? 'text-fg-dim' : 'text-immune-500'}">
                             {if $ab['impact']['propagation_seconds'] === null}
-                                &mdash;
+                                -
                             {else}
                                 {format('decimal', $ab['impact']['propagation_seconds'], 1)}s
                             {/if}
