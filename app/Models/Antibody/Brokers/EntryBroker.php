@@ -36,6 +36,56 @@ class EntryBroker extends Broker
         );
     }
 
+    /**
+     * Recent published entries pre-joined with cache_hits, mirror_count,
+     * value_protected_usd, and last_block_at. Drives the dashboard's active
+     * registry table (latest first).
+     *
+     * @return stdClass[]
+     */
+    public function findRecentWithStats(int $limit = 10): array
+    {
+        return $this->selectStatsRows('e.id DESC', $limit);
+    }
+
+    /**
+     * Same shape as findRecentWithStats but ordered by cache hits desc.
+     * Drives the landing page's "top attacks" table.
+     *
+     * @return stdClass[]
+     */
+    public function findTopByCacheHits(int $limit = 10): array
+    {
+        return $this->selectStatsRows('cache_hits DESC, e.id DESC', $limit);
+    }
+
+    /**
+     * Shared SELECT that joins the per-entry counts/sums; orderClause is a
+     * pre-validated ORDER BY fragment, NOT user input.
+     *
+     * @return stdClass[]
+     */
+    private function selectStatsRows(string $orderClause, int $limit): array
+    {
+        $sql = "
+            SELECT
+                e.id, e.imm_id, e.type::text AS type, e.verdict::text AS verdict,
+                e.redacted_reasoning, e.publisher_ens, e.created_at,
+                encode(e.publisher, 'hex') AS publisher_hex,
+                COUNT(DISTINCT ce.id)        AS cache_hits,
+                COUNT(DISTINCT am.id)        AS mirror_count,
+                COALESCE(SUM(be.value_protected_usd), 0)::text AS value_protected_usd,
+                MAX(be.occurred_at)          AS last_block_at
+              FROM antibody.entry e
+              LEFT JOIN event.check_event ce ON ce.matched_entry_id = e.id AND ce.cache_hit = true
+              LEFT JOIN event.block_event be ON be.entry_id = e.id
+              LEFT JOIN antibody.mirror   am ON am.entry_id = e.id AND am.status = 'active'
+             GROUP BY e.id
+             ORDER BY $orderClause
+             LIMIT ?";
+        return $this->select($sql, [$limit]);
+    }
+
     public function countActive(): int
     {
         return (int) $this->selectValue(
