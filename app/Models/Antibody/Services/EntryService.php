@@ -32,6 +32,28 @@ readonly class EntryService
         return Entry::buildArray($this->broker->findRecent($limit, $beforeId));
     }
 
+    /**
+     * Latest entries with per-row stats for the dashboard active-registry table.
+     * Rows are stdClass (denormalised join, not the Entry entity shape).
+     *
+     * @return stdClass[]
+     */
+    public function findRecentWithStats(int $limit = 10): array
+    {
+        return $this->broker->findRecentWithStats($limit);
+    }
+
+    /**
+     * Top entries by cache hits with per-row stats. Drives the landing page's
+     * "top attacks" table.
+     *
+     * @return stdClass[]
+     */
+    public function findTopByCacheHits(int $limit = 10): array
+    {
+        return $this->broker->findTopByCacheHits($limit);
+    }
+
     public function countActive(): int
     {
         return $this->broker->countActive();
