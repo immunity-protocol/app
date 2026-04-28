@@ -1,0 +1,57 @@
+{* Card 05 — Cache replay. Picks an existing antibody, replays an attack
+   against its target. The cache-hit timing tells the story. *}
+<article class="bg-ink-base p-6 flex flex-col" data-pg-card data-pg-endpoint="/api/v1/playground/cache-replay" data-pg-init="loadAntibodies">
+    <header class="mb-4">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary tabular-nums">Card 05</span>
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-accent">judge</span>
+        </div>
+        <h3 class="font-display text-[20px] tracking-tighter text-fg-primary leading-tight">Cache replay</h3>
+    </header>
+    <p class="text-fg-secondary text-[13px] leading-[1.6] mb-5">
+        Pick an antibody the network already knows about. We replay an attack against its target — every agent's local cache should hit in microseconds.
+    </p>
+
+    <form class="space-y-3" data-pg-form>
+        <label class="block">
+            <span class="block font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Antibody</span>
+            <select name="imm_id" required data-pg-antibody-select
+                    class="w-full px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+                <option value="">loading…</option>
+            </select>
+        </label>
+        <button type="submit"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2 text-[12px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
+            Replay attack
+        </button>
+    </form>
+
+    <div class="mt-5 pt-4 border-t border-ink-line/40" data-pg-result>
+        <p class="font-mono text-[10.5px] text-fg-dim">No replay yet.</p>
+    </div>
+</article>
+
+<script>
+(function () {
+  // Populate the antibody dropdown on page load.
+  fetch('/api/v1/playground/recent-address-antibodies')
+    .then((r) => r.json())
+    .then((data) => {
+      const select = document.querySelector('[data-pg-antibody-select]');
+      if (!select) return;
+      const items = (data && data.items) || [];
+      if (items.length === 0) {
+        select.innerHTML = '<option value="">no ADDRESS antibodies yet — publish-threats not run?</option>';
+        return;
+      }
+      select.innerHTML = items.map((it) => {
+        const short = it.address.slice(0, 8) + '…' + it.address.slice(-6);
+        return `<option value="${it.imm_id}">${it.imm_id}  →  ${short}</option>`;
+      }).join('');
+    })
+    .catch(() => {
+      const select = document.querySelector('[data-pg-antibody-select]');
+      if (select) select.innerHTML = '<option value="">failed to load</option>';
+    });
+})();
+</script>

@@ -239,6 +239,46 @@ final class PlaygroundController extends Controller
         return Response::json(['command_id' => $commandId, 'agent_id' => $wolf], 202);
     }
 
+    /**
+     * Card 5 helper — list recent ADDRESS antibodies for the dropdown.
+     */
+    #[Get('/playground/recent-address-antibodies')]
+    public function recentAddressAntibodies(): Response
+    {
+        $this->commands ??= new CommandBroker();
+        return Response::json(['items' => $this->commands->recentAddressAntibodies(20)])
+            ->withHeader('Cache-Control', 'public, max-age=15');
+    }
+
+    /**
+     * Card 5 — Cache replay. Looks up the antibody's target address and fires
+     * an `attack` against it from a random wolf. The AddressMatcher hits in
+     * microseconds so the result panel emphasises `source: cache`.
+     */
+    #[Post('/playground/cache-replay')]
+    public function cacheReplay(Request $request): Response
+    {
+        $body = $request->body();
+        $immId = (string) $body->get('imm_id', '');
+        if (!preg_match('/^IMM-\d{4}-\d{4}$/', $immId)) {
+            return Response::json(['error' => 'imm_id must look like IMM-YYYY-NNNN'], 400);
+        }
+        $this->commands ??= new CommandBroker();
+        $target = $this->commands->findAddressByImmId($immId);
+        if ($target === null) {
+            return Response::json(['error' => 'antibody not found or not an ADDRESS type with a target'], 404);
+        }
+        $this->heartbeats ??= new HeartbeatBroker();
+        $wolf = $this->heartbeats->pickRandomOnline('wolf') ?? 'wolf-1';
+        $commandId = $this->commands->enqueue($wolf, 'attack', [
+            'method'     => 'drain',
+            'target'     => $target,
+            'amount_usd' => 4500,
+            'context'    => "Replay of $immId — checking cache hit speed.",
+        ]);
+        return Response::json(['command_id' => $commandId, 'agent_id' => $wolf, 'replayed_imm_id' => $immId, 'target' => $target], 202);
+    }
+
     private function decodeJsonb(mixed $value): mixed
     {
         if ($value === null || $value === '') {

@@ -36,4 +36,41 @@ class CommandBroker extends Broker
             [$id]
         );
     }
+
+    /**
+     * Recent ADDRESS antibodies — used to populate the Card 5 (Cache replay)
+     * dropdown. Returns imm_id + extracted target address (lowercased).
+     *
+     * @return array<int, array{imm_id: string, address: string}>
+     */
+    public function recentAddressAntibodies(int $limit = 20): array
+    {
+        $rows = $this->select(
+            "SELECT imm_id, primary_matcher->>'target' AS target
+               FROM antibody.entry
+              WHERE type = 'address' AND status = 'active'
+                AND primary_matcher ? 'target'
+              ORDER BY id DESC
+              LIMIT ?",
+            [$limit]
+        );
+        $out = [];
+        foreach ($rows as $r) {
+            if (!is_string($r->target) || !preg_match('/^0x[0-9a-fA-F]{40}$/', $r->target)) continue;
+            $out[] = ['imm_id' => $r->imm_id, 'address' => strtolower($r->target)];
+        }
+        return $out;
+    }
+
+    public function findAddressByImmId(string $immId): ?string
+    {
+        $row = $this->selectOne(
+            "SELECT primary_matcher->>'target' AS target
+               FROM antibody.entry
+              WHERE imm_id = ? AND type = 'address'",
+            [$immId]
+        );
+        if ($row === null || !is_string($row->target)) return null;
+        return preg_match('/^0x[0-9a-fA-F]{40}$/', $row->target) ? strtolower($row->target) : null;
+    }
 }
