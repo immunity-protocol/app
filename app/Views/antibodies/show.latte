@@ -10,6 +10,19 @@
  * Fields without a direct source (impact ingestion graph, block_events
  * agent list) get placeholder values until those streams land.
  *}
+{*
+ * Friendly chain-id to name. Galileo (16602) is the home chain of the
+ * Registry; the rest are mirror destinations the relayer fans out to.
+ *}
+{var $chainNames = [
+    16602    => 'galileo-testnet',
+    11155111 => 'sepolia',
+    84532    => 'base-sepolia',
+    1        => 'ethereum',
+    8453     => 'base',
+    42161    => 'arbitrum',
+    10       => 'optimism',
+]}
 {var $primaryMatcher = $entry->primary_matcher}
 {var $hasMatcher = is_object($primaryMatcher) || (is_array($primaryMatcher) && $primaryMatcher !== [])}
 {var $primaryKind = match($entry->type) {
@@ -65,10 +78,12 @@
     'value_protected_usd'=> (float) $impact['value_protected_usd'],
     'ingestion'          => $impact['ingestion'],
     'block_events'       => array_map(fn ($b) => [
-      'agent'  => $b->agent_id,
-      'method' => 'check()',
-      'chain'  => 'evm:' . $b->chain_id,
-      'when'   => $b->occurred_at,
+      'agent'    => $b->agent_id,
+      'method'   => $b->chain_id == 16602 ? 'SDK check()' : 'Uniswap v4 hook',
+      'chain'    => isset($chainNames[$b->chain_id])
+                        ? 'evm:' . $b->chain_id . ' (' . $chainNames[$b->chain_id] . ')'
+                        : 'evm:' . $b->chain_id,
+      'when_iso' => $b->occurred_at,
     ], $blocks),
   ],
 
@@ -365,7 +380,7 @@
                                 <td class="py-2.5 font-mono text-[12px] text-fg-secondary">{$e['agent']}</td>
                                 <td class="py-2.5 font-mono text-[12px] text-fg-tertiary">{$e['method']}</td>
                                 <td class="py-2.5 font-mono text-[11.5px] text-fg-tertiary">{$e['chain']}</td>
-                                <td class="py-2.5 font-mono text-[11.5px] text-fg-tertiary text-right">{$e['when']}</td>
+                                <td class="py-2.5 font-mono text-[11.5px] text-fg-tertiary text-right">{format('timeago', $e['when_iso'])}</td>
                             </tr>
                         {/foreach}
                         </tbody>
