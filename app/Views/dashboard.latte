@@ -242,22 +242,22 @@ window.addEventListener('DOMContentLoaded', () => {
                 {var $publisherDisplay = $r->publisher_ens
                     ?? ('0x' . substr($r->publisher_hex, 0, 6) . '…' . substr($r->publisher_hex, -4))}
                 {var $isHexPub = $r->publisher_ens === null}
-                <tr data-registry-row="{$r->imm_id}" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors group">
-                    <td class="pl-7 pr-4 py-3">
+                <tr data-registry-row="{$r->imm_id}" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors group align-middle">
+                    <td class="pl-7 pr-4 py-3 align-middle">
                         <a href="/antibody/{$r->imm_id}" class="font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">{$r->imm_id}</a>
                     </td>
-                    <td class="pr-4 py-3">
+                    <td class="pr-4 py-3 align-middle">
                         <span class="font-mono text-[10.5px] uppercase tracking-widest2 {$typeColor}">{$typeUpper}</span>
                     </td>
-                    <td class="pr-6 py-3 max-w-[320px]">
+                    <td class="pr-6 py-3 max-w-[320px] align-middle">
                         <span class="text-[12.5px] text-fg-secondary truncate inline-block max-w-full" title="{$reasoning}">{$reasoningTrunc}</span>
                     </td>
-                    <td class="pr-4 py-3">
+                    <td class="pr-4 py-3 align-middle">
                         <span class="{$isHexPub ? 'font-mono text-[11.5px] text-fg-secondary' : 'text-[12.5px] text-fg-secondary'}">{$publisherDisplay}</span>
                     </td>
-                    <td class="pr-4 py-3 text-right font-mono text-[12px] text-fg-primary tabular-nums">{format('decimal', $r->cache_hits, 0)}</td>
-                    <td class="pr-4 py-3 text-right font-mono text-[12px] text-immune-500 tabular-nums">{format('money', $r->value_protected_usd)}</td>
-                    <td class="pr-7 py-3 text-right font-mono text-[11px] text-fg-tertiary tabular-nums">
+                    <td class="pr-4 py-3 text-right font-mono text-[12px] text-fg-primary tabular-nums align-middle">{format('decimal', $r->cache_hits, 0)}</td>
+                    <td class="pr-4 py-3 text-right font-mono text-[12px] text-immune-500 tabular-nums align-middle">{format('money', $r->value_protected_usd)}</td>
+                    <td class="pr-7 py-3 text-right font-mono text-[11px] text-fg-tertiary tabular-nums align-middle">
                         {if $r->last_block_at}{format('timeago', $r->last_block_at)}{else}-{/if}
                     </td>
                 </tr>
