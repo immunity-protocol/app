@@ -47,7 +47,7 @@ class PropagationMap {
   }
 
   _buildSvg() {
-    const pad = 40;
+    const pad = 30;
     const size = this.opts.radius * 2 + pad * 2;
     const svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('viewBox', `${-size / 2} ${-size / 2} ${size} ${size}`);
@@ -55,7 +55,7 @@ class PropagationMap {
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
     svg.style.display = 'block';
-    svg.style.overflow = 'visible';
+    svg.style.overflow = 'hidden';
     this.svg = svg;
     this.root.appendChild(svg);
   }
@@ -233,7 +233,7 @@ class PropagationMap {
       ` stroke-width ${waveDurationMs}ms ease-out`;
     this.svg.appendChild(ring);
     requestAnimationFrame(() => {
-      ring.setAttribute('r', String(radius * 1.18));
+      ring.setAttribute('r', String(radius * 0.95));
       ring.setAttribute('opacity', '0');
       ring.setAttribute('stroke-width', '0.4');
     });
