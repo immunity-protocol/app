@@ -80,11 +80,6 @@
   'expires_at'    => $entry->expires_at ?? 'permanent',
   'mirrored_to'   => array_map(fn ($m) => $m->chain_name, $mirrors),
 
-  {*
-   * Scope = home chain (where the antibody was published) + every chain it has
-   * been mirrored to. Home chain is the matcher's chainId when present, else
-   * the registry's network preset. Deduped + ordered: home first, then mirrors.
-   *}
   'envelope' => [
     'primary'   => ['kind' => $primaryKind, 'value' => $primaryValue],
     'secondary' => [],
