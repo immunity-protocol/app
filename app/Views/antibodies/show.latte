@@ -95,11 +95,12 @@
   ],
 
   'impact' => [
-    'cache_hits'         => $impact['cache_hits'],
-    'agents_synced'      => $impact['agents_synced'],
-    'blocks_made'        => $impact['blocks_made'],
-    'value_protected_usd'=> (float) $impact['value_protected_usd'],
-    'ingestion'          => $impact['ingestion'],
+    'cache_hits'           => $impact['cache_hits'],
+    'agents_synced'        => $impact['agents_synced'],
+    'blocks_made'          => $impact['blocks_made'],
+    'value_protected_usd'  => (float) $impact['value_protected_usd'],
+    'ingestion'            => $impact['ingestion'],
+    'propagation_seconds'  => $impact['propagation_seconds'] ?? null,
     'block_events'       => array_map(fn ($b) => [
       'agent'    => $b->agent_id,
       'method'   => $b->chain_id == 16602 ? 'SDK check()' : 'Uniswap v4 hook',
