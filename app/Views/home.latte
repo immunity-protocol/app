@@ -749,27 +749,31 @@ window.addEventListener('DOMContentLoaded', () => {
     return '≈ $' + usd.toLocaleString('en-US', { maximumFractionDigits: 0 });
   }
 
+  // Skip the DOM write when the formatted value hasn't changed; reassigning
+  // the same string still triggers a brief repaint that reads as a flicker.
+  function setText(el, next) { if (el.textContent !== next) el.textContent = next; }
+
   Live.poll(STATS_URL, 4000, function (data) {
     const tiles = data.tiles || {};
     document.querySelectorAll('[data-stat]').forEach(function (el) {
       const m = el.getAttribute('data-stat');
-      if (tiles[m]) el.textContent = fmtNumber(tiles[m].value);
+      if (tiles[m]) setText(el, fmtNumber(tiles[m].value));
     });
     document.querySelectorAll('[data-stat-money]').forEach(function (el) {
       const m = el.getAttribute('data-stat-money');
-      if (tiles[m]) el.textContent = fmtMoney(tiles[m].value);
+      if (tiles[m]) setText(el, fmtMoney(tiles[m].value));
     });
     document.querySelectorAll('[data-delta]').forEach(function (el) {
       const m = el.getAttribute('data-delta');
-      if (tiles[m]) el.textContent = fmtDelta(tiles[m].delta_1h, false);
+      if (tiles[m]) setText(el, fmtDelta(tiles[m].delta_1h, false));
     });
     document.querySelectorAll('[data-delta-money]').forEach(function (el) {
       const m = el.getAttribute('data-delta-money');
-      if (tiles[m]) el.textContent = fmtDelta(tiles[m].delta_1h, true);
+      if (tiles[m]) setText(el, fmtDelta(tiles[m].delta_1h, true));
     });
     document.querySelectorAll('[data-compute-saved]').forEach(function (el) {
       const m = el.getAttribute('data-compute-saved');
-      if (tiles[m]) el.textContent = fmtComputeSaved(tiles[m].value);
+      if (tiles[m]) setText(el, fmtComputeSaved(tiles[m].value));
     });
   });
 

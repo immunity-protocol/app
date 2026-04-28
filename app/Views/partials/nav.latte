@@ -85,8 +85,11 @@
       .then(d => {
         const tile = d && d.tiles && d.tiles.value_protected_usd;
         if (!tile) return;
+        const next = fmtMoney(tile.value);
         document.querySelectorAll('[data-stat-money="value_protected_usd"]').forEach(el => {
-          el.textContent = fmtMoney(tile.value);
+          // Skip the DOM write when the value hasn't changed; reassigning the
+          // same string still triggers a brief repaint that reads as a flicker.
+          if (el.textContent !== next) el.textContent = next;
         });
       })
       .catch(() => { /* swallow; will retry */ });
