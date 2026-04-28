@@ -47,11 +47,11 @@
   default        => 'unknown',
 }}
 {var $primaryValue = !$hasMatcher ? '(envelope not yet hydrated from 0G Storage)' : match(true) {
-  $entry->type === 'address'      => $primaryMatcher->address ?? '',
-  $entry->type === 'call_pattern' => ($primaryMatcher->selector ?? '') . ' ' . implode(', ', (array) ($primaryMatcher->args ?? [])),
-  $entry->type === 'bytecode'     => $primaryMatcher->runtime_hash ?? '',
-  $entry->type === 'graph'        => ($primaryMatcher->root ?? '') . ' depth=' . ($primaryMatcher->depth ?? '?'),
-  $entry->type === 'semantic'     => $primaryMatcher->embedding_id ?? '',
+  $entry->type === 'address'      => $primaryMatcher->target ?? '',
+  $entry->type === 'call_pattern' => trim(($primaryMatcher->target ?? '') . ' ' . ($primaryMatcher->selector ?? '')),
+  $entry->type === 'bytecode'     => $primaryMatcher->bytecodeHash ?? '',
+  $entry->type === 'graph'        => ($primaryMatcher->taintSetId ?? '') . ' size=' . ($primaryMatcher->size ?? '?'),
+  $entry->type === 'semantic'     => ($primaryMatcher->flavor ?? '') . (isset($primaryMatcher->markerHint) ? ' "' . $primaryMatcher->markerHint . '"' : ''),
   default                         => json_encode($primaryMatcher),
 }}
 {var $publisherAddr = '0x' . bin2hex($entry->publisher)}
