@@ -7,6 +7,13 @@
 // Reads OG_STORAGE_INDEXER from env (default: testnet turbo).
 // Writes the downloaded payload as JSON to stdout. Exits non-zero on any
 // failure with a one-line JSON error on stderr.
+//
+// The upstream `@0gfoundation/0g-ts-sdk` writes progress lines via
+// console.log, which would pollute the single-line JSON contract NodeBridge
+// expects on stdout. We redirect those to stderr before importing the SDK
+// so stdout stays clean.
+console.log = (...args) => console.error(...args);
+console.info = (...args) => console.error(...args);
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
