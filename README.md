@@ -75,6 +75,78 @@ Inside the machine, `psql -h localhost -U immunity -d immunity` opens the live d
 - `.flyio/vhosts/default.conf` — Apache vhost pointing at `public/`
 - `.flyio/php-production.ini` — production php.ini overrides
 
+## Infrastructure
+
+The full prod stack is **6 Fly.io apps in the `ophelios` org, all in `yyz`**, plus two AXL gossip hubs the team operates separately. Everything reaches the same managed Postgres via `*.flycast` internal DNS.
+
+```
+┌──────── Fly.io / ophelios ──────────────────────────────────────────────┐
+│                                                                         │
+│  immunity-app (WEB)        immunity-api (API)        immunity-indexer   │
+│  ↳ web UI + dashboard      ↳ public REST + cron      ↳ event poller +   │
+│  ↳ /playground gate                                    hydration worker │
+│           │                          │                         │        │
+│           └──────────┬───────────────┴────────────┬───────────┘        │
+│                      ▼                            ▼                     │
+│              immunity-db (Fly Postgres) ◄── immunity-relayer (RELAYER) │
+│                      ▲                                                  │
+│                      │ writes heartbeats + reads commands               │
+│                      │                                                  │
+│              immunity-fleet (DEMO)                                      │
+│              ↳ axl-spoke + 60 agents under supervisord                  │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Outside Fly:
+  • 0G Galileo testnet RPC + Registry contract (chain-side)
+  • 0G Storage indexer (envelope read/write)
+  • Sepolia RPC (cross-chain mirror destination)
+  • hub-can.immunity-protocol.com:9001, hub-usa.immunity-protocol.com:9001
+    (AXL gossip hubs the spoke dials out to; deployed from immunity-axl-hub)
+```
+
+### Per-app role
+
+| App | Mode | Role | VM | Memory | Public? | Secrets |
+|---|---|---|---|---|---|---|
+| `immunity-app` | `WEB` | Public site at immunity-protocol.com. Landing, dashboard, antibody explorer, antibody detail, RSS / JSON feeds, the password-gated `/playground` console. | shared-cpu-1x | 512 MB | yes (HTTPS) | `DATABASE_URL`, `ENCRYPTION_KEY`, `PLAYGROUND_PASSWORD`, `ADMIN_PASSWORD` |
+| `immunity-api` | `API` | Public developer REST API at api.immunity-protocol.com (`/v1/antibodies`, `/v1/internal/*`). Two processes from one image: `app` (Apache) and `cron` (supercronic). | shared-cpu-1x ×2 | 512 + 256 MB | yes (HTTPS, app only) | `DATABASE_URL`, `CRON_TOKEN` |
+| `immunity-indexer` | `INDEXER` | Single long-running PHP CLI process (`bin/indexer.php`). Workers: EventPoller (2s) → 0G chain logs, HydrationWorker (2s) → downloads envelopes from 0G storage, StatRefresher (60s) → recomputes the dashboard tiles, EnsResolutionWorker (30s), ExpirySweep (60s). | shared-cpu-1x | 512 MB | no | `DATABASE_URL`, `MORALIS_API_KEY` (optional) |
+| `immunity-relayer` | `RELAYER` | Single process (`bin/relayer.php`). Polls `mirror.pending_jobs`, batches them, submits cross-chain mirror txs on Sepolia (and other configured destinations) via the Mirror contract. Postgres advisory lock prevents nonce collisions if two instances ever run. | shared-cpu-1x | 256 MB | no | `DATABASE_URL`, `SEPOLIA_RPC_URL`, `RELAYER_PRIVATE_KEY_SEPOLIA` |
+| `immunity-db` | (Fly Managed Postgres) | The source of truth for everything except chain state. Schemas: `antibody`, `agent`, `event`, `network`, `indexer`, `mirror`, `demo`. Reached via `immunity-db.flycast:5432`. | (managed) | (managed) | n/a | n/a |
+| `immunity-fleet` | (demo swarm) | Packed 60-agent showcase fleet + AXL spoke under supervisord. Lives in **`/Users/dtucker/www/immunity-demo`** (separate repo). Boot with `./scripts/fly-boot.sh`, fully shut down with `./scripts/fly-shutdown.sh`. Pause/resume of ambient activity is controlled from the admin tier of `/playground`. | shared-cpu-4x | 8 GB | no | `DATABASE_URL`, `MASTER_SEED`, `DEPLOYER_PRIVATE_KEY`, `MOCK_USDC_ADDRESS` |
+| `immunity-hub-can`, `immunity-hub-usa` | (AXL hubs) | The two gossip hubs the spoke dials out to. Deployed from the `immunity-axl-hub` repo. Out of scope for this README. | n/a | n/a | n/a | n/a |
+
+### Deploy + operate per app
+
+Each app has its own `fly_<role>.toml` at the repo root:
+
+```sh
+fly deploy --config fly_app.toml      --app immunity-app      --remote-only
+fly deploy --config fly_api.toml      --app immunity-api      --remote-only
+fly deploy --config fly_indexer.toml  --app immunity-indexer  --remote-only
+fly deploy --config fly_relayer.toml  --app immunity-relayer  --remote-only
+```
+
+The fleet deploys from the immunity-demo repo:
+```sh
+cd /Users/dtucker/www/immunity-demo
+fly deploy --config fly_fleet.toml --app immunity-fleet --remote-only
+./scripts/fly-boot.sh        # scale to 1 machine
+./scripts/fly-shutdown.sh    # scale to 0 between sessions
+```
+
+Logs: `fly logs --app <name>`. Status: `fly status --app <name>`. Secrets: `fly secrets list --app <name>`.
+
+### Playground gate
+
+`/playground` is gated behind two passwords stored as Fly secrets on `immunity-app`:
+
+- **`PLAYGROUND_PASSWORD`** — judge tier. Unlocks the page and the test-scenario buttons.
+- **`ADMIN_PASSWORD`** — admin tier. Adds destructive ops + the pause/resume controls that toggle `demo.fleet_state.ambient_paused` (the flag every demo agent polls every tick).
+
+Comparisons use `hash_equals` (constant time). If either secret is unset, the gate rejects every login (the `$expected === ''` short-circuit in `PlaygroundController`).
+
 ## Indexer
 
 `bin/indexer.php` is a single PHP CLI process running multiple cadence-aware loops:
