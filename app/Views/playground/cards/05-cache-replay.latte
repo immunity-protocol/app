@@ -1,4 +1,4 @@
-{* Card 05 — Cache replay. Picks an existing antibody, replays an attack
+{* Card 05 - Cache replay. Picks an existing antibody, replays an attack
    against its target. The cache-hit timing tells the story. *}
 <article class="bg-ink-base p-6 flex flex-col" data-pg-card data-pg-endpoint="/api/v1/playground/cache-replay" data-pg-init="loadAntibodies">
     <header class="mb-4">
@@ -9,7 +9,7 @@
         <h3 class="font-display text-[20px] tracking-tighter text-fg-primary leading-tight">Cache replay</h3>
     </header>
     <p class="text-fg-secondary text-[13px] leading-[1.6] mb-5">
-        Pick an antibody the network already knows about. We replay an attack against its target — every agent's local cache should hit in microseconds.
+        Pick an antibody the network already knows about. We replay an attack against its target - every agent's local cache should hit in microseconds.
     </p>
 
     <form class="space-y-3" data-pg-form>
@@ -41,7 +41,7 @@
       if (!select) return;
       const items = (data && data.items) || [];
       if (items.length === 0) {
-        select.innerHTML = '<option value="">no ADDRESS antibodies yet — publish-threats not run?</option>';
+        select.innerHTML = '<option value="">no ADDRESS antibodies yet - publish-threats not run?</option>';
         return;
       }
       select.innerHTML = items.map((it) => {

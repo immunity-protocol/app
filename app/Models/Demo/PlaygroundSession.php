@@ -15,7 +15,7 @@ namespace App\Models\Demo;
  *   - 'admin' : adds Section 3 + the destructive endpoints (kill agents, manual
  *               command insertion, scenario triggers).
  *
- * Admin implies judge — `hasJudge()` returns true for admin sessions too.
+ * Admin implies judge - `hasJudge()` returns true for admin sessions too.
  */
 final class PlaygroundSession
 {

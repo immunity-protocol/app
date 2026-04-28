@@ -21,7 +21,7 @@
                     Click. Watch the network respond.
                 </h1>
                 <p class="text-fg-secondary text-[14px] leading-[1.6] mt-3 max-w-[640px]">
-                    Every action below produces real on-chain activity against the Immunity demo fleet. No mocks, no fixtures — what you trigger, the network actually does.
+                    Every action below produces real on-chain activity against the Immunity demo fleet. No mocks, no fixtures - what you trigger, the network actually does.
                 </p>
             </div>
             <form method="post" action="/playground/logout" class="self-start">
@@ -51,9 +51,9 @@
             <div class="md:px-5 md:first:pl-0 md:border-r md:border-ink-line/60">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Agents online</div>
                 <div class="font-display text-[28px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">
-                    <span data-pg="agents.online">—</span><span class="text-fg-dim">/</span><span data-pg="agents.total" class="text-fg-tertiary">—</span>
+                    <span data-pg="agents.online">-</span><span class="text-fg-dim">/</span><span data-pg="agents.total" class="text-fg-tertiary">-</span>
                 </div>
-                <div class="font-mono text-[10px] text-fg-dim mt-2 tabular-nums" data-pg-byrole>traders — · wolves — · publishers —</div>
+                <div class="font-mono text-[10px] text-fg-dim mt-2 tabular-nums" data-pg-byrole>traders - · wolves - · publishers -</div>
             </div>
 
             <div class="md:px-5 md:border-r md:border-ink-line/60">
@@ -64,19 +64,19 @@
 
             <div class="md:px-5 md:border-r md:border-ink-line/60">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Events / min</div>
-                <div data-pg="activity.events_per_min_5min" class="font-display text-[28px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">—</div>
+                <div data-pg="activity.events_per_min_5min" class="font-display text-[28px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">-</div>
                 <div class="font-mono text-[10px] text-fg-dim mt-2">5min trailing</div>
             </div>
 
             <div class="md:px-5 md:border-r md:border-ink-line/60">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Blocks / hr</div>
-                <div data-pg="activity.blocks_last_hour" class="font-display text-[28px] font-light tracking-tighter text-threat-300 leading-none tabular-nums">—</div>
+                <div data-pg="activity.blocks_last_hour" class="font-display text-[28px] font-light tracking-tighter text-threat-300 leading-none tabular-nums">-</div>
                 <div class="font-mono text-[10px] text-fg-dim mt-2">last 60min</div>
             </div>
 
             <div class="md:px-5">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Antibodies</div>
-                <div data-pg="registry.antibodies_active" class="font-display text-[28px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">—</div>
+                <div data-pg="registry.antibodies_active" class="font-display text-[28px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">-</div>
                 <div class="font-mono text-[10px] text-fg-dim mt-2">active in registry</div>
             </div>
 
@@ -189,7 +189,7 @@
       setResult(panel, `<div class="flex items-center gap-2"><span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">${data.result_status}</span><span class="font-mono text-[10px] text-fg-dim">cmd #${data.id} → ${escapeHtml(data.agent_id)} · waiting…</span></div>`);
       await new Promise((res) => setTimeout(res, POLL_MS));
     }
-    setResult(panel, `<p class="font-mono text-[11px] text-caution-500">timeout — agent did not pick up the command in 90s</p>`);
+    setResult(panel, `<p class="font-mono text-[11px] text-caution-500">timeout - agent did not pick up the command in 90s</p>`);
   }
 
   function bind(card) {
@@ -235,7 +235,7 @@
 
   function setText(selector, value, fallback) {
     document.querySelectorAll(`[data-pg="${selector}"]`).forEach((el) => {
-      el.textContent = (value === null || value === undefined) ? (fallback ?? '—') : String(value);
+      el.textContent = (value === null || value === undefined) ? (fallback ?? '-') : String(value);
     });
   }
   function getDeep(obj, path) {

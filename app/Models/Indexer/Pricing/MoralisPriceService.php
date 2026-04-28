@@ -108,7 +108,7 @@ final class MoralisPriceService
                 $hintDecimals ?? $token->tokenDecimals,
             );
         } catch (Throwable $e) {
-            // Fall back to stale cache if available — better than NULL when
+            // Fall back to stale cache if available - better than NULL when
             // Moralis is rate-limiting us briefly.
             if ($cached !== null) {
                 return $this->compute(

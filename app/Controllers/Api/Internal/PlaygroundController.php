@@ -117,7 +117,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 1 — Test an address.
+     * Card 1 - Test an address.
      * Picks a random online trader, enqueues a `check_only` command targeting
      * the supplied address. Caller polls /commands/{id} for the result.
      */
@@ -146,7 +146,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 2 — Publish a threat. Enqueues an `external_threat_alert` command
+     * Card 2 - Publish a threat. Enqueues an `external_threat_alert` command
      * for watcher-1, which mints a fresh ADDRESS antibody on chain.
      */
     #[Post('/playground/publish-threat')]
@@ -179,7 +179,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 3 — Send a malicious payload. Picks a random online trader and
+     * Card 3 - Send a malicious payload. Picks a random online trader and
      * runs `check_only` with the supplied text in the conversation context.
      * SemanticMatcher catches known patterns; the TEE evaluates novel ones.
      */
@@ -205,7 +205,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 4 — Trigger an attack. Operator picks the wolf, target address,
+     * Card 4 - Trigger an attack. Operator picks the wolf, target address,
      * amount, and method. The wolf agent runs an `attack` command which
      * builds the synthesised tx and calls check().
      */
@@ -240,7 +240,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 5 helper — list recent ADDRESS antibodies for the dropdown.
+     * Card 5 helper - list recent ADDRESS antibodies for the dropdown.
      */
     #[Get('/playground/recent-address-antibodies')]
     public function recentAddressAntibodies(): Response
@@ -251,7 +251,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 5 — Cache replay. Looks up the antibody's target address and fires
+     * Card 5 - Cache replay. Looks up the antibody's target address and fires
      * an `attack` against it from a random wolf. The AddressMatcher hits in
      * microseconds so the result panel emphasises `source: cache`.
      */
@@ -274,7 +274,7 @@ final class PlaygroundController extends Controller
             'method'     => 'drain',
             'target'     => $target,
             'amount_usd' => 4500,
-            'context'    => "Replay of $immId — checking cache hit speed.",
+            'context'    => "Replay of $immId - checking cache hit speed.",
         ]);
         return Response::json(['command_id' => $commandId, 'agent_id' => $wolf, 'replayed_imm_id' => $immId, 'target' => $target], 202);
     }

@@ -38,7 +38,7 @@ class CommandBroker extends Broker
     }
 
     /**
-     * Recent ADDRESS antibodies — used to populate the Card 5 (Cache replay)
+     * Recent ADDRESS antibodies - used to populate the Card 5 (Cache replay)
      * dropdown. Returns imm_id + extracted target address (lowercased).
      *
      * @return array<int, array{imm_id: string, address: string}>
