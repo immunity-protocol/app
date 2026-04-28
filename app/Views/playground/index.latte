@@ -160,7 +160,46 @@
             </button>
         </div>
 
-        <div data-pg-admin-result class="font-mono text-[10.5px] text-fg-dim mb-4"></div>
+        <div data-pg-admin-result class="font-mono text-[10.5px] text-fg-dim mb-6"></div>
+
+        {* Manual command insertion *}
+        <div class="bg-ink-base border border-ink-line/60 rounded-sm p-5">
+            <h3 class="font-display text-[16px] tracking-tighter text-fg-primary mb-1">Manual command insertion</h3>
+            <p class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-4">stage tool</p>
+            <form id="pg-admin-enqueue" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input name="agent_id" required placeholder="agent_id (e.g. wolf-1)"
+                       class="px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+                <input name="command_type" required placeholder="command_type (e.g. attack)"
+                       class="px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+                <button class="px-4 py-2 text-[12px] bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">Enqueue</button>
+                <textarea name="payload" required rows="4" placeholder='{"method":"drain","target":"0x...","amount_usd":1000}'
+                          class="md:col-span-3 px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors"></textarea>
+            </form>
+            <div data-pg-enqueue-result class="font-mono text-[10.5px] text-fg-dim mt-3"></div>
+        </div>
+
+        <script>
+        (function () {
+          const form = document.getElementById('pg-admin-enqueue');
+          const out = document.querySelector('[data-pg-enqueue-result]');
+          if (!form) return;
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fd = new FormData(form);
+            const body = { agent_id: fd.get('agent_id'), command_type: fd.get('command_type'), payload: fd.get('payload') };
+            out.textContent = 'enqueueing...';
+            const r = await fetch('/api/v1/playground/admin/enqueue', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify(body),
+            }).catch((err) => null);
+            if (!r) { out.textContent = 'network error'; return; }
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) { out.textContent = `${r.status}: ${data.error ?? 'unknown error'}`; return; }
+            out.textContent = `enqueued cmd #${data.command_id} for ${data.agent_id}`;
+          });
+        })();
+        </script>
 
         <script>
         (function () {

@@ -102,6 +102,33 @@ final class PlaygroundAdminController extends Controller
     }
 
     /**
+     * Section 3 (Manual command insertion). Operator types an agent_id, a
+     * command_type, and a JSON payload. We validate, then enqueue.
+     */
+    #[Post('/playground/admin/enqueue')]
+    public function enqueue(Request $request): Response
+    {
+        $body = $request->body();
+        $agentId = (string) $body->get('agent_id', '');
+        if (!preg_match('/^[a-z]+-\d+$/', $agentId)) {
+            return Response::json(['error' => 'agent_id must look like role-N (e.g. wolf-1)'], 400);
+        }
+        $commandType = (string) $body->get('command_type', '');
+        if (!preg_match('/^[a-z_]+$/', $commandType)) {
+            return Response::json(['error' => 'command_type must be lower-snake-case'], 400);
+        }
+        $payloadRaw = $body->get('payload');
+        $payload = is_string($payloadRaw) ? @json_decode($payloadRaw, true) : $payloadRaw;
+        if (!is_array($payload)) {
+            return Response::json(['error' => 'payload must be a JSON object (or already-decoded array)'], 400);
+        }
+
+        $this->commands ??= new CommandBroker();
+        $id = $this->commands->enqueue($agentId, $commandType, $payload);
+        return Response::json(['command_id' => $id, 'agent_id' => $agentId, 'command_type' => $commandType]);
+    }
+
+    /**
      * Card 8 (Resilience test). Hard-kills N random trader containers.
      *
      * Requires the web container to have access to the docker socket
