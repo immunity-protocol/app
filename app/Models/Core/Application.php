@@ -8,10 +8,12 @@ use App\Models\Demo\PlaygroundSession;
 use Zephyrus\Core\App;
 use Zephyrus\Core\ApplicationBuilder;
 use Zephyrus\Formatting\Formatter;
+use Zephyrus\Core\Config\SessionConfig;
 use Zephyrus\Rendering\Asset;
 use Zephyrus\Security\AuthGuardMiddleware;
 use Zephyrus\Security\HeaderTokenGuard;
 use Zephyrus\Security\PredicateAuthGuard;
+use Zephyrus\Session\SessionMiddleware;
 
 /**
  * Application entry point.
@@ -53,6 +55,16 @@ final class Application extends Kernel
 
     protected function registerMiddleware(ApplicationBuilder $builder): ApplicationBuilder
     {
+        // Session middleware is global so the /playground judge/admin tier
+        // checks (which read session()) work end-to-end. Defaults are safe
+        // for local dev; production should set secure=true behind HTTPS.
+        $builder = $builder->withMiddleware(new SessionMiddleware(SessionConfig::fromArray([
+            'name'     => 'IMMUNITY_SESSION',
+            'lifetime' => 0,
+            'sameSite' => 'Lax',
+            'secure'   => false,
+        ])));
+
         $cronToken = (string) ($_ENV['CRON_TOKEN'] ?? getenv('CRON_TOKEN') ?: '');
         if ($cronToken !== '') {
             $guard = new HeaderTokenGuard(
