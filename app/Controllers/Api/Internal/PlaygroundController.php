@@ -145,6 +145,39 @@ final class PlaygroundController extends Controller
         ], 202);
     }
 
+    /**
+     * Card 2 — Publish a threat. Enqueues an `external_threat_alert` command
+     * for watcher-1, which mints a fresh ADDRESS antibody on chain.
+     */
+    #[Post('/playground/publish-threat')]
+    public function publishThreat(Request $request): Response
+    {
+        $body = $request->body();
+        $address = (string) $body->get('address', '');
+        if (!preg_match('/^0x[0-9a-fA-F]{40}$/', $address)) {
+            return Response::json(['error' => 'address must be 0x-prefixed 20-byte hex'], 400);
+        }
+        $severity = (int) $body->get('severity', 80);
+        if ($severity < 0 || $severity > 100) {
+            return Response::json(['error' => 'severity must be 0..100'], 400);
+        }
+        $reasoning = trim((string) $body->get('reasoning', ''));
+        if ($reasoning === '') {
+            return Response::json(['error' => 'reasoning is required'], 400);
+        }
+        $verdict = $body->get('verdict') === 'SUSPICIOUS' ? 'SUSPICIOUS' : 'MALICIOUS';
+
+        $this->commands ??= new CommandBroker();
+        $commandId = $this->commands->enqueue('watcher-1', 'external_threat_alert', [
+            'address'   => strtolower($address),
+            'severity'  => $severity,
+            'verdict'   => $verdict,
+            'reasoning' => $reasoning,
+            'source'    => 'playground',
+        ]);
+        return Response::json(['command_id' => $commandId, 'agent_id' => 'watcher-1'], 202);
+    }
+
     private function decodeJsonb(mixed $value): mixed
     {
         if ($value === null || $value === '') {
