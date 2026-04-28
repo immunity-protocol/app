@@ -178,6 +178,32 @@ final class PlaygroundController extends Controller
         return Response::json(['command_id' => $commandId, 'agent_id' => 'watcher-1'], 202);
     }
 
+    /**
+     * Card 3 — Send a malicious payload. Picks a random online trader and
+     * runs `check_only` with the supplied text in the conversation context.
+     * SemanticMatcher catches known patterns; the TEE evaluates novel ones.
+     */
+    #[Post('/playground/check-payload')]
+    public function checkPayload(Request $request): Response
+    {
+        $body = $request->body();
+        $payloadText = trim((string) $body->get('payload_text', ''));
+        if ($payloadText === '') {
+            return Response::json(['error' => 'payload_text is required'], 400);
+        }
+        $this->heartbeats ??= new HeartbeatBroker();
+        $agentId = $this->heartbeats->pickRandomOnline('trader');
+        if ($agentId === null) {
+            return Response::json(['error' => 'no online traders'], 503);
+        }
+        $this->commands ??= new CommandBroker();
+        $commandId = $this->commands->enqueue($agentId, 'check_only', [
+            'payload_text' => $payloadText,
+            'amount_usd'   => 100,
+        ]);
+        return Response::json(['command_id' => $commandId, 'agent_id' => $agentId], 202);
+    }
+
     private function decodeJsonb(mixed $value): mixed
     {
         if ($value === null || $value === '') {
