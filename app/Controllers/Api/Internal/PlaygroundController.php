@@ -321,6 +321,46 @@ final class PlaygroundController extends Controller
         ])->withHeader('Cache-Control', 'no-store');
     }
 
+    /**
+     * Card 7 helper: top publishers (for the dropdown).
+     */
+    #[Get('/playground/top-publishers')]
+    public function topPublishers(): Response
+    {
+        $this->commands ??= new CommandBroker();
+        return Response::json(['items' => $this->commands->topPublishers(15)])
+            ->withHeader('Cache-Control', 'public, max-age=15');
+    }
+
+    /**
+     * Card 7 (publisher earnings). Aggregate stats for the picked publisher.
+     */
+    #[Get('/playground/publisher-earnings')]
+    public function publisherEarnings(Request $request): Response
+    {
+        $address = (string) $request->parameter('address', '');
+        if (!preg_match('/^0x[0-9a-fA-F]{40}$/', $address)) {
+            return Response::json(['error' => 'address must be 0x-prefixed 20-byte hex'], 400);
+        }
+        $this->commands ??= new CommandBroker();
+        $row = $this->commands->publisherStats($address);
+        if ($row === null) {
+            return Response::json(['error' => 'publisher not found'], 404);
+        }
+        return Response::json([
+            'address'                   => '0x' . $row->address_hex,
+            'ens'                       => $row->ens,
+            'antibodies_published'      => (int) $row->antibodies_published,
+            'successful_blocks'         => (int) $row->successful_blocks,
+            'total_earned_usdc'         => (string) $row->total_earned_usdc,
+            'total_staked_usdc'         => (string) $row->total_staked_usdc,
+            'successful_challenges_won' => (int) $row->successful_challenges_won,
+            'challenges_lost'           => (int) $row->challenges_lost,
+            'first_seen_at'             => $row->first_seen_at,
+            'last_active_at'            => $row->last_active_at,
+        ])->withHeader('Cache-Control', 'no-store');
+    }
+
     private function decodeJsonb(mixed $value): mixed
     {
         if ($value === null || $value === '') {

@@ -1,0 +1,56 @@
+{* Card 07. Publisher earnings. Pure read; populates a dropdown of top
+   publishers and shows their aggregate stats. *}
+<article class="bg-ink-base p-6 flex flex-col" data-pg-card data-pg-endpoint="/api/v1/playground/publisher-earnings" data-pg-method="GET">
+    <header class="mb-4">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary tabular-nums">Card 07</span>
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-accent">judge</span>
+        </div>
+        <h3 class="font-display text-[20px] tracking-tighter text-fg-primary leading-tight">Publisher earnings</h3>
+    </header>
+    <p class="text-fg-secondary text-[13px] leading-[1.6] mb-5">
+        Skin in the game. Each publisher locks 1 USDC per antibody for 72h. Match rewards split 80/20. Pick a publisher and see what the network has paid them.
+    </p>
+
+    <form class="space-y-3" data-pg-form>
+        <label class="block">
+            <span class="block font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Publisher</span>
+            <select name="address" required data-pg-publisher-select
+                    class="w-full px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+                <option value="">loading top publishers...</option>
+            </select>
+        </label>
+        <button type="submit"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2 text-[12px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
+            View earnings
+        </button>
+    </form>
+
+    <div class="mt-5 pt-4 border-t border-ink-line/40" data-pg-result>
+        <p class="font-mono text-[10.5px] text-fg-dim">No lookup yet.</p>
+    </div>
+</article>
+
+<script>
+(function () {
+  fetch('/api/v1/playground/top-publishers')
+    .then((r) => r.json())
+    .then((data) => {
+      const select = document.querySelector('[data-pg-publisher-select]');
+      if (!select) return;
+      const items = (data && data.items) || [];
+      if (items.length === 0) {
+        select.innerHTML = '<option value="">no publishers yet</option>';
+        return;
+      }
+      select.innerHTML = items.map((it) => {
+        const label = it.ens ? `${it.ens}` : `${it.address.slice(0, 8)}...${it.address.slice(-4)}`;
+        return `<option value="${it.address}">${label}  -  ${it.antibodies_published} published</option>`;
+      }).join('');
+    })
+    .catch(() => {
+      const select = document.querySelector('[data-pg-publisher-select]');
+      if (select) select.innerHTML = '<option value="">failed to load</option>';
+    });
+})();
+</script>

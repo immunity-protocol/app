@@ -102,4 +102,55 @@ class CommandBroker extends Broker
         );
         return ['entry' => $entry, 'mirrors' => $mirrors];
     }
+
+    /**
+     * Card 7 (publisher earnings). Returns aggregate stats from
+     * antibody.publisher.
+     */
+    public function publisherStats(string $addressHex): ?stdClass
+    {
+        $clean = strtolower($addressHex);
+        if (str_starts_with($clean, '0x')) {
+            $clean = substr($clean, 2);
+        }
+        if (!preg_match('/^[0-9a-f]{40}$/', $clean)) {
+            return null;
+        }
+        return $this->selectOne(
+            "SELECT encode(address, 'hex') AS address_hex, ens,
+                    antibodies_published, successful_blocks,
+                    total_earned_usdc, total_staked_usdc,
+                    successful_challenges_won, challenges_lost,
+                    first_seen_at, last_active_at
+               FROM antibody.publisher
+              WHERE address = decode(?, 'hex')",
+            [$clean]
+        );
+    }
+
+    /**
+     * Card 7 dropdown. Top publishers by published count.
+     *
+     * @return array<int, array{address: string, ens: string|null, antibodies_published: int}>
+     */
+    public function topPublishers(int $limit = 10): array
+    {
+        $rows = $this->select(
+            "SELECT encode(address, 'hex') AS address_hex, ens, antibodies_published
+               FROM antibody.publisher
+              WHERE antibodies_published > 0
+              ORDER BY antibodies_published DESC, last_active_at DESC
+              LIMIT ?",
+            [$limit]
+        );
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'address'              => '0x' . $r->address_hex,
+                'ens'                  => $r->ens,
+                'antibodies_published' => (int) $r->antibodies_published,
+            ];
+        }
+        return $out;
+    }
 }
