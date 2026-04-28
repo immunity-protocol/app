@@ -329,8 +329,8 @@
                 {* Ingestion sparkline (real histogram of check_event since publish) *}
                 <div class="px-7 py-6 border-b border-ink-line/40">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary">Ingestion rate</span>
-                        <span class="font-mono text-[10px] text-fg-dim">{count($ab['impact']['ingestion'])} buckets across antibody lifetime</span>
+                        <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary">Hits over time</span>
+                        <span class="font-mono text-[10px] text-fg-dim">each bar is one of {count($ab['impact']['ingestion'])} equal slices since publish</span>
                     </div>
                     <svg viewBox="0 0 600 90" preserveAspectRatio="none" class="w-full h-[90px]" aria-hidden="true">
                         <line x1="0" y1="89" x2="600" y2="89" stroke="rgba(232,232,227,0.06)" stroke-width="1"/>
