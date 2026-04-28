@@ -736,9 +736,14 @@ window.addEventListener('DOMContentLoaded', () => {
     return sign + (money ? '$' : '') + abs.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' in 1h';
   }
   // 0G Compute pricing for qwen-2.5-7b-instruct: 50 gwei in / 100 gwei out,
-  // ~2k tokens per inference, 0G assumed at ~$0.50 spot. Yields ~$0.0001 per
-  // call. Update if 0G pricing or token value moves materially.
-  const COST_PER_CALL_USD = 0.0001;
+  // 0G assumed at ~$0.50 spot. SDK's verdict prompt now runs ~750 tokens of
+  // definitions + few-shot examples plus a typical 500-token distilled
+  // bundle, with 2-5 sentences of reasoning out (~200 output tokens). That
+  // works out to ~1450 tokens per inference and a realistic ~$0.00007 per
+  // call. We display $0.00015 as a slightly conservative round-up to cover
+  // larger bundles. Update if 0G pricing, token volume, or 0G/USD rate
+  // moves materially.
+  const COST_PER_CALL_USD = 0.00015;
   function fmtComputeSaved(callsSaved) {
     if (callsSaved === null || callsSaved === undefined || callsSaved === '') return '≈ $0';
     const n = Number(callsSaved);
