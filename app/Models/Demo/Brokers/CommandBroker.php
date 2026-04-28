@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Demo\Brokers;
 
 use App\Models\Core\Broker;
+use stdClass;
 
 class CommandBroker extends Broker
 {
@@ -23,5 +24,16 @@ class CommandBroker extends Broker
             [$agentId, $commandType, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)]
         );
         return (int) $row->id;
+    }
+
+    public function findById(int $id): ?stdClass
+    {
+        return $this->selectOne(
+            "SELECT id, agent_id, command_type, payload, scheduled_at,
+                    picked_up_at, executed_at, result_status, result_detail
+               FROM demo.commands
+              WHERE id = ?",
+            [$id]
+        );
     }
 }
