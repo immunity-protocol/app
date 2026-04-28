@@ -67,20 +67,25 @@ class EntryBroker extends Broker
      */
     private function selectStatsRows(string $orderClause, int $limit): array
     {
+        // Scalar subqueries instead of multi-LEFT-JOIN + GROUP BY: joining
+        // three independent collections (check_event, block_event, mirror)
+        // produces a cartesian blowup and double-counts SUM/MAX. Subqueries
+        // give correct per-entry aggregates regardless of cardinality.
         $sql = "
             SELECT
                 e.id, e.imm_id, e.type::text AS type, e.verdict::text AS verdict,
                 e.redacted_reasoning, e.publisher_ens, e.created_at,
                 encode(e.publisher, 'hex') AS publisher_hex,
-                COUNT(DISTINCT ce.id)        AS cache_hits,
-                COUNT(DISTINCT am.id)        AS mirror_count,
-                COALESCE(SUM(be.value_protected_usd), 0)::text AS value_protected_usd,
-                MAX(be.occurred_at)          AS last_block_at
+                (SELECT count(*) FROM event.check_event ce
+                  WHERE ce.matched_entry_id = e.id AND ce.cache_hit = true) AS cache_hits,
+                (SELECT count(*) FROM antibody.mirror am
+                  WHERE am.entry_id = e.id AND am.status = 'active')        AS mirror_count,
+                (SELECT COALESCE(SUM(be.value_protected_usd), 0)
+                   FROM event.block_event be
+                  WHERE be.entry_id = e.id)::text                           AS value_protected_usd,
+                (SELECT MAX(be.occurred_at) FROM event.block_event be
+                  WHERE be.entry_id = e.id)                                 AS last_block_at
               FROM antibody.entry e
-              LEFT JOIN event.check_event ce ON ce.matched_entry_id = e.id AND ce.cache_hit = true
-              LEFT JOIN event.block_event be ON be.entry_id = e.id
-              LEFT JOIN antibody.mirror   am ON am.entry_id = e.id AND am.status = 'active'
-             GROUP BY e.id
              ORDER BY $orderClause
              LIMIT ?";
         return $this->select($sql, [$limit]);
