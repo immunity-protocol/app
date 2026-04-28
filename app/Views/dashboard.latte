@@ -345,6 +345,93 @@ window.addEventListener('DOMContentLoaded', () => {
     window.__dashMap.setOnlineSet(online);
   }
 
+  // ---------------- Agent list live update ----------------
+
+  const ROLE_TONE = {
+    'TRADER':    'text-fg-secondary',
+    'WOLF':      'text-threat-300',
+    'PUBLISHER': 'text-accent-soft',
+    'WATCHER':   'text-immune-300',
+    'SCENARIO':  'text-caution-300',
+  };
+
+  function updateAgentRow(agent) {
+    const row = document.querySelector('[data-agent-row="' + CSS.escape(agent.agent_id) + '"]');
+    if (!row) return;
+    const dot = row.querySelector('[data-agent-dot]');
+    if (dot) {
+      dot.classList.remove('bg-immune-500', 'bg-fg-dim');
+      dot.classList.add(agent.online ? 'bg-immune-500' : 'bg-fg-dim');
+    }
+    const nameEl = row.querySelector('[data-agent-name]');
+    if (nameEl) {
+      const display = agent.display_name && agent.display_name.trim() !== ''
+        ? agent.display_name : agent.agent_id;
+      if (nameEl.textContent !== display) nameEl.textContent = display;
+    }
+    const roleEl = row.querySelector('[data-agent-role]');
+    if (roleEl) {
+      const roleUpper = String(agent.role || '').toUpperCase();
+      roleEl.textContent = roleUpper;
+      const tone = ROLE_TONE[roleUpper] || 'text-fg-tertiary';
+      ['text-fg-secondary', 'text-threat-300', 'text-accent-soft',
+       'text-immune-300', 'text-caution-300', 'text-fg-tertiary']
+        .forEach(function (c) { roleEl.classList.remove(c); });
+      roleEl.classList.add(tone);
+    }
+    const checksEl = row.querySelector('[data-agent-checks]');
+    if (checksEl) checksEl.textContent = String(agent.checks_24h);
+    const blocksEl = row.querySelector('[data-agent-blocks]');
+    if (blocksEl) {
+      blocksEl.textContent = String(agent.blocks_24h);
+      blocksEl.classList.remove('text-threat-300', 'text-fg-dim');
+      blocksEl.classList.add(agent.blocks_24h > 0 ? 'text-threat-300' : 'text-fg-dim');
+    }
+    const seenEl = row.querySelector('[data-agent-seen]');
+    if (seenEl) seenEl.textContent = timeAgo(agent.last_seen);
+  }
+
+  function appendAgentRow(agent) {
+    const list = document.querySelector('[data-agent-list]');
+    if (!list) return;
+    // Drop the empty-state row if it's still there.
+    const empty = list.querySelector('li.italic');
+    if (empty) empty.remove();
+    const li = document.createElement('li');
+    li.setAttribute('data-agent-row', agent.agent_id);
+    li.className = 'px-5 py-2.5 flex items-center gap-3 hover:bg-ink-elevated/40 transition-colors cursor-pointer';
+    const roleUpper = String(agent.role || '').toUpperCase();
+    const tone = ROLE_TONE[roleUpper] || 'text-fg-tertiary';
+    const display = agent.display_name && agent.display_name.trim() !== ''
+      ? agent.display_name : agent.agent_id;
+    const blockTone = agent.blocks_24h > 0 ? 'text-threat-300' : 'text-fg-dim';
+    const dotTone = agent.online ? 'bg-immune-500' : 'bg-fg-dim';
+    li.innerHTML =
+      '<span class="inline-flex h-1.5 w-1.5 rounded-full shrink-0 ' + dotTone + '" aria-hidden="true" data-agent-dot></span>' +
+      '<span class="font-mono text-[11.5px] text-fg-primary truncate flex-1 min-w-0" data-agent-name>' + escapeHtml(display) + '</span>' +
+      '<span class="font-mono text-[9px] uppercase tracking-widest2 ' + tone + ' shrink-0" data-agent-role>' + escapeHtml(roleUpper) + '</span>' +
+      '<span class="font-mono text-[10.5px] text-fg-secondary tabular-nums shrink-0 w-10 text-right" data-agent-checks>' + agent.checks_24h + '</span>' +
+      '<span class="font-mono text-[10.5px] tabular-nums shrink-0 w-10 text-right ' + blockTone + '" data-agent-blocks>' + agent.blocks_24h + '</span>' +
+      '<span class="font-mono text-[10px] text-fg-dim shrink-0 w-14 text-right" data-agent-seen>' + timeAgo(agent.last_seen) + '</span>';
+    list.appendChild(li);
+  }
+
+  function updateAgentList(agents) {
+    const list = document.querySelector('[data-agent-list]');
+    if (!list || !Array.isArray(agents)) return;
+    let onlineCount = 0;
+    agents.forEach(function (a) {
+      if (a.online) onlineCount++;
+      const existing = list.querySelector('[data-agent-row="' + CSS.escape(a.agent_id) + '"]');
+      if (existing) updateAgentRow(a);
+      else appendAgentRow(a);
+    });
+    const totalEl = document.querySelector('[data-agent-total-count]');
+    if (totalEl) totalEl.textContent = String(agents.length);
+    const onlineEl = document.querySelector('[data-agent-online-count]');
+    if (onlineEl) onlineEl.textContent = String(onlineCount);
+  }
+
   // ---------------- Active-registry live update ----------------
 
   const TYPE_TONE = {
@@ -448,6 +535,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const agents = data.agents || [];
         bindAgentMap(agents);
         applyOnlineSet(agents);
+        updateAgentList(agents);
         if (window.__dashMap) {
           window.__dashMap.applyEvents({
             checks: data.checks || [],
