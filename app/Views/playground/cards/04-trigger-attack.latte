@@ -1,0 +1,55 @@
+{* Card 04 — Trigger an attack. The selected wolf attempts a specific attack
+   pattern; cache or TEE blocks. *}
+<article class="bg-ink-base p-6 flex flex-col" data-pg-card data-pg-endpoint="/api/v1/playground/trigger-attack">
+    <header class="mb-4">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary tabular-nums">Card 04</span>
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-accent">judge</span>
+        </div>
+        <h3 class="font-display text-[20px] tracking-tighter text-fg-primary leading-tight">Trigger an attack</h3>
+    </header>
+    <p class="text-fg-secondary text-[13px] leading-[1.6] mb-5">
+        Pick a wolf, target, and method. The wolf builds the tx and calls <code class="font-mono text-[12px] text-fg-primary">check()</code>. Watch the result panel for the verdict + matching antibody.
+    </p>
+
+    <form class="space-y-3" data-pg-form>
+        <div class="grid grid-cols-2 gap-3">
+            <label class="block">
+                <span class="block font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Wolf</span>
+                <select name="wolf_id" required class="w-full px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+                    <option value="wolf-1">wolf-1 (huntress.eth)</option>
+                    <option value="wolf-2">wolf-2 (ravager.eth)</option>
+                    <option value="wolf-3">wolf-3 (shade.eth)</option>
+                </select>
+            </label>
+            <label class="block">
+                <span class="block font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Method</span>
+                <select name="method" class="w-full px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+                    <option value="drain">drain (USDC transfer)</option>
+                    <option value="approve">approve (MAX_UINT)</option>
+                    <option value="honeypot-swap">honeypot-swap</option>
+                    <option value="prompt-inject">prompt-inject</option>
+                </select>
+            </label>
+        </div>
+        <label class="block">
+            <span class="block font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Target address</span>
+            <input type="text" name="target" required pattern="^0x[0-9a-fA-F]{40}$"
+                   value="0x098b716b8aaf21512996dc57eb0615e2383e2f96"
+                   class="w-full px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+        </label>
+        <label class="block">
+            <span class="block font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Amount (USD)</span>
+            <input type="number" name="amount_usd" min="1" max="1000000" value="5000" required
+                   class="w-full px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+        </label>
+        <button type="submit"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2 text-[12px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
+            Run attack
+        </button>
+    </form>
+
+    <div class="mt-5 pt-4 border-t border-ink-line/40" data-pg-result>
+        <p class="font-mono text-[10.5px] text-fg-dim">No attack yet.</p>
+    </div>
+</article>

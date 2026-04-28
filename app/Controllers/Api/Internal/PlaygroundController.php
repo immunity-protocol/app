@@ -204,6 +204,41 @@ final class PlaygroundController extends Controller
         return Response::json(['command_id' => $commandId, 'agent_id' => $agentId], 202);
     }
 
+    /**
+     * Card 4 — Trigger an attack. Operator picks the wolf, target address,
+     * amount, and method. The wolf agent runs an `attack` command which
+     * builds the synthesised tx and calls check().
+     */
+    #[Post('/playground/trigger-attack')]
+    public function triggerAttack(Request $request): Response
+    {
+        $body = $request->body();
+        $wolf = (string) $body->get('wolf_id', '');
+        if (!preg_match('/^wolf-[1-3]$/', $wolf)) {
+            return Response::json(['error' => 'wolf_id must be wolf-1, wolf-2, or wolf-3'], 400);
+        }
+        $target = (string) $body->get('target', '');
+        if (!preg_match('/^0x[0-9a-fA-F]{40}$/', $target)) {
+            return Response::json(['error' => 'target must be 0x-prefixed 20-byte hex'], 400);
+        }
+        $amountUsd = (int) $body->get('amount_usd', 5000);
+        if ($amountUsd < 1 || $amountUsd > 1_000_000) {
+            return Response::json(['error' => 'amount_usd must be 1..1000000'], 400);
+        }
+        $method = (string) $body->get('method', 'drain');
+        if (!in_array($method, ['drain', 'approve', 'honeypot-swap', 'prompt-inject'], true)) {
+            return Response::json(['error' => 'unknown method'], 400);
+        }
+
+        $this->commands ??= new CommandBroker();
+        $commandId = $this->commands->enqueue($wolf, 'attack', [
+            'method'     => $method,
+            'target'     => strtolower($target),
+            'amount_usd' => $amountUsd,
+        ]);
+        return Response::json(['command_id' => $commandId, 'agent_id' => $wolf], 202);
+    }
+
     private function decodeJsonb(mixed $value): mixed
     {
         if ($value === null || $value === '') {
