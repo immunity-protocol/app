@@ -113,12 +113,53 @@
 {if $isAdmin}
 <section id="playground-pitch" class="relative bg-ink-elevated/30 border-t border-ink-line/60">
     <div class="relative max-w-[1400px] mx-auto px-7 py-12">
-        <div class="flex items-center gap-3 mb-7">
+        <div class="flex items-center gap-3 mb-2">
             <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">03</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-accent">Pitch controls (admin)</span>
         </div>
-        <p class="text-fg-dim font-mono text-[11px]">Stage controls land here in subsequent commits.</p>
+        <p class="text-fg-secondary text-[13.5px] leading-[1.6] mb-8 max-w-[640px]">
+            Bulletproof one-click moments for the live demo. Each button maps to a scenario file or a fleet-wide control.
+        </p>
+
+        {* Pause / resume *}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <button data-pg-admin-action="pause"
+                    class="px-5 py-4 text-left bg-ink-base border border-ink-line/60 hover:border-caution-500 hover:bg-ink-elevated transition-colors rounded-sm">
+                <div class="font-display text-[18px] tracking-tighter text-fg-primary">Pause fleet</div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mt-1">stops ambient ticks</div>
+            </button>
+            <button data-pg-admin-action="resume"
+                    class="px-5 py-4 text-left bg-ink-base border border-ink-line/60 hover:border-immune-500 hover:bg-ink-elevated transition-colors rounded-sm">
+                <div class="font-display text-[18px] tracking-tighter text-fg-primary">Resume fleet</div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mt-1">restarts ambient flow</div>
+            </button>
+        </div>
+
+        <div data-pg-admin-result class="font-mono text-[10.5px] text-fg-dim mb-4"></div>
+
+        <script>
+        (function () {
+          const result = document.querySelector('[data-pg-admin-result]');
+          document.querySelectorAll('[data-pg-admin-action]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              const action = btn.dataset.pgAdminAction;
+              result.textContent = `${action}…`;
+              const r = await fetch(`/api/v1/playground/admin/${action}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: '{}',
+              }).catch((err) => ({ ok: false, statusText: String(err) }));
+              if (!r.ok) {
+                result.textContent = `${action} failed: ${r.status ?? ''} ${r.statusText ?? ''}`;
+                return;
+              }
+              const data = await r.json().catch(() => ({}));
+              result.textContent = `${action} ok - ${JSON.stringify(data)}`;
+            });
+          });
+        })();
+        </script>
     </div>
 </section>
 {else}

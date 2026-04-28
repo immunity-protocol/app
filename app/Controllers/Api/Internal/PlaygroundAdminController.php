@@ -25,6 +25,27 @@ final class PlaygroundAdminController extends Controller
     private FleetStateBroker $fleetState;
 
     /**
+     * Section 3 (Pause fleet). Sets demo.fleet_state.ambient_paused = true.
+     * Agents observe the flag on their next dequeue tick and stop generating
+     * ambient traffic until resumed. Scenario commands still execute.
+     */
+    #[Post('/playground/admin/pause')]
+    public function pause(): Response
+    {
+        $this->fleetState ??= new FleetStateBroker();
+        $this->fleetState->pause();
+        return Response::json(['ambient_paused' => true]);
+    }
+
+    #[Post('/playground/admin/resume')]
+    public function resume(): Response
+    {
+        $this->fleetState ??= new FleetStateBroker();
+        $this->fleetState->resume();
+        return Response::json(['ambient_paused' => false]);
+    }
+
+    /**
      * Card 8 (Resilience test). Hard-kills N random trader containers.
      *
      * Requires the web container to have access to the docker socket
