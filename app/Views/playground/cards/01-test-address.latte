@@ -1,0 +1,34 @@
+{* Card 01 — Test an address. Picks a random online trader to run check() on
+   the supplied address. The trader's SDK consults the cache → TEE on miss. *}
+<article class="bg-ink-base p-6 flex flex-col" data-pg-card data-pg-endpoint="/api/v1/playground/check-address">
+    <header class="mb-4">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary tabular-nums">Card 01</span>
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-accent">judge</span>
+        </div>
+        <h3 class="font-display text-[20px] tracking-tighter text-fg-primary leading-tight">Test an address</h3>
+    </header>
+    <p class="text-fg-secondary text-[13px] leading-[1.6] mb-5">
+        Paste any wallet or contract address. A live trader agent runs <code class="font-mono text-[12px] text-fg-primary">immunity.check()</code> against it and reports back what the network knows.
+    </p>
+
+    <form class="space-y-3" data-pg-form>
+        <label class="block">
+            <span class="block font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Address</span>
+            <input type="text" name="address" required pattern="^0x[0-9a-fA-F]{40}$"
+                   placeholder="0x098b716b8aaf21512996dc57eb0615e2383e2f96"
+                   class="w-full px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+        </label>
+        <button type="submit"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2 text-[12px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
+            Run check
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </form>
+
+    <div class="mt-5 pt-4 border-t border-ink-line/40" data-pg-result>
+        <p class="font-mono text-[10.5px] text-fg-dim">No run yet. Submit to see the network's response.</p>
+    </div>
+</article>

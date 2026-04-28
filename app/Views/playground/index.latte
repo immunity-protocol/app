@@ -87,12 +87,18 @@
 {* ============================================ SECTION 2 · TEST SCENARIOS ===== *}
 <section id="playground-cards" class="relative bg-ink-base">
     <div class="relative max-w-[1400px] mx-auto px-7 py-12">
-        <div class="flex items-center gap-3 mb-7">
+        <div class="flex items-center gap-3 mb-2">
             <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">02</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Test scenarios</span>
         </div>
-        <p class="text-fg-dim font-mono text-[11px]">Eight interactive cards land here in subsequent commits.</p>
+        <p class="text-fg-secondary text-[13.5px] leading-[1.6] mb-8 max-w-[640px]">
+            Each card runs a real action against the demo fleet. Click, watch the result panel update, and inspect what happened on chain.
+        </p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-px bg-ink-line/50">
+            {include 'playground/cards/01-test-address.latte', isAdmin => $isAdmin}
+        </div>
     </div>
 </section>
 
@@ -135,6 +141,91 @@
 
 <script src="{asset('/javascripts/live.js')}"></script>
 <script>
+// Shared card helper: every card has data-pg-card + data-pg-endpoint, contains
+// a [data-pg-form] (for submit) and [data-pg-result] (for output). On submit we
+// POST the form, get a {command_id}, then poll /commands/{id} until terminal.
+(function () {
+  const POLL_MS = 1500;
+  const POLL_TIMEOUT_MS = 90000;
+
+  function fmtBadge(status) {
+    const tone = status === 'completed' ? 'text-immune-500'
+               : status === 'failed'    ? 'text-threat-300'
+               : 'text-caution-500';
+    return `<span class="font-mono text-[10.5px] uppercase tracking-widest2 ${tone}">${status}</span>`;
+  }
+  function fmtKv(detail) {
+    if (detail === null || detail === undefined) return '';
+    if (typeof detail !== 'object') return `<pre class="font-mono text-[11.5px] text-fg-secondary whitespace-pre-wrap">${escapeHtml(String(detail))}</pre>`;
+    const rows = Object.entries(detail).map(([k, v]) => {
+      const value = v === null ? 'null' : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+      return `<dt class="font-mono text-[10.5px] text-fg-tertiary uppercase tracking-widest2">${escapeHtml(k)}</dt>
+              <dd class="font-mono text-[11.5px] text-fg-primary break-all mb-2">${escapeHtml(value)}</dd>`;
+    }).join('');
+    return `<dl class="grid grid-cols-1 gap-y-1">${rows}</dl>`;
+  }
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+  }
+  function setResult(panel, html) { panel.innerHTML = html; }
+
+  async function poll(commandId, panel, deadline) {
+    while (Date.now() < deadline) {
+      const r = await fetch(`/api/v1/playground/commands/${commandId}`);
+      if (!r.ok) {
+        setResult(panel, `<p class="font-mono text-[11px] text-threat-300">poll failed (${r.status})</p>`);
+        return;
+      }
+      const data = await r.json();
+      if (data.result_status === 'completed' || data.result_status === 'failed') {
+        const meta = `<div class="flex items-center gap-2 mb-3">${fmtBadge(data.result_status)}<span class="font-mono text-[10px] text-fg-dim">cmd #${data.id} → ${escapeHtml(data.agent_id)}</span></div>`;
+        setResult(panel, meta + fmtKv(data.result_detail));
+        return;
+      }
+      setResult(panel, `<div class="flex items-center gap-2"><span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">${data.result_status}</span><span class="font-mono text-[10px] text-fg-dim">cmd #${data.id} → ${escapeHtml(data.agent_id)} · waiting…</span></div>`);
+      await new Promise((res) => setTimeout(res, POLL_MS));
+    }
+    setResult(panel, `<p class="font-mono text-[11px] text-caution-500">timeout — agent did not pick up the command in 90s</p>`);
+  }
+
+  function bind(card) {
+    const endpoint = card.dataset.pgEndpoint;
+    const form = card.querySelector('[data-pg-form]');
+    const panel = card.querySelector('[data-pg-result]');
+    if (!form || !panel) return;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const body = {};
+      fd.forEach((v, k) => { body[k] = v; });
+      setResult(panel, '<p class="font-mono text-[10.5px] text-fg-dim">submitting…</p>');
+      let resp;
+      try {
+        resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      } catch (err) {
+        setResult(panel, `<p class="font-mono text-[11px] text-threat-300">network error: ${escapeHtml(String(err))}</p>`);
+        return;
+      }
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        setResult(panel, `<p class="font-mono text-[11px] text-threat-300">${resp.status}: ${escapeHtml(data.error ?? 'unknown error')}</p>`);
+        return;
+      }
+      if (data.command_id) {
+        poll(data.command_id, panel, Date.now() + POLL_TIMEOUT_MS);
+      } else {
+        // Direct-response endpoints (cards 6, 7) skip the queue entirely.
+        setResult(panel, fmtKv(data));
+      }
+    });
+  }
+
+  document.querySelectorAll('[data-pg-card]').forEach(bind);
+})();
 (function () {
   const STATUS_URL = '/api/v1/playground/status';
 

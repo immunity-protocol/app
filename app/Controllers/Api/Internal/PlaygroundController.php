@@ -9,9 +9,11 @@ use App\Models\Demo\Brokers\CommandBroker;
 use App\Models\Demo\Brokers\FleetStateBroker;
 use App\Models\Demo\Brokers\HeartbeatBroker;
 use App\Models\Event\Brokers\CheckEventBroker;
+use Zephyrus\Http\Request;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;
 use Zephyrus\Routing\Attribute\Middleware;
+use Zephyrus\Routing\Attribute\Post;
 
 /**
  * Judge-tier endpoints powering the /playground page (Sections 1 + 2).
@@ -112,6 +114,35 @@ final class PlaygroundController extends Controller
             'result_detail'   => $this->decodeJsonb($row->result_detail),
             'payload'         => $this->decodeJsonb($row->payload),
         ])->withHeader('Cache-Control', 'no-store');
+    }
+
+    /**
+     * Card 1 — Test an address.
+     * Picks a random online trader, enqueues a `check_only` command targeting
+     * the supplied address. Caller polls /commands/{id} for the result.
+     */
+    #[Post('/playground/check-address')]
+    public function checkAddress(Request $request): Response
+    {
+        $body = $request->body();
+        $address = (string) $body->get('address', '');
+        if (!preg_match('/^0x[0-9a-fA-F]{40}$/', $address)) {
+            return Response::json(['error' => 'address must be 0x-prefixed 20-byte hex'], 400);
+        }
+        $this->heartbeats ??= new HeartbeatBroker();
+        $agentId = $this->heartbeats->pickRandomOnline('trader');
+        if ($agentId === null) {
+            return Response::json(['error' => 'no online traders'], 503);
+        }
+        $this->commands ??= new CommandBroker();
+        $commandId = $this->commands->enqueue($agentId, 'check_only', [
+            'address'    => strtolower($address),
+            'amount_usd' => 100,
+        ]);
+        return Response::json([
+            'command_id' => $commandId,
+            'agent_id'   => $agentId,
+        ], 202);
     }
 
     private function decodeJsonb(mixed $value): mixed
