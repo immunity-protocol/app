@@ -302,7 +302,15 @@
                             {if $ab['evidence']['tee_attestation'] !== null}
                                 <div class="font-mono text-[11.5px] text-fg-secondary bg-ink-sunken/60 border border-ink-line/40 rounded-sm px-3 py-2 break-all">{$ab['evidence']['tee_attestation']}</div>
                             {else}
-                                <div class="font-mono text-[11.5px] text-fg-dim italic px-3 py-2">(none recorded)</div>
+                                <div class="inline-flex items-center gap-2 px-3 py-2 rounded-sm bg-ink-sunken/40 border border-ink-line/30">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-accent-soft" aria-hidden="true">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>
+                                        <path d="M12 7v5l3 3"/>
+                                    </svg>
+                                    <span class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary">Curated by human</span>
+                                </div>
+                                <div class="font-mono text-[10.5px] text-fg-dim mt-1.5 px-1">Heuristically published from a known threat catalog, not derived from a TEE-verified verdict.</div>
                             {/if}
                         </div>
 
