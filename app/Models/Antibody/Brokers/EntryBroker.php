@@ -78,6 +78,8 @@ class EntryBroker extends Broker
                 encode(e.publisher, 'hex') AS publisher_hex,
                 (SELECT count(*) FROM event.check_event ce
                   WHERE ce.matched_entry_id = e.id AND ce.cache_hit = true) AS cache_hits,
+                (SELECT count(*) FROM event.block_event be
+                  WHERE be.entry_id = e.id)                                 AS block_count,
                 (SELECT count(*) FROM antibody.mirror am
                   WHERE am.entry_id = e.id AND am.status = 'active')        AS mirror_count,
                 (SELECT COALESCE(SUM(be.value_protected_usd), 0)

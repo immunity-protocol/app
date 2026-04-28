@@ -209,7 +209,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3">Type</th>
                     <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-6 py-3">Reasoning</th>
                     <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3">Publisher</th>
-                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3">Hits</th>
+                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3" title="Cache hits / actual blocks">Hits / blocks</th>
                     <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3">Value protected</th>
                     <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-7 py-3">Last block</th>
                 </tr>
@@ -249,7 +249,11 @@ window.addEventListener('DOMContentLoaded', () => {
                     <td class="pr-4 py-3 align-middle">
                         <span class="{$isHexPub ? 'font-mono text-[11.5px] text-fg-secondary' : 'text-[12.5px] text-fg-secondary'}">{$publisherDisplay}</span>
                     </td>
-                    <td class="pr-4 py-3 text-right font-mono text-[12px] text-fg-primary tabular-nums align-middle">{format('decimal', $r->cache_hits, 0)}</td>
+                    <td class="pr-4 py-3 text-right font-mono text-[12px] tabular-nums align-middle" title="Cache hits / actual blocks">
+                        <span class="text-fg-primary">{format('decimal', $r->cache_hits, 0)}</span>
+                        <span class="text-fg-dim mx-1">/</span>
+                        <span class="text-threat-300">{format('decimal', $r->block_count, 0)}</span>
+                    </td>
                     <td class="pr-4 py-3 text-right font-mono text-[12px] text-immune-500 tabular-nums align-middle">{format('money', $r->value_protected_usd)}</td>
                     <td class="pr-7 py-3 text-right font-mono text-[11px] text-fg-tertiary tabular-nums align-middle">
                         {if $r->last_block_at}{format('timeago', $r->last_block_at)}{else}-{/if}
@@ -481,16 +485,21 @@ window.addEventListener('DOMContentLoaded', () => {
       ? 'font-mono text-[11.5px] text-fg-secondary'
       : 'text-[12.5px] text-fg-secondary';
     const cacheHits = Number(r.cache_hits || 0).toLocaleString('en-US');
+    const blockCount = Number(r.block_count || 0).toLocaleString('en-US');
     const lastBlock = r.last_block_at ? timeAgo(r.last_block_at) : '-';
     return (
-      '<tr data-registry-row="' + escapeAttr(r.imm_id) + '" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors group">' +
-        '<td class="pl-7 pr-4 py-3"><a href="/antibody/' + escapeAttr(r.imm_id) + '" class="font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">' + escapeHtml(r.imm_id) + '</a></td>' +
-        '<td class="pr-4 py-3"><span class="font-mono text-[10.5px] uppercase tracking-widest2 ' + typeTone + '">' + escapeHtml(typeUpper) + '</span></td>' +
-        '<td class="pr-6 py-3 max-w-[320px]"><span class="text-[12.5px] text-fg-secondary truncate inline-block max-w-full" title="' + escapeAttr(reasoning) + '">' + escapeHtml(trunc) + '</span></td>' +
-        '<td class="pr-4 py-3"><span class="' + pubCls + '">' + escapeHtml(publisher) + '</span></td>' +
-        '<td class="pr-4 py-3 text-right font-mono text-[12px] text-fg-primary tabular-nums">' + cacheHits + '</td>' +
-        '<td class="pr-4 py-3 text-right font-mono text-[12px] text-immune-500 tabular-nums">' + fmtMoneyCents(r.value_protected_usd) + '</td>' +
-        '<td class="pr-7 py-3 text-right font-mono text-[11px] text-fg-tertiary tabular-nums">' + lastBlock + '</td>' +
+      '<tr data-registry-row="' + escapeAttr(r.imm_id) + '" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors group align-middle">' +
+        '<td class="pl-7 pr-4 py-3 align-middle"><a href="/antibody/' + escapeAttr(r.imm_id) + '" class="font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">' + escapeHtml(r.imm_id) + '</a></td>' +
+        '<td class="pr-4 py-3 align-middle"><span class="font-mono text-[10.5px] uppercase tracking-widest2 ' + typeTone + '">' + escapeHtml(typeUpper) + '</span></td>' +
+        '<td class="pr-6 py-3 max-w-[320px] align-middle"><span class="text-[12.5px] text-fg-secondary truncate inline-block max-w-full" title="' + escapeAttr(reasoning) + '">' + escapeHtml(trunc) + '</span></td>' +
+        '<td class="pr-4 py-3 align-middle"><span class="' + pubCls + '">' + escapeHtml(publisher) + '</span></td>' +
+        '<td class="pr-4 py-3 text-right font-mono text-[12px] tabular-nums align-middle" title="Cache hits / actual blocks">' +
+          '<span class="text-fg-primary">' + cacheHits + '</span>' +
+          '<span class="text-fg-dim mx-1">/</span>' +
+          '<span class="text-threat-300">' + blockCount + '</span>' +
+        '</td>' +
+        '<td class="pr-4 py-3 text-right font-mono text-[12px] text-immune-500 tabular-nums align-middle">' + fmtMoneyCents(r.value_protected_usd) + '</td>' +
+        '<td class="pr-7 py-3 text-right font-mono text-[11px] text-fg-tertiary tabular-nums align-middle">' + lastBlock + '</td>' +
       '</tr>'
     );
   }

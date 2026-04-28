@@ -125,6 +125,7 @@ final class DashboardController extends Controller
             'publisher_ens'       => $row->publisher_ens,
             'publisher_hex'       => (string) $row->publisher_hex,
             'cache_hits'          => (int) $row->cache_hits,
+            'block_count'         => (int) $row->block_count,
             'mirror_count'        => (int) $row->mirror_count,
             'value_protected_usd' => (string) $row->value_protected_usd,
             'last_block_at'       => $row->last_block_at,
