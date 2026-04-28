@@ -537,19 +537,25 @@
                 <dl class="space-y-3">
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="text-fg-tertiary text-[11.5px]">Network propagation</dt>
-                        <dd class="font-mono text-[12px] text-immune-500">3.2s</dd>
+                        <dd class="font-mono text-[12px] {$ab['impact']['propagation_seconds'] === null ? 'text-fg-dim' : 'text-immune-500'}">
+                            {if $ab['impact']['propagation_seconds'] === null}
+                                &mdash;
+                            {else}
+                                {format('decimal', $ab['impact']['propagation_seconds'], 1)}s
+                            {/if}
+                        </dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="text-fg-tertiary text-[11.5px]">Mirrors live</dt>
-                        <dd class="font-mono text-[12px] text-fg-primary">{count($ab['mirrors'])}/4</dd>
+                        <dd class="font-mono text-[12px] text-fg-primary">{count($ab['mirrors'])}/{$mirrorChainsTotal}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="text-fg-tertiary text-[11.5px]">Cache hits</dt>
                         <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{format('decimal', $ab['impact']['cache_hits'], 0)}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="text-fg-tertiary text-[11.5px]">USD protected</dt>
-                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{format('money', $ab['impact']['value_protected_usd'])}</dd>
+                        <dt class="text-fg-tertiary text-[11.5px]">Attacks blocked</dt>
+                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{format('decimal', $ab['impact']['blocks_made'], 0)}</dd>
                     </div>
                 </dl>
             </div>

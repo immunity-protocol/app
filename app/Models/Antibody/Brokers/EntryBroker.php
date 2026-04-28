@@ -183,8 +183,35 @@ class EntryBroker extends Broker
                    FROM event.block_event WHERE entry_id = ?",
                 [$entryId]
             ) ?? '0'),
+            // First-check-after-publish latency. Returns null until at least
+            // one matching check has been settled. Used by the "Network
+            // propagation" stat in the at-a-glance panel.
+            'propagation_seconds' => $this->propagationFor($entryId),
             'ingestion' => $this->buildIngestionHistogram($entryId, 30),
         ];
+    }
+
+    /**
+     * Seconds between antibody publish and the first check_event that
+     * matched this entry. `null` when no checks have landed yet, so the UI
+     * can show a dash instead of a fake number.
+     */
+    private function propagationFor(int $entryId): ?float
+    {
+        $row = $this->selectOne(
+            "SELECT EXTRACT(EPOCH FROM (MIN(ce.occurred_at) - e.created_at)) AS secs
+               FROM antibody.entry e
+               JOIN event.check_event ce ON ce.matched_entry_id = e.id
+              WHERE e.id = ?
+              GROUP BY e.created_at",
+            [$entryId]
+        );
+        if ($row === null || $row->secs === null) {
+            return null;
+        }
+        $secs = (float) $row->secs;
+        // Negative is meaningless (clock skew); clamp to 0.
+        return $secs < 0 ? 0.0 : $secs;
     }
 
     /**
