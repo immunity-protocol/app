@@ -57,11 +57,45 @@
         </div>
     </div>
 
+    {* ============== FILTER TOGGLE (mobile/tablet only) ===== *}
+    {* Counts how many non-default filter knobs are active. Used in the toggle
+       label so a user can see at a glance whether anything is filtered. *}
+    {var $activeFilterCount =
+        count($filters->types)
+      + count($filters->statuses)
+      + count($filters->verdicts)
+      + ($filters->search !== '' && $filters->search !== null ? 1 : 0)
+      + ($filters->range !== null && $filters->range !== 'all' ? 1 : 0)
+      + ($filters->sevMin !== null ? 1 : 0)
+      + ($filters->sevMax !== null ? 1 : 0)
+      + ($filters->publisher !== '' && $filters->publisher !== null ? 1 : 0)
+    }
+    <div class="lg:hidden mb-4">
+        <button type="button" data-filter-toggle
+                aria-expanded="false" aria-controls="antibody-filter-panel"
+                class="w-full inline-flex items-center justify-between px-4 py-3 bg-ink-elevated/40 border border-ink-line/80 rounded-sm font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary hover:border-fg-tertiary transition-colors">
+            <span class="flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                    <path d="M3 6h18M6 12h12M10 18h4"/>
+                </svg>
+                Filters
+                {if $activeFilterCount > 0}
+                    <span class="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-accent/20 text-accent text-[10px] tabular-nums normal-case tracking-normal">{$activeFilterCount}</span>
+                {/if}
+            </span>
+            <svg data-filter-chevron width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" class="transition-transform" aria-hidden="true">
+                <path d="M3 4l3 3 3-3"/>
+            </svg>
+        </button>
+    </div>
+
     {* ================================================ FILTERS + TABLE ===== *}
     <div class="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-x-16 gap-y-8">
 
-        {* ----------- SIDEBAR FILTERS ----------- *}
-        <aside class="space-y-7">
+        {* ----------- SIDEBAR FILTERS -----------
+           Hidden by default below `lg` breakpoint; toggled by [data-filter-toggle].
+           On lg+ the `lg:block` keeps it visible regardless of the data-state. *}
+        <aside id="antibody-filter-panel" data-filter-panel class="hidden lg:block space-y-7">
 
             {* Type *}
             <div>
@@ -304,7 +338,7 @@
 
 </section>
 
-<script>
+<script n:syntax="off">
 (function () {
   const form = document.getElementById('antibody-filters');
   if (!form) return;
@@ -344,6 +378,36 @@
       e.preventDefault();
       search.focus();
     }
+  });
+})();
+
+(function () {
+  // Mobile/tablet filter panel toggle. The panel is `hidden` by default
+  // and `lg:block` brings it back at the desktop breakpoint regardless of
+  // toggle state, so the toggle only affects the small-screen layout.
+  // Persist the user's preference across reloads so a "filters open" state
+  // sticks until they close it.
+  const toggle = document.querySelector('[data-filter-toggle]');
+  const panel = document.getElementById('antibody-filter-panel');
+  const chevron = document.querySelector('[data-filter-chevron]');
+  if (!toggle || !panel) return;
+
+  const KEY = 'immunity.antibodies.filters_open_mobile';
+  function applyState(open) {
+    panel.classList.toggle('hidden', !open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+  }
+  // Restore previous preference on small screens; desktop stays open via lg:block.
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved === '1') applyState(true);
+  } catch (_) { /* localStorage unavailable; ignore */ }
+
+  toggle.addEventListener('click', function () {
+    const open = panel.classList.contains('hidden');
+    applyState(open);
+    try { localStorage.setItem(KEY, open ? '1' : '0'); } catch (_) {}
   });
 })();
 </script>
