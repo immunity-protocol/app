@@ -65,4 +65,42 @@ class HeartbeatBroker extends Broker
         $row = $this->selectOne($sql, $params);
         return $row !== null ? (string) $row->agent_id : null;
     }
+
+    /**
+     * Full agent roster with per-agent 24h check / block counts and an
+     * `online` flag derived from `last_seen`. Sorted alphabetically by
+     * `agent_id` so the dashboard can map each row to a stable node index
+     * on the propagation map.
+     *
+     * @return \stdClass[]  rows: { agent_id, role, display_name, last_seen, online, checks_24h, blocks_24h }
+     */
+    public function listAllWithStats(int $limit = 60): array
+    {
+        return $this->select(
+            "SELECT
+                 h.agent_id,
+                 h.role,
+                 h.display_name,
+                 h.last_seen,
+                 (h.last_seen >= now() - make_interval(secs => ?)) AS online,
+                 coalesce(c.n, 0) AS checks_24h,
+                 coalesce(b.n, 0) AS blocks_24h
+               FROM demo.agent_heartbeat h
+          LEFT JOIN (
+                 SELECT agent_id, count(*) AS n
+                   FROM event.check_event
+                  WHERE occurred_at >= now() - interval '24 hours'
+               GROUP BY agent_id
+               ) c ON c.agent_id = h.agent_id
+          LEFT JOIN (
+                 SELECT agent_id, count(*) AS n
+                   FROM event.block_event
+                  WHERE occurred_at >= now() - interval '24 hours'
+               GROUP BY agent_id
+               ) b ON b.agent_id = h.agent_id
+           ORDER BY h.agent_id
+              LIMIT ?",
+            [self::ONLINE_WINDOW_SECONDS, $limit]
+        );
+    }
 }
