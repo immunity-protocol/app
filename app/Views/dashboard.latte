@@ -122,39 +122,55 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
     </header>
 
-    <div class="hr-fade mb-10"></div>
+    <div class="hr-fade"></div>
+</section>
 
-    {* ============== STATS BAR (live; values come from /api/v1/network/stats) ============== *}
-    {var $stats = [
-      ['label' => 'Nodes online',         'metric' => 'agents_online',       'fmt' => 'count', 'tone' => 'immune'],
-      ['label' => 'Antibodies active',    'metric' => 'antibodies_active',   'fmt' => 'count', 'tone' => 'immune'],
-      ['label' => 'Cache hits / hour',    'metric' => 'cache_hits_per_hour', 'fmt' => 'count', 'tone' => 'immune'],
-      ['label' => 'LLM calls saved',      'metric' => 'llm_calls_saved',     'fmt' => 'count', 'tone' => 'threat'],
-      ['label' => 'Value protected',      'metric' => 'value_protected_usd', 'fmt' => 'money', 'tone' => 'accent'],
-    ]}
+{* ============== STATS BAR ============== *
+   Full-width breakout matching the playground status bar pattern: deeper
+   dark background, inline divider lines, big monospace numbers. Same data
+   source as the nav badge (/api/v1/network/stats) so the existing live
+   poller keeps the values fresh without a page refresh. *}
+<section class="relative bg-ink-sunken border-y border-ink-line/60">
+    <div class="relative max-w-[1400px] mx-auto px-7 py-6">
+        <div class="flex items-center gap-3 mb-5">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network status</span>
+            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-immune-500">live</span>
+        </div>
 
-    <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 grid grid-cols-2 md:grid-cols-5 divide-x divide-ink-line/40 mb-10">
-        {foreach $stats as $s}
-            {var $valueTone = match($s['tone']) {
-              'threat' => 'text-threat-300',
-              'accent' => 'text-accent-soft',
-              default  => 'text-fg-primary',
-            }}
-            <div class="px-6 py-6">
-                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-2">{$s['label']}</div>
-                <div class="font-mono text-[28px] {$valueTone} tabular-nums leading-none">
-                    {if $s['fmt'] === 'money'}<span data-stat-money="{$s['metric']}">-</span>
-                    {else}<span data-stat="{$s['metric']}">-</span>
-                    {/if}
-                </div>
-                {if $s['fmt'] === 'money'}
-                    <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-2" data-delta-money="{$s['metric']}">&nbsp;</div>
-                {else}
-                    <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-2" data-delta="{$s['metric']}">&nbsp;</div>
-                {/if}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-y-6 md:gap-0">
+
+            <div class="md:px-7 md:first:pl-0 md:border-r md:border-ink-line/60">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Antibodies active</div>
+                <div data-stat="antibodies_active" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">-</div>
+                <div class="font-mono text-[11px] text-immune-500 tabular-nums mt-3" data-delta="antibodies_active">&nbsp;</div>
             </div>
-        {/foreach}
+
+            <div class="md:px-7 md:border-r md:border-ink-line/60">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Cache hits / hr</div>
+                <div data-stat="cache_hits_per_hour" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">-</div>
+                <div class="font-mono text-[11px] text-immune-500 tabular-nums mt-3" data-delta="cache_hits_per_hour">&nbsp;</div>
+            </div>
+
+            <div class="md:px-7 md:border-r md:border-ink-line/60">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">LLM calls saved</div>
+                <div data-stat="llm_calls_saved" class="font-display text-[44px] font-light tracking-tighter text-threat-300 leading-none tabular-nums">-</div>
+                <div class="font-mono text-[11px] text-fg-tertiary mt-3">
+                    <span class="text-immune-500" data-compute-saved="llm_calls_saved">≈ $0</span> in compute
+                </div>
+            </div>
+
+            <div class="md:px-7">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Value protected</div>
+                <div data-stat-money="value_protected_usd" class="font-display text-[44px] font-light tracking-tighter text-accent-soft leading-none tabular-nums">-</div>
+                <div class="font-mono text-[11px] text-immune-500 tabular-nums mt-3" data-delta-money="value_protected_usd">&nbsp;</div>
+            </div>
+
+        </div>
     </div>
+</section>
+
+<section class="max-w-[1400px] mx-auto px-7 pt-10 pb-16">
 
     {* ============== MAP + DUAL FEED (filled in 7c, 7d, 7e) ============== *}
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 mb-10">
@@ -379,6 +395,19 @@ window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-delta-money]').forEach(function (el) {
       const m = el.getAttribute('data-delta-money');
       if (tiles[m]) el.textContent = fmtDelta(tiles[m].delta_1h, true);
+    });
+    // 0G Compute pricing for qwen-2.5-7b-instruct: ~$0.0001 per call.
+    // Cumulative since registry deploy.
+    document.querySelectorAll('[data-compute-saved]').forEach(function (el) {
+      const m = el.getAttribute('data-compute-saved');
+      const tile = tiles[m];
+      if (!tile) return;
+      const n = Number(tile.value);
+      if (!Number.isFinite(n) || n <= 0) { el.textContent = '≈ $0'; return; }
+      const usd = n * 0.0001;
+      if (usd < 0.01) el.textContent = '≈ <$0.01';
+      else if (usd < 1) el.textContent = '≈ $' + usd.toFixed(2);
+      else el.textContent = '≈ $' + usd.toLocaleString('en-US', { maximumFractionDigits: 0 });
     });
   });
 })();
