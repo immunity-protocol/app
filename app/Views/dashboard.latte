@@ -287,23 +287,28 @@ window.addEventListener('DOMContentLoaded', () => {
     const sign = n >= 0 ? '+' : '-';
     return sign + (money ? '$' : '') + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' in 1h';
   }
+  // Skip the DOM write when the formatted value hasn't changed, otherwise
+  // assigning the same string back into textContent still causes a brief
+  // repaint that reads as a flicker on the larger tiles.
+  function setText(el, next) { if (el.textContent !== next) el.textContent = next; }
+
   Live.poll('/api/v1/network/stats', 4000, function (data) {
     const tiles = data.tiles || {};
     document.querySelectorAll('[data-stat]').forEach(function (el) {
       const m = el.getAttribute('data-stat');
-      if (tiles[m]) el.textContent = fmtNumber(tiles[m].value);
+      if (tiles[m]) setText(el, fmtNumber(tiles[m].value));
     });
     document.querySelectorAll('[data-stat-money]').forEach(function (el) {
       const m = el.getAttribute('data-stat-money');
-      if (tiles[m]) el.textContent = fmtMoney(tiles[m].value);
+      if (tiles[m]) setText(el, fmtMoney(tiles[m].value));
     });
     document.querySelectorAll('[data-delta]').forEach(function (el) {
       const m = el.getAttribute('data-delta');
-      if (tiles[m]) el.textContent = fmtDelta(tiles[m].delta_1h, false);
+      if (tiles[m]) setText(el, fmtDelta(tiles[m].delta_1h, false));
     });
     document.querySelectorAll('[data-delta-money]').forEach(function (el) {
       const m = el.getAttribute('data-delta-money');
-      if (tiles[m]) el.textContent = fmtDelta(tiles[m].delta_1h, true);
+      if (tiles[m]) setText(el, fmtDelta(tiles[m].delta_1h, true));
     });
     // 0G Compute pricing for qwen-2.5-7b-instruct: ~$0.0001 per call.
     // Cumulative since registry deploy.
@@ -312,11 +317,11 @@ window.addEventListener('DOMContentLoaded', () => {
       const tile = tiles[m];
       if (!tile) return;
       const n = Number(tile.value);
-      if (!Number.isFinite(n) || n <= 0) { el.textContent = '≈ $0'; return; }
+      if (!Number.isFinite(n) || n <= 0) { setText(el, '≈ $0'); return; }
       const usd = n * 0.0001;
-      if (usd < 0.01) el.textContent = '≈ <$0.01';
-      else if (usd < 1) el.textContent = '≈ $' + usd.toFixed(2);
-      else el.textContent = '≈ $' + usd.toLocaleString('en-US', { maximumFractionDigits: 0 });
+      if (usd < 0.01) setText(el, '≈ <$0.01');
+      else if (usd < 1) setText(el, '≈ $' + usd.toFixed(2));
+      else setText(el, '≈ $' + usd.toLocaleString('en-US', { maximumFractionDigits: 0 }));
     });
   });
 })();
