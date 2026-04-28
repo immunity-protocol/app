@@ -1,0 +1,38 @@
+{* Card 08 (admin-tier). Resilience test: kill N random trader containers. *}
+{var $isAdmin = $isAdmin ?? false}
+
+<article class="bg-ink-base p-6 flex flex-col {if !$isAdmin}opacity-60{/if}"
+         {if $isAdmin}data-pg-card data-pg-endpoint="/api/v1/playground/admin/resilience-test"{/if}>
+    <header class="mb-4">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary tabular-nums">Card 08</span>
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-threat-300">admin only</span>
+        </div>
+        <h3 class="font-display text-[20px] tracking-tighter text-fg-primary leading-tight">Resilience test</h3>
+    </header>
+    <p class="text-fg-secondary text-[13px] leading-[1.6] mb-5">
+        Kill N random trader containers. The rest keep gossiping antibodies and serving check() calls. There is no central node to take down.
+    </p>
+
+    {if $isAdmin}
+        <form class="space-y-3" data-pg-form>
+            <label class="block">
+                <span class="block font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">How many to kill (1-10)</span>
+                <input type="number" name="count" min="1" max="10" value="5" required
+                       class="w-full px-3 py-2 bg-ink-elevated/60 border border-ink-line/80 rounded-sm text-fg-primary font-mono text-[12px] focus:outline-none focus:border-accent transition-colors">
+            </label>
+            <button type="submit"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2 text-[12px] tracking-wide bg-threat-300 text-ink-base hover:bg-threat-500 transition-colors rounded-sm">
+                Kill agents
+            </button>
+        </form>
+
+        <div class="mt-5 pt-4 border-t border-ink-line/40" data-pg-result>
+            <p class="font-mono text-[10.5px] text-fg-dim">No kill yet.</p>
+        </div>
+    {else}
+        <p class="font-mono text-[10.5px] text-fg-dim mt-3">
+            Locked. <a href="#admin-login" class="underline-offset-4 hover:underline hover:text-fg-tertiary">Upgrade to admin</a> to enable.
+        </p>
+    {/if}
+</article>
