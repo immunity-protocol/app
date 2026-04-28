@@ -310,15 +310,17 @@ window.addEventListener('DOMContentLoaded', () => {
       const m = el.getAttribute('data-delta-money');
       if (tiles[m]) setText(el, fmtDelta(tiles[m].delta_1h, true));
     });
-    // 0G Compute pricing for qwen-2.5-7b-instruct: ~$0.0001 per call.
-    // Cumulative since registry deploy.
+    // 0G Compute pricing for qwen-2.5-7b-instruct: ~$0.00015 per call.
+    // SDK's verdict prompt with definitions + few-shot examples runs about
+    // 1450 tokens per inference at 50 gwei in / 100 gwei out, $0.50/0G spot.
+    // Cumulative since registry deploy. Keep in sync with home.latte.
     document.querySelectorAll('[data-compute-saved]').forEach(function (el) {
       const m = el.getAttribute('data-compute-saved');
       const tile = tiles[m];
       if (!tile) return;
       const n = Number(tile.value);
       if (!Number.isFinite(n) || n <= 0) { setText(el, '≈ $0'); return; }
-      const usd = n * 0.0001;
+      const usd = n * 0.00015;
       if (usd < 0.01) setText(el, '≈ <$0.01');
       else if (usd < 1) setText(el, '≈ $' + usd.toFixed(2));
       else setText(el, '≈ $' + usd.toLocaleString('en-US', { maximumFractionDigits: 0 }));
