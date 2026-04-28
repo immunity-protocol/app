@@ -13,7 +13,9 @@ use Zephyrus\Data\Database;
  * data stale at >120s, so the supervisor schedules this every 60s.
  *
  * - antibodies_active   : count of antibody.entry where status = active
- * - agents_online       : count of agent.heartbeat with last_seen in last 60s
+ * - agents_online       : count of demo.agent_heartbeat with last_seen in last 120s
+ *                         (matches the 2-tick liveness window the dashboard
+ *                         right-rail uses; demo fleet is the only writer today)
  * - cache_hits_per_hour : count of event.check_event with cache_hit in last hour
  * - llm_calls_saved     : ALL-TIME count of cache hits — each one avoided a TEE
  *                         inference round-trip, so the lifetime total is the
@@ -44,8 +46,11 @@ class StatRefresher
             'antibodies_active'   => $this->scalar(
                 "SELECT count(*) FROM antibody.entry WHERE status = 'active'::antibody.entry_status"
             ),
+            // Demo fleet uses demo.agent_heartbeat. Production agents would
+            // also write here once the SDK gets a heartbeat-emit helper;
+            // until then the demo table is the only live source.
             'agents_online'       => $this->scalar(
-                "SELECT count(*) FROM agent.heartbeat WHERE last_seen >= now() - interval '60 seconds'"
+                "SELECT count(*) FROM demo.agent_heartbeat WHERE last_seen >= now() - interval '120 seconds'"
             ),
             'cache_hits_per_hour' => $this->scalar(
                 "SELECT count(*) FROM event.check_event
