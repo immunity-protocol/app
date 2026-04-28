@@ -9,6 +9,7 @@ use App\Controllers\Web\Antibody\Pagination;
 use App\Models\Antibody\Services\EntryService;
 use App\Models\Antibody\Services\MirrorService;
 use App\Models\Antibody\Services\PublisherService;
+use App\Models\Core\MirrorNetworkRegistry;
 use App\Models\Event\Services\BlockEventService;
 use Zephyrus\Http\Request;
 use Zephyrus\Http\Response;
@@ -69,13 +70,17 @@ final class AntibodyController extends Controller
         $blocks = (new BlockEventService())->findRecentByEntryId($entry->id, 10);
         $publisher = (new PublisherService())->findByAddressHex(bin2hex($entry->publisher));
         $impact = $entries->impactFor($entry->id);
+        // Total mirror chains we're configured to fan out to. Drives the
+        // "X of N chains mirrored" denominator in the detail view.
+        $mirrorChainsTotal = count(MirrorNetworkRegistry::default()->all());
         return $this->render('antibodies/show', [
-            'id'        => $id,
-            'entry'     => $entry,
-            'mirrors'   => $mirrors,
-            'blocks'    => $blocks,
-            'publisher' => $publisher,
-            'impact'    => $impact,
+            'id'                => $id,
+            'entry'             => $entry,
+            'mirrors'           => $mirrors,
+            'blocks'            => $blocks,
+            'publisher'         => $publisher,
+            'impact'            => $impact,
+            'mirrorChainsTotal' => $mirrorChainsTotal,
         ]);
     }
 }
