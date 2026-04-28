@@ -16,6 +16,21 @@ class CheckEventBroker extends Broker
         );
     }
 
+    /**
+     * @return \stdClass[]  rows: { agent_id, occurred_at, cache_hit }
+     */
+    public function findRecentSince(string $sinceIso, int $limit = 200): array
+    {
+        return $this->select(
+            "SELECT agent_id, occurred_at, cache_hit
+               FROM event.check_event
+              WHERE occurred_at > ?::timestamptz
+           ORDER BY occurred_at ASC
+              LIMIT ?",
+            [$sinceIso, $limit]
+        );
+    }
+
     public function countCacheHitsSince(string $sinceIso): int
     {
         return (int) $this->selectValue(

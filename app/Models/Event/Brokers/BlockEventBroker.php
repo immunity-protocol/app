@@ -44,6 +44,21 @@ class BlockEventBroker extends Broker
         );
     }
 
+    /**
+     * @return \stdClass[]  rows: { agent_id, occurred_at, entry_id }
+     */
+    public function findRecentSince(string $sinceIso, int $limit = 200): array
+    {
+        return $this->select(
+            "SELECT agent_id, occurred_at, entry_id
+               FROM event.block_event
+              WHERE occurred_at > ?::timestamptz
+           ORDER BY occurred_at ASC
+              LIMIT ?",
+            [$sinceIso, $limit]
+        );
+    }
+
     public function sumValueProtectedAllTime(): string
     {
         return (string) $this->selectValue(
