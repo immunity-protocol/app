@@ -55,6 +55,16 @@
   default                         => json_encode($primaryMatcher),
 }}
 {var $publisherAddr = '0x' . bin2hex($entry->publisher)}
+{*
+ * Action panel state. evidence_cid is bytea NOT NULL but a fresh antibody
+ * with no uploaded envelope carries 32 zero bytes; treat that as "no
+ * envelope". Challenge window is open while stake_lock_until is in the
+ * future; once elapsed the action disappears entirely.
+ *}
+{var $evidenceCidHex = '0x' . bin2hex($entry->evidence_cid)}
+{var $hasEvidenceCid = bin2hex($entry->evidence_cid) !== str_repeat('0', 64)}
+{var $evidenceUrl = $hasEvidenceCid ? 'https://indexer-storage-testnet-turbo.0g.ai/file?root=' . $evidenceCidHex : null}
+{var $challengeOpen = $entry->stake_lock_until !== null && strtotime($entry->stake_lock_until) > time()}
 {var $ab = [
   'id'             => $entry->imm_id,
   'keccak'         => '0x' . bin2hex($entry->keccak_id),
@@ -480,29 +490,44 @@
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary px-5 py-3 border-b border-ink-line/40">Actions</div>
                 <ul class="divide-y divide-ink-line/40">
                     <li>
-                        <a href="#" class="flex items-center justify-between px-5 py-3 text-[13px] text-fg-secondary hover:text-fg-primary hover:bg-ink-elevated/40 transition-colors">
-                            <span>View raw JSON</span>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="text-fg-dim"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
-                        </a>
+                        {if $hasEvidenceCid}
+                            <a href="{$evidenceUrl}" target="_blank" rel="noopener" download="{$entry->imm_id}.json"
+                               class="flex items-center justify-between px-5 py-3 text-[13px] text-fg-secondary hover:text-fg-primary hover:bg-ink-elevated/40 transition-colors">
+                                <span>View raw JSON</span>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="text-fg-dim"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+                            </a>
+                        {else}
+                            <span title="no envelope uploaded yet"
+                                  class="flex items-center justify-between px-5 py-3 text-[13px] text-fg-dim cursor-not-allowed select-none">
+                                <span>View raw JSON</span>
+                                <span class="font-mono text-[9.5px] uppercase tracking-widest2">unavailable</span>
+                            </span>
+                        {/if}
                     </li>
                     <li>
-                        <a href="#" class="flex items-center justify-between px-5 py-3 text-[13px] text-fg-secondary hover:text-fg-primary hover:bg-ink-elevated/40 transition-colors">
-                            <span>Copy evidence CID</span>
+                        <button type="button" data-copy-cid="{$evidenceCidHex}" data-cid-available="{$hasEvidenceCid ? '1' : '0'}"
+                                class="w-full flex items-center justify-between px-5 py-3 text-[13px] {$hasEvidenceCid ? 'text-fg-secondary hover:text-fg-primary hover:bg-ink-elevated/40' : 'text-fg-dim cursor-not-allowed'} transition-colors"
+                                {if !$hasEvidenceCid}disabled title="no envelope uploaded yet"{/if}>
+                            <span><span data-copy-cid-label>Copy evidence CID</span></span>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="text-fg-dim"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                        </a>
+                        </button>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center justify-between px-5 py-3 text-[13px] text-fg-secondary hover:text-fg-primary hover:bg-ink-elevated/40 transition-colors">
-                            <span>Share permalink</span>
+                        <button type="button" data-copy-permalink
+                                class="w-full flex items-center justify-between px-5 py-3 text-[13px] text-fg-secondary hover:text-fg-primary hover:bg-ink-elevated/40 transition-colors">
+                            <span><span data-copy-permalink-label>Share permalink</span></span>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="text-fg-dim"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
-                        </a>
+                        </button>
                     </li>
+                    {if $challengeOpen}
                     <li>
-                        <a href="#" class="flex items-center justify-between px-5 py-3 text-[13px] text-caution-500 hover:text-caution-300 hover:bg-caution-500/5 transition-colors">
+                        <button type="button" data-challenge-open
+                                class="w-full flex items-center justify-between px-5 py-3 text-[13px] text-caution-500 hover:text-caution-300 hover:bg-caution-500/5 transition-colors">
                             <span>Challenge antibody</span>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        </a>
+                        </button>
                     </li>
+                    {/if}
                 </ul>
             </div>
 
@@ -533,5 +558,67 @@
     </div>
 
 </section>
+
+{* Challenge antibody v2 modal. Stays hidden until [data-challenge-open] fires. *}
+<dialog data-challenge-modal class="bg-ink-elevated border border-ink-line/80 rounded-sm text-fg-primary p-0 max-w-[420px] w-full backdrop:bg-ink-base/70">
+    <div class="px-6 py-5">
+        <div class="flex items-center gap-3 mb-3">
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-caution-500">v2 feature</span>
+        </div>
+        <h2 class="font-display text-[22px] tracking-tighter mb-3">Challenge game coming soon</h2>
+        <p class="text-fg-secondary text-[13.5px] leading-[1.6] mb-5">
+            Challenges let anyone counter-stake on a published antibody they believe is wrong. The publisher loses their stake if a challenge succeeds; the challenger does if it fails. The on-chain mechanics are designed; the UI lands in v2.
+        </p>
+        <div class="flex justify-end">
+            <button type="button" data-challenge-close
+                    class="px-4 py-2 text-[12px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
+                Close
+            </button>
+        </div>
+    </div>
+</dialog>
+
+<script n:syntax="off">
+(function () {
+  function flashLabel(el, text, restore) {
+    if (!el) return;
+    el.textContent = text;
+    setTimeout(function () { el.textContent = restore; }, 1400);
+  }
+
+  // Copy CID
+  document.querySelectorAll('[data-copy-cid]').forEach(function (btn) {
+    if (btn.dataset.cidAvailable !== '1') return;
+    const cid = btn.dataset.copyCid;
+    const label = btn.querySelector('[data-copy-cid-label]');
+    btn.addEventListener('click', function () {
+      navigator.clipboard.writeText(cid).then(
+        function () { flashLabel(label, 'Copied', 'Copy evidence CID'); },
+        function () { flashLabel(label, 'Copy failed', 'Copy evidence CID'); },
+      );
+    });
+  });
+
+  // Share permalink
+  document.querySelectorAll('[data-copy-permalink]').forEach(function (btn) {
+    const label = btn.querySelector('[data-copy-permalink-label]');
+    btn.addEventListener('click', function () {
+      navigator.clipboard.writeText(window.location.href).then(
+        function () { flashLabel(label, 'Link copied', 'Share permalink'); },
+        function () { flashLabel(label, 'Copy failed', 'Share permalink'); },
+      );
+    });
+  });
+
+  // Challenge modal
+  const modal = document.querySelector('[data-challenge-modal]');
+  document.querySelectorAll('[data-challenge-open]').forEach(function (btn) {
+    btn.addEventListener('click', function () { modal && modal.showModal && modal.showModal(); });
+  });
+  document.querySelectorAll('[data-challenge-close]').forEach(function (btn) {
+    btn.addEventListener('click', function () { modal && modal.close && modal.close(); });
+  });
+})();
+</script>
 
 {/block}
