@@ -80,10 +80,18 @@
   'expires_at'    => $entry->expires_at ?? 'permanent',
   'mirrored_to'   => array_map(fn ($m) => $m->chain_name, $mirrors),
 
+  {*
+   * Scope = home chain (where the antibody was published) + every chain it has
+   * been mirrored to. Home chain is the matcher's chainId when present, else
+   * the registry's network preset. Deduped + ordered: home first, then mirrors.
+   *}
   'envelope' => [
     'primary'   => ['kind' => $primaryKind, 'value' => $primaryValue],
     'secondary' => [],
-    'scope'     => array_map(fn ($m) => 'evm:' . $m->chain_id, $mirrors),
+    'scope'     => array_values(array_unique(array_merge(
+        [(int) ($primaryMatcher->chainId ?? 16602)],
+        array_map(fn ($m) => (int) $m->chain_id, $mirrors),
+    ))),
     'exception' => 'none',
   ],
 
@@ -255,12 +263,20 @@
                         </div>
                     {/if}
 
-                    {* Scope *}
+                    {* Scope: home chain first, mirrors after. *}
                     <div>
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-3">Scope</div>
                         <div class="flex flex-wrap gap-2">
-                            {foreach $ab['envelope']['scope'] as $chain}
-                                <span class="font-mono text-[11px] text-fg-secondary px-2 py-1 rounded-sm bg-ink-elevated/60 border border-ink-line/50">{$chain}</span>
+                            {var $homeChain = $ab['envelope']['scope'][0] ?? null}
+                            {foreach $ab['envelope']['scope'] as $chainId}
+                                {var $chainLabel = isset($chainNames[$chainId]) ? $chainNames[$chainId] : 'evm:' . $chainId}
+                                {var $isHome = $chainId === $homeChain}
+                                <span class="inline-flex items-center gap-1.5 font-mono text-[11px] text-fg-secondary px-2 py-1 rounded-sm bg-ink-elevated/60 border border-ink-line/50">
+                                    {$chainLabel}
+                                    {if $isHome}
+                                        <span class="font-mono text-[9px] uppercase tracking-widest2 text-fg-dim">home</span>
+                                    {/if}
+                                </span>
                             {/foreach}
                         </div>
                     </div>
