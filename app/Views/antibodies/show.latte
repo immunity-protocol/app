@@ -405,6 +405,14 @@
                             </tr>
                         </thead>
                         <tbody>
+                        {if count($ab['impact']['block_events']) === 0}
+                            <tr class="border-b border-ink-line/30 last:border-0">
+                                <td colspan="4" class="py-6 text-center">
+                                    <div class="font-mono text-[11.5px] text-fg-dim italic">No agent has had to block this antibody yet.</div>
+                                    <div class="font-mono text-[10.5px] text-fg-dim mt-1.5">Intercepts appear here in real time as agents match this pattern in the wild.</div>
+                                </td>
+                            </tr>
+                        {/if}
                         {foreach $ab['impact']['block_events'] as $e}
                             <tr class="border-b border-ink-line/30 last:border-0">
                                 <td class="py-2.5 font-mono text-[12px] text-fg-secondary">{$e['agent']}</td>
