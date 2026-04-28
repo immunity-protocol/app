@@ -143,7 +143,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="md:px-7 md:border-r md:border-ink-line/60">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Cache hits / hr</div>
                 <div data-stat="cache_hits_per_hour" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">18,492</div>
-                <div class="font-mono text-[11px] text-fg-tertiary mt-3">avg 5.1 / agent</div>
+                <div class="font-mono text-[11px] text-fg-tertiary mt-3" data-cache-per-agent>avg &mdash; / agent</div>
             </div>
 
             <div class="md:px-7 md:border-r md:border-ink-line/60">
@@ -775,6 +775,19 @@ window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-compute-saved]').forEach(function (el) {
       const m = el.getAttribute('data-compute-saved');
       if (tiles[m]) el.textContent = fmtComputeSaved(tiles[m].value);
+    });
+    // cache_hits_per_hour / max(agents_online, 1) - average per active agent.
+    // The "Cache hits / hr" tile subtitle. Shows a dash when either side
+    // isn't yet known so we don't render NaN or division-by-zero.
+    document.querySelectorAll('[data-cache-per-agent]').forEach(function (el) {
+      const hits = Number((tiles.cache_hits_per_hour || {}).value);
+      const agents = Number((tiles.agents_online || {}).value);
+      if (!Number.isFinite(hits) || !Number.isFinite(agents)) {
+        el.textContent = 'avg — / agent';
+        return;
+      }
+      const per = agents > 0 ? hits / agents : 0;
+      el.textContent = 'avg ' + per.toLocaleString('en-US', { maximumFractionDigits: 1 }) + ' / agent';
     });
   });
 
