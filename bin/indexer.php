@@ -70,7 +70,7 @@ if ($config->database === null) {
 $db = Db::fromConfig($config->database);
 
 $network           = NetworkConfig::galileo();
-$pollIntervalMs    = (int) (getenv('INDEXER_POLL_INTERVAL_MS') ?: 2000);
+$pollIntervalMs    = (int) (getenv('INDEXER_POLL_INTERVAL_MS') ?: 15000);
 $hydrationConc     = (int) (getenv('INDEXER_HYDRATION_CONCURRENCY') ?: 5);
 $backfillChunk     = (int) (getenv('INDEXER_BACKFILL_CHUNK') ?: 5000);
 $confirmations     = (int) (getenv('INDEXER_CONFIRMATIONS') ?: 2);

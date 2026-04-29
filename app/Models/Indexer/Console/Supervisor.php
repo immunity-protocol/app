@@ -16,14 +16,23 @@ use Throwable;
  * Single-process indexer supervisor.
  *
  * Runs sequential cadence-aware loops in one PHP process:
- *   - EventPoller       : every poll-interval (default 2s)
+ *   - EventPoller       : every poll-interval (default 15s)
  *   - HydrationWorker   : every poll-interval, capped at maxHydrationJobs
- *   - EnsResolutionWorker: every 30s
+ *   - EnsResolutionWorker: once per day
  *   - StatRefresher     : every 60s
  *   - SummaryLogger     : every 60s
  *
  * Handles SIGTERM / SIGINT to stop cleanly between iterations. Memory ceiling
  * triggers a non-zero exit so the orchestrator (Docker / Fly) restarts.
+ *
+ * Connection-lost detection: PDO does not auto-reconnect when its TCP
+ * socket dies (Fly Postgres maintenance, idle timeout, network blip).
+ * Once broken, every subsequent query fails with the same "no connection
+ * to the server" error forever — exactly the failure that left dashboards
+ * showing stale stats for two hours today. Rather than rebuild the entire
+ * dependency graph mid-loop, we count consecutive connection-lost errors
+ * across worker calls and exit non-zero on the threshold so Fly restarts
+ * the process with a fresh PDO. This mirrors the memory-ceiling exit path.
  *
  * v1 antibodies are permanent (`expires_at` is reserved for v2), so the
  * ExpirySweep worker is no longer registered here. Re-add the constructor
@@ -35,6 +44,9 @@ class Supervisor
     private int $iterations = 0;
     private int $totalEvents = 0;
     private int $totalHydrated = 0;
+    private int $consecutiveConnLostErrors = 0;
+    private const ENS_RESOLUTION_INTERVAL_SEC = 86_400;
+    private const CONN_LOST_EXIT_THRESHOLD = 3;
 
     /**
      * @param BackfillBootstrap[] $bootstraps  one per chain (0G + each Mirror chain)
@@ -52,7 +64,7 @@ class Supervisor
         private readonly StatRefresher $statRefresher,
         private readonly Cadence $cadence,
         private readonly ?PricingRetryWorker $pricingRetry = null,
-        private readonly int $pollIntervalMs = 2000,
+        private readonly int $pollIntervalMs = 15_000,
         private readonly int $maxHydrationJobs = 5,
         private readonly int $memoryCeilingMb = 256,
     ) {
@@ -89,39 +101,71 @@ class Supervisor
                 }
                 try {
                     $this->totalEvents += $poller->tick();
+                    $this->onWorkerSuccess();
                 } catch (Throwable $e) {
                     $this->log("event-poller chain=" . $poller->chainId() . " error: " . $e->getMessage());
+                    if ($this->isConnectionLost($e)) {
+                        $code = $this->bailOnLostConnection();
+                        if ($code !== null) {
+                            return $code;
+                        }
+                    }
                 }
             }
 
             try {
                 $hydStats = $this->hydration->tick($this->maxHydrationJobs);
                 $this->totalHydrated += (int) $hydStats['succeeded'];
+                $this->onWorkerSuccess();
             } catch (Throwable $e) {
                 $this->log("hydration error: " . $e->getMessage());
+                if ($this->isConnectionLost($e)) {
+                    return $this->bailOnLostConnection();
+                }
             }
 
-            if ($this->ens !== null && $this->cadence->due('ens_resolution', 30)) {
+            if ($this->ens !== null && $this->cadence->due('ens_resolution', self::ENS_RESOLUTION_INTERVAL_SEC)) {
                 try {
                     $this->ens->tick();
+                    $this->onWorkerSuccess();
                 } catch (Throwable $e) {
                     $this->log("ens error: " . $e->getMessage());
+                    if ($this->isConnectionLost($e)) {
+                        $code = $this->bailOnLostConnection();
+                        if ($code !== null) {
+                            return $code;
+                        }
+                    }
                 }
             }
 
             if ($this->cadence->due('stat_refresh', 60)) {
                 try {
                     $this->statRefresher->run();
+                    $this->onWorkerSuccess();
                 } catch (Throwable $e) {
                     $this->log("stat-refresh error: " . $e->getMessage());
+                    if ($this->isConnectionLost($e)) {
+                        $code = $this->bailOnLostConnection();
+                        if ($code !== null) {
+                            return $code;
+                        }
+                    }
                 }
             }
 
             if ($this->pricingRetry !== null && $this->cadence->due('pricing_retry', 60)) {
                 try {
                     $this->pricingRetry->tick();
+                    $this->onWorkerSuccess();
                 } catch (Throwable $e) {
                     $this->log("pricing-retry error: " . $e->getMessage());
+                    if ($this->isConnectionLost($e)) {
+                        $code = $this->bailOnLostConnection();
+                        if ($code !== null) {
+                            return $code;
+                        }
+                    }
                 }
             }
 
@@ -178,5 +222,47 @@ class Supervisor
     {
         $line = sprintf('[%s] indexer: %s', gmdate('Y-m-d\TH:i:s\Z'), $message);
         fwrite(STDOUT, $line . PHP_EOL);
+    }
+
+    /**
+     * "no connection to the server" / "server has gone away" / "Connection
+     * refused" all indicate that PDO's TCP socket is dead and PDO will not
+     * recover on its own. We match on the substrings rather than SQLSTATE
+     * codes because SQLSTATE for these typically reads HY000 (generic) and
+     * the only reliable signal is the driver-level message.
+     */
+    private function isConnectionLost(Throwable $e): bool
+    {
+        $msg = strtolower($e->getMessage());
+        return str_contains($msg, 'no connection to the server')
+            || str_contains($msg, 'server has gone away')
+            || str_contains($msg, 'connection refused')
+            || str_contains($msg, 'broken pipe')
+            || str_contains($msg, 'lost connection');
+    }
+
+    private function onWorkerSuccess(): void
+    {
+        $this->consecutiveConnLostErrors = 0;
+    }
+
+    /**
+     * Increment the connection-lost counter and request a non-zero exit
+     * once we cross the threshold. Returns the exit code (3) when the
+     * threshold is reached, otherwise null — callers should `return` the
+     * non-null value from `run()` so the orchestrator restarts the process
+     * with a fresh PDO.
+     */
+    private function bailOnLostConnection(): ?int
+    {
+        $this->consecutiveConnLostErrors++;
+        if ($this->consecutiveConnLostErrors < self::CONN_LOST_EXIT_THRESHOLD) {
+            return null;
+        }
+        $this->log(sprintf(
+            "connection lost %d times in a row, exiting for restart",
+            $this->consecutiveConnLostErrors
+        ));
+        return 3;
     }
 }
