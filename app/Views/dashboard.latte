@@ -263,6 +263,84 @@ window.addEventListener('DOMContentLoaded', () => {
 
     </section>
 
+    {* ============== AGENT ACTIVITY FEED ==============
+       Live feed of every observable thing the fleet does — checks (allow /
+       block / novel), publish scans + mints, A2A attacks (DM out, feed
+       posts), inbox evaluations, and operator commands. Server-rendered
+       for first paint; the dashboard activity poll pushes new rows in via
+       a keyset cursor on demo.agent_activity.id. *}
+
+    <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 mt-6">
+
+        <header class="px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Agent activity</span>
+                <span class="font-mono text-[10px] text-fg-dim">live (latest 50)</span>
+            </div>
+            <div class="flex items-center gap-3 font-mono text-[10px] text-fg-dim">
+                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500"></span>allow</span>
+                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-threat-300"></span>block</span>
+                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-caution-300"></span>novel</span>
+                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent-soft"></span>info</span>
+            </div>
+        </header>
+
+        <div class="max-h-[28rem] overflow-y-auto" data-activity-scroll>
+            <table class="w-full">
+                <thead class="sticky top-0 bg-ink-sunken/90 backdrop-blur">
+                    <tr class="border-b border-ink-line/40">
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-7 pr-4 py-3 w-20">When</th>
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-32">Agent</th>
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-24">Type</th>
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-7 py-3">Action</th>
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-7 py-3 w-24">Antibody</th>
+                    </tr>
+                </thead>
+                <tbody data-activity-body>
+                {if count($activity ?? []) === 0}
+                    <tr><td colspan="5" class="px-7 py-8 text-center font-mono text-[11.5px] text-fg-dim" data-activity-empty>
+                        Waiting for fleet activity. Rows will appear as agents tick.
+                    </td></tr>
+                {/if}
+                {foreach $activity ?? [] as $a}
+                    {var $statusTone = match((string) $a->status) {
+                        'allow' => 'text-immune-500',
+                        'block' => 'text-threat-300',
+                        'novel' => 'text-caution-300',
+                        'error' => 'text-threat-300',
+                        default => 'text-accent-soft',
+                    }}
+                    {var $statusDot = match((string) $a->status) {
+                        'allow' => 'bg-immune-500',
+                        'block' => 'bg-threat-300',
+                        'novel' => 'bg-caution-300',
+                        'error' => 'bg-threat-300',
+                        default => 'bg-accent-soft',
+                    }}
+                    <tr data-activity-row="{$a->id}" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle">
+                        <td class="pl-7 pr-4 py-2 align-middle font-mono text-[10.5px] text-fg-dim tabular-nums" data-activity-when="{$a->occurred_at}">{format('timeago', $a->occurred_at)}</td>
+                        <td class="pr-4 py-2 align-middle font-mono text-[11px] text-fg-secondary truncate">{$a->display_name}</td>
+                        <td class="pr-4 py-2 align-middle">
+                            <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {$statusTone}">
+                                <span class="inline-flex h-1.5 w-1.5 rounded-full {$statusDot}"></span>{$a->action_type}
+                            </span>
+                        </td>
+                        <td class="pr-7 py-2 align-middle text-[12px] text-fg-secondary truncate max-w-[640px]" title="{$a->action_summary}">{$a->action_summary}</td>
+                        <td class="pr-7 py-2 align-middle text-right font-mono text-[10.5px]">
+                            {if $a->antibody_imm_id}
+                                <a href="/antibody/{$a->antibody_imm_id}" class="text-fg-secondary hover:text-accent transition-colors">{$a->antibody_imm_id}</a>
+                            {else}
+                                <span class="text-fg-dim">-</span>
+                            {/if}
+                        </td>
+                    </tr>
+                {/foreach}
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
 </section>
 
 <script src="{asset('/javascripts/live.js')}"></script>
@@ -334,6 +412,8 @@ window.addEventListener('DOMContentLoaded', () => {
 (function () {
   let agentMapBound = false;
   let cursor = null;
+  let activityCursor = null;
+  const ACTIVITY_MAX_ROWS = 50;
 
   function bindAgentMap(agents) {
     if (agentMapBound || !window.__dashMap || agents.length === 0) return;
@@ -532,15 +612,99 @@ window.addEventListener('DOMContentLoaded', () => {
     newIds.forEach(function (id) { flashRow(tbody, id); });
   }
 
+  // ---------------- Agent activity feed ----------------
+
+  const STATUS_TONE = {
+    'allow': 'text-immune-500',
+    'block': 'text-threat-300',
+    'novel': 'text-caution-300',
+    'error': 'text-threat-300',
+    'info':  'text-accent-soft',
+  };
+
+  const STATUS_DOT = {
+    'allow': 'bg-immune-500',
+    'block': 'bg-threat-300',
+    'novel': 'bg-caution-300',
+    'error': 'bg-threat-300',
+    'info':  'bg-accent-soft',
+  };
+
+  function renderActivityRow(a) {
+    const status = String(a.status || 'info');
+    const tone = STATUS_TONE[status] || 'text-accent-soft';
+    const dot = STATUS_DOT[status] || 'bg-accent-soft';
+    const summary = String(a.action_summary || '');
+    const summaryTrunc = summary.length > 120 ? summary.slice(0, 118) + '…' : summary;
+    const antibody = a.antibody_imm_id
+      ? '<a href="/antibody/' + escapeAttr(a.antibody_imm_id) + '" class="text-fg-secondary hover:text-accent transition-colors">' + escapeHtml(a.antibody_imm_id) + '</a>'
+      : '<span class="text-fg-dim">-</span>';
+    return (
+      '<tr data-activity-row="' + a.id + '" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle">' +
+        '<td class="pl-7 pr-4 py-2 align-middle font-mono text-[10.5px] text-fg-dim tabular-nums" data-activity-when="' + escapeAttr(a.occurred_at) + '">' + timeAgo(a.occurred_at) + '</td>' +
+        '<td class="pr-4 py-2 align-middle font-mono text-[11px] text-fg-secondary truncate">' + escapeHtml(a.display_name || a.agent_id) + '</td>' +
+        '<td class="pr-4 py-2 align-middle">' +
+          '<span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 ' + tone + '">' +
+            '<span class="inline-flex h-1.5 w-1.5 rounded-full ' + dot + '"></span>' + escapeHtml(a.action_type || '') +
+          '</span>' +
+        '</td>' +
+        '<td class="pr-7 py-2 align-middle text-[12px] text-fg-secondary truncate max-w-[640px]" title="' + escapeAttr(summary) + '">' + escapeHtml(summaryTrunc) + '</td>' +
+        '<td class="pr-7 py-2 align-middle text-right font-mono text-[10.5px]">' + antibody + '</td>' +
+      '</tr>'
+    );
+  }
+
+  function flashActivityRow(tbody, id) {
+    const row = tbody.querySelector('[data-activity-row="' + id + '"]');
+    if (!row) return;
+    row.style.transition = 'background-color 240ms ease-out';
+    row.style.backgroundColor = 'rgba(232, 212, 160, 0.18)';
+    setTimeout(function () { row.style.backgroundColor = ''; }, 1100);
+  }
+
+  function refreshActivityTimestamps(tbody) {
+    tbody.querySelectorAll('[data-activity-when]').forEach(function (el) {
+      const iso = el.getAttribute('data-activity-when');
+      const next = timeAgo(iso);
+      if (el.textContent !== next) el.textContent = next;
+    });
+  }
+
+  function updateActivity(rows) {
+    const tbody = document.querySelector('[data-activity-body]');
+    if (!tbody) return;
+    refreshActivityTimestamps(tbody);
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    // Server returns rows DESC by id; we prepend in id-DESC order so the
+    // newest lands at the top of the table.
+    const empty = tbody.querySelector('[data-activity-empty]');
+    if (empty) empty.parentElement.remove();
+    rows.sort(function (a, b) { return b.id - a.id; });
+    const newIds = [];
+    rows.forEach(function (r) {
+      if (tbody.querySelector('[data-activity-row="' + r.id + '"]')) return;
+      tbody.insertAdjacentHTML('afterbegin', renderActivityRow(r));
+      newIds.push(r.id);
+    });
+    // Cap the table — drop the oldest rows (last in DOM) past ACTIVITY_MAX_ROWS.
+    const all = tbody.querySelectorAll('[data-activity-row]');
+    for (let i = ACTIVITY_MAX_ROWS; i < all.length; i++) all[i].remove();
+    newIds.forEach(function (id) { flashActivityRow(tbody, id); });
+  }
+
   // ---------------- Poll loop ----------------
 
   function tick() {
-    const url = '/api/v1/dashboard/activity' + (cursor ? '?since=' + encodeURIComponent(cursor) : '');
+    const params = [];
+    if (cursor) params.push('since=' + encodeURIComponent(cursor));
+    if (activityCursor) params.push('activity_since=' + encodeURIComponent(activityCursor));
+    const url = '/api/v1/dashboard/activity' + (params.length ? '?' + params.join('&') : '');
     fetch(url, { headers: { 'Accept': 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         if (!data) return;
         cursor = data.next_since || cursor;
+        if (data.next_activity_since) activityCursor = data.next_activity_since;
         const agents = data.agents || [];
         bindAgentMap(agents);
         applyOnlineSet(agents);
@@ -552,6 +716,7 @@ window.addEventListener('DOMContentLoaded', () => {
           });
         }
         updateRegistry(data.recent_entries || []);
+        updateActivity(data.activity || []);
       })
       .catch(function () { /* swallow: next tick will retry */ });
   }
@@ -560,6 +725,18 @@ window.addEventListener('DOMContentLoaded', () => {
     if (document.visibilityState === 'visible') tick();
     setTimeout(loop, 2000);
   }
+
+  // Seed the activity cursor from server-rendered rows so the first poll
+  // only fetches newer rows.
+  (function () {
+    let maxId = 0;
+    document.querySelectorAll('[data-activity-row]').forEach(function (el) {
+      const id = Number(el.getAttribute('data-activity-row'));
+      if (Number.isFinite(id) && id > maxId) maxId = id;
+    });
+    if (maxId > 0) activityCursor = maxId;
+  })();
+
   // Wait for the map to construct in the DOMContentLoaded handler above.
   setTimeout(loop, 200);
 })();

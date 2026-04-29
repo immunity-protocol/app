@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Api\Internal;
 
 use App\Models\Antibody\Services\EntryService;
+use App\Models\Demo\Brokers\AgentActivityBroker;
 use App\Models\Demo\Brokers\HeartbeatBroker;
 use App\Models\Event\Brokers\BlockEventBroker;
 use App\Models\Event\Brokers\CheckEventBroker;
@@ -24,6 +25,7 @@ use Zephyrus\Routing\Attribute\Get;
 final class DashboardController extends Controller
 {
     private const EVENT_LIMIT = 200;
+    private const ACTIVITY_LIMIT = 50;
 
     #[Get('/dashboard/activity')]
     public function index(Request $request): Response
@@ -31,20 +33,64 @@ final class DashboardController extends Controller
         $sinceParam = $request->query('since');
         $since = $this->resolveSince(is_string($sinceParam) ? $sinceParam : null);
 
+        // Activity uses a separate keyset cursor on demo.agent_activity.id so
+        // it advances independently of the time-based event cursor.
+        $activitySinceParam = $request->query('activity_since');
+        $activitySince = is_string($activitySinceParam) && $activitySinceParam !== ''
+            ? (int) $activitySinceParam
+            : null;
+
         $heartbeats = (new HeartbeatBroker())->listAllWithStats(60);
         $checks = (new CheckEventBroker())->findRecentSince($since, self::EVENT_LIMIT);
         $blocks = (new BlockEventBroker())->findRecentSince($since, self::EVENT_LIMIT);
         $entries = (new EntryService())->findRecentWithStats(10);
+        $activity = (new AgentActivityBroker())->findSince($activitySince, self::ACTIVITY_LIMIT);
 
         $nextSince = $this->advanceCursor($since, $checks, $blocks);
+        $nextActivitySince = $this->advanceActivityCursor($activitySince, $activity);
 
         return Response::json([
-            'agents'         => array_map([$this, 'projectAgent'], $heartbeats),
-            'checks'         => array_map([$this, 'projectCheck'], $checks),
-            'blocks'         => array_map([$this, 'projectBlock'], $blocks),
-            'recent_entries' => array_map([$this, 'projectEntry'], $entries),
-            'next_since'     => $nextSince,
+            'agents'              => array_map([$this, 'projectAgent'], $heartbeats),
+            'checks'              => array_map([$this, 'projectCheck'], $checks),
+            'blocks'              => array_map([$this, 'projectBlock'], $blocks),
+            'recent_entries'      => array_map([$this, 'projectEntry'], $entries),
+            'activity'            => array_map([$this, 'projectActivity'], $activity),
+            'next_since'          => $nextSince,
+            'next_activity_since' => $nextActivitySince,
         ])->withHeader('Cache-Control', 'no-store');
+    }
+
+    /**
+     * @param \stdClass[] $rows
+     */
+    private function advanceActivityCursor(?int $current, array $rows): int
+    {
+        $max = $current ?? 0;
+        foreach ($rows as $row) {
+            $id = (int) $row->id;
+            if ($id > $max) {
+                $max = $id;
+            }
+        }
+        return $max;
+    }
+
+    private function projectActivity(\stdClass $row): array
+    {
+        return [
+            'id'              => (int) $row->id,
+            'agent_id'        => (string) $row->agent_id,
+            'role'            => (string) $row->role,
+            'display_name'    => (string) $row->display_name,
+            'action_type'     => (string) $row->action_type,
+            'action_summary'  => (string) $row->action_summary,
+            'status'          => (string) $row->status,
+            'antibody_imm_id' => $row->antibody_imm_id,
+            'tx_hash'         => $row->tx_hash,
+            'target'          => $row->target,
+            'family'          => $row->family,
+            'occurred_at'     => (string) $row->occurred_at,
+        ];
     }
 
     private function resolveSince(?string $raw): string
