@@ -64,7 +64,7 @@ final class AntibodyController extends Controller
         $entries = new EntryService();
         $entry = $entries->findByImmId($id);
         if ($entry === null) {
-            return Response::html('<h1>404 - antibody not found</h1>', 404);
+            return $this->render('errors/404', ['requestPath' => "/antibody/{$id}"])->withStatus(404);
         }
         $mirrors = (new MirrorService())->findByEntryId($entry->id);
         $blocks = (new BlockEventService())->findRecentByEntryId($entry->id, 10);
