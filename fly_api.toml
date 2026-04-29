@@ -34,7 +34,7 @@ primary_region = 'yyz'
     soft_limit = 20
 
 [[vm]]
-  size = 'performance-cpu-2x'
+  size = 'shared-cpu-4x'
   memory = '4gb'
   processes = ['app']
 
