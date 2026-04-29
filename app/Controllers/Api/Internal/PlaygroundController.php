@@ -147,7 +147,8 @@ final class PlaygroundController extends Controller
 
     /**
      * Card 2 - Publish a threat. Enqueues an `external_threat_alert` command
-     * for watcher-1, which mints a fresh ADDRESS antibody on chain.
+     * for an online publisher (round-robin), which mints a fresh ADDRESS
+     * antibody on chain. Returns 503 when no publisher is reachable.
      */
     #[Post('/playground/publish-threat')]
     public function publishThreat(Request $request): Response
@@ -168,14 +169,18 @@ final class PlaygroundController extends Controller
         $verdict = $body->get('verdict') === 'SUSPICIOUS' ? 'SUSPICIOUS' : 'MALICIOUS';
 
         $this->commands ??= new CommandBroker();
-        $commandId = $this->commands->enqueue('watcher-1', 'external_threat_alert', [
+        $publisher = $this->commands->pickOnlinePublisher();
+        if ($publisher === null) {
+            return Response::json(['error' => 'no publisher online; try again shortly'], 503);
+        }
+        $commandId = $this->commands->enqueue($publisher, 'external_threat_alert', [
             'address'   => strtolower($address),
             'severity'  => $severity,
             'verdict'   => $verdict,
             'reasoning' => $reasoning,
             'source'    => 'playground',
         ]);
-        return Response::json(['command_id' => $commandId, 'agent_id' => 'watcher-1'], 202);
+        return Response::json(['command_id' => $commandId, 'agent_id' => $publisher], 202);
     }
 
     /**

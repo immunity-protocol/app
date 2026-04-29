@@ -12,8 +12,9 @@ use Zephyrus\Routing\Attribute\Post;
 /**
  * External threat-feed entry-point. Pipedream (or any cron-token-bearing
  * client) posts a structured threat report; we enqueue an
- * `external_threat_alert` command for `watcher-1`, which publishes an
- * ADDRESS antibody on its next dequeue tick.
+ * `external_threat_alert` command for an online publisher (picked at
+ * random from demo.agent_heartbeat), which publishes an ADDRESS antibody
+ * on its next dequeue tick. Returns 503 when no publisher is online.
  *
  * Endpoint:
  *   POST /v1/internal/threat-report
@@ -32,7 +33,6 @@ use Zephyrus\Routing\Attribute\Post;
  */
 final class ThreatReportController extends Controller
 {
-    private const TARGET_AGENT = 'watcher-1';
     private const VALID_VERDICTS = ['MALICIOUS', 'SUSPICIOUS'];
 
     private CommandBroker $broker;
@@ -83,11 +83,15 @@ final class ThreatReportController extends Controller
         }
 
         $this->broker ??= new CommandBroker();
-        $commandId = $this->broker->enqueue(self::TARGET_AGENT, 'external_threat_alert', $payload);
+        $publisher = $this->broker->pickOnlinePublisher();
+        if ($publisher === null) {
+            return Response::json(['error' => 'no publisher online'], 503);
+        }
+        $commandId = $this->broker->enqueue($publisher, 'external_threat_alert', $payload);
 
         return Response::json([
             'command_id' => $commandId,
-            'agent_id'   => self::TARGET_AGENT,
+            'agent_id'   => $publisher,
         ], 202);
     }
 }

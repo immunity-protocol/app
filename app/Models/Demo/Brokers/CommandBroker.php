@@ -26,6 +26,28 @@ class CommandBroker extends Broker
         return (int) $row->id;
     }
 
+    /**
+     * Pick a random online publisher to receive an `external_threat_alert`
+     * command. Returns null when no publisher has reported a heartbeat in
+     * the last 180s; callers surface that as a 503.
+     *
+     * Replaces the v0.4 hardcoded `watcher-1` target. Watchers are gone
+     * after the Phase-4 fleet evolution; their command is now handled by
+     * any online publisher.
+     */
+    public function pickOnlinePublisher(): ?string
+    {
+        $row = $this->selectOne(
+            "SELECT agent_id
+               FROM demo.agent_heartbeat
+              WHERE role = 'publisher'
+                AND last_seen >= now() - interval '180 seconds'
+              ORDER BY random()
+              LIMIT 1"
+        );
+        return $row !== null ? (string) $row->agent_id : null;
+    }
+
     public function findById(int $id): ?stdClass
     {
         return $this->selectOne(

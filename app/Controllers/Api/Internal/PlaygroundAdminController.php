@@ -77,7 +77,11 @@ final class PlaygroundAdminController extends Controller
 
             case '03':
             case 'twitter-trigger':
-                $id = $this->commands->enqueue('watcher-1', 'external_threat_alert', [
+                $publisher = $this->commands->pickOnlinePublisher();
+                if ($publisher === null) {
+                    return Response::json(['error' => 'no publisher online for scenario-03'], 503);
+                }
+                $id = $this->commands->enqueue($publisher, 'external_threat_alert', [
                     'address'    => '0xfeedfeedfeedfeedfeedfeedfeedfeedfeedfeed',
                     'severity'   => 91,
                     'verdict'    => 'MALICIOUS',
@@ -85,7 +89,7 @@ final class PlaygroundAdminController extends Controller
                     'source'     => 'scenario',
                     'source_url' => 'https://twitter.com/0ximmunity/status/demo-replay',
                 ]);
-                return Response::json(['scenario' => '03-twitter-trigger', 'command_id' => $id, 'agent_id' => 'watcher-1']);
+                return Response::json(['scenario' => '03-twitter-trigger', 'command_id' => $id, 'agent_id' => $publisher]);
 
             case '04':
             case 'prompt-injection':
