@@ -113,29 +113,93 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <section class="max-w-[1400px] mx-auto px-5 sm:px-7 pt-10 pb-16">
 
-    {* ============== MAP + DUAL FEED (filled in 7c, 7d, 7e) ============== *}
+    {* ============== ACTIVITY FEED + AGENT LIST ==============
+       Activity feed (left, 1fr) replaces the previous propagation map —
+       the map looked great but produced no operator signal beyond what
+       the agent list already shows. The live activity table is the
+       primary "what is the fleet doing right now" surface and benefits
+       from sitting beside the agent roster. The old map markup is
+       intentionally left commented out below; the propagation-map.js
+       asset, the __dashMap JS handles, and the click-to-pulse wiring
+       around it are also no-ops now (kept in place for trivial revert). *}
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 mb-10">
 
-        {* Propagation map + agent detail *}
-        <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-5 sm:p-7 flex flex-col gap-4">
+        {* Live agent activity feed *}
+        <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 flex flex-col">
 
-            <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <header class="px-5 sm:px-7 py-4 border-b border-ink-line/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div class="flex items-center gap-3">
-                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Propagation map</span>
-                    <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 text-immune-500">
-                        <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-                        60 nodes
-                    </span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Agent activity</span>
+                    <span class="font-mono text-[10px] text-fg-dim">live (latest 50)</span>
                 </div>
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">
-                    <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true"></span>Publisher</span>
-                    <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-immune-500" aria-hidden="true"></span>Receiver</span>
-                    <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-fg-dim" aria-hidden="true"></span>Offline</span>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-fg-dim">
+                    <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500"></span>allow</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-threat-300"></span>block</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-caution-300"></span>novel</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent-soft"></span>info</span>
                 </div>
             </header>
 
-            <div id="dash-map" class="relative w-full aspect-square max-w-[640px] mx-auto" aria-label="Live agent propagation map"></div>
-        </div>
+            <div class="flex-1 max-h-[40rem] overflow-y-auto" data-activity-scroll>
+                <table class="w-full">
+                    <thead class="sticky top-0 bg-ink-sunken/90 backdrop-blur">
+                        <tr class="border-b border-ink-line/40">
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 sm:pl-7 pr-4 py-3 w-20">When</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-28">Agent</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-24">Type</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-5 sm:pr-7 py-3">Action</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-5 sm:pr-7 py-3 w-24">Antibody</th>
+                        </tr>
+                    </thead>
+                    <tbody data-activity-body>
+                    {if count($activity ?? []) === 0}
+                        <tr><td colspan="5" class="px-7 py-8 text-center font-mono text-[11.5px] text-fg-dim" data-activity-empty>
+                            Waiting for fleet activity. Rows will appear as agents tick.
+                        </td></tr>
+                    {/if}
+                    {foreach $activity ?? [] as $a}
+                        {var $statusTone = match((string) $a->status) {
+                            'allow' => 'text-immune-500',
+                            'block' => 'text-threat-300',
+                            'novel' => 'text-caution-300',
+                            'error' => 'text-threat-300',
+                            default => 'text-accent-soft',
+                        }}
+                        {var $statusDot = match((string) $a->status) {
+                            'allow' => 'bg-immune-500',
+                            'block' => 'bg-threat-300',
+                            'novel' => 'bg-caution-300',
+                            'error' => 'bg-threat-300',
+                            default => 'bg-accent-soft',
+                        }}
+                        <tr data-activity-row="{$a->id}" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle">
+                            <td class="pl-5 sm:pl-7 pr-4 py-2 align-middle font-mono text-[10.5px] text-fg-dim tabular-nums" data-activity-when="{$a->occurred_at}">{format('timeago', $a->occurred_at)}</td>
+                            <td class="pr-4 py-2 align-middle font-mono text-[11px] text-fg-secondary truncate">{$a->display_name}</td>
+                            <td class="pr-4 py-2 align-middle">
+                                <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {$statusTone}">
+                                    <span class="inline-flex h-1.5 w-1.5 rounded-full {$statusDot}"></span>{$a->action_type}
+                                </span>
+                            </td>
+                            <td class="pr-5 sm:pr-7 py-2 align-middle text-[12px] text-fg-secondary truncate max-w-[420px]" title="{$a->action_summary}">{$a->action_summary}</td>
+                            <td class="pr-5 sm:pr-7 py-2 align-middle text-right font-mono text-[10.5px]">
+                                {if $a->antibody_imm_id}
+                                    <a href="/antibody/{$a->antibody_imm_id}" class="text-fg-secondary hover:text-accent transition-colors">{$a->antibody_imm_id}</a>
+                                {else}
+                                    <span class="text-fg-dim">-</span>
+                                {/if}
+                            </td>
+                        </tr>
+                    {/foreach}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+        {* Propagation map removed — see git history if you need to restore it.
+           Trivial revert: drop the activity feed section above back to the
+           bottom of the page, and uncomment the original block in the
+           preceding commit. *}
 
         {* ============== AGENT LIST ==============
            Full demo fleet roster, scrollable, server-rendered for first
@@ -263,83 +327,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     </section>
 
-    {* ============== AGENT ACTIVITY FEED ==============
-       Live feed of every observable thing the fleet does — checks (allow /
-       block / novel), publish scans + mints, A2A attacks (DM out, feed
-       posts), inbox evaluations, and operator commands. Server-rendered
-       for first paint; the dashboard activity poll pushes new rows in via
-       a keyset cursor on demo.agent_activity.id. *}
-
-    <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 mt-6">
-
-        <header class="px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Agent activity</span>
-                <span class="font-mono text-[10px] text-fg-dim">live (latest 50)</span>
-            </div>
-            <div class="flex items-center gap-3 font-mono text-[10px] text-fg-dim">
-                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500"></span>allow</span>
-                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-threat-300"></span>block</span>
-                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-caution-300"></span>novel</span>
-                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent-soft"></span>info</span>
-            </div>
-        </header>
-
-        <div class="max-h-[28rem] overflow-y-auto" data-activity-scroll>
-            <table class="w-full">
-                <thead class="sticky top-0 bg-ink-sunken/90 backdrop-blur">
-                    <tr class="border-b border-ink-line/40">
-                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-7 pr-4 py-3 w-20">When</th>
-                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-32">Agent</th>
-                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-24">Type</th>
-                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-7 py-3">Action</th>
-                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-7 py-3 w-24">Antibody</th>
-                    </tr>
-                </thead>
-                <tbody data-activity-body>
-                {if count($activity ?? []) === 0}
-                    <tr><td colspan="5" class="px-7 py-8 text-center font-mono text-[11.5px] text-fg-dim" data-activity-empty>
-                        Waiting for fleet activity. Rows will appear as agents tick.
-                    </td></tr>
-                {/if}
-                {foreach $activity ?? [] as $a}
-                    {var $statusTone = match((string) $a->status) {
-                        'allow' => 'text-immune-500',
-                        'block' => 'text-threat-300',
-                        'novel' => 'text-caution-300',
-                        'error' => 'text-threat-300',
-                        default => 'text-accent-soft',
-                    }}
-                    {var $statusDot = match((string) $a->status) {
-                        'allow' => 'bg-immune-500',
-                        'block' => 'bg-threat-300',
-                        'novel' => 'bg-caution-300',
-                        'error' => 'bg-threat-300',
-                        default => 'bg-accent-soft',
-                    }}
-                    <tr data-activity-row="{$a->id}" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle">
-                        <td class="pl-7 pr-4 py-2 align-middle font-mono text-[10.5px] text-fg-dim tabular-nums" data-activity-when="{$a->occurred_at}">{format('timeago', $a->occurred_at)}</td>
-                        <td class="pr-4 py-2 align-middle font-mono text-[11px] text-fg-secondary truncate">{$a->display_name}</td>
-                        <td class="pr-4 py-2 align-middle">
-                            <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {$statusTone}">
-                                <span class="inline-flex h-1.5 w-1.5 rounded-full {$statusDot}"></span>{$a->action_type}
-                            </span>
-                        </td>
-                        <td class="pr-7 py-2 align-middle text-[12px] text-fg-secondary truncate max-w-[640px]" title="{$a->action_summary}">{$a->action_summary}</td>
-                        <td class="pr-7 py-2 align-middle text-right font-mono text-[10.5px]">
-                            {if $a->antibody_imm_id}
-                                <a href="/antibody/{$a->antibody_imm_id}" class="text-fg-secondary hover:text-accent transition-colors">{$a->antibody_imm_id}</a>
-                            {else}
-                                <span class="text-fg-dim">-</span>
-                            {/if}
-                        </td>
-                    </tr>
-                {/foreach}
-                </tbody>
-            </table>
-        </div>
-
-    </section>
+    {* The agent activity feed used to live here, between the active-registry
+       table and the bottom of the page. It now sits beside the agent list
+       in the grid above, where it gets the prime real estate the propagation
+       map used to occupy. Single source of truth — the JS poller still binds
+       to [data-activity-body] so the live update wiring is unchanged. *}
 
 </section>
 
