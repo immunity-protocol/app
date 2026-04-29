@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api\Public;
+namespace App\Controllers\Api\Internal;
 
 use App\Models\Core\Db;
 use App\Models\Core\SepoliaDexConfig;
