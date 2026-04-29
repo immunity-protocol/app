@@ -26,6 +26,13 @@ const V4_ROUTER_ABI = [
     'function swapExactTokensForTokens(uint256 amountIn,uint256 amountOutMin,bool zeroForOne,(address,address,uint24,int24,address) poolKey,bytes hookData,address receiver,uint256 deadline) returns (int256[2])',
 ];
 
+// V4 Quoter: read-only quote for the output amount of a swap. Public, no
+// signer required, no gas. Used to populate the "To (estimated)" field as
+// the user types, debounced.
+const V4_QUOTER_ABI = [
+    'function quoteExactInputSingle(((address,address,uint24,int24,address) poolKey,bool zeroForOne,uint256 exactAmount,bytes hookData)) returns (uint256 amountOut,uint256 gasEstimate)',
+];
+
 const HOOK_ERROR_ABI = [
     'error TokenBlocked(address token, bytes32 keccakId)',
     'error SenderBlocked(address sender, bytes32 keccakId)',
@@ -192,6 +199,64 @@ function flipDirection() {
     setText('[data-token-from-label]', tokenLabel(state.fromToken));
     setText('[data-token-to-label]', tokenLabel(otherSide(state.fromToken)));
     refreshBalances();
+    refreshQuote();
+}
+
+// ---- Quote (estimated output) ----------------------------------------------
+
+let quoteTimer = null;
+
+function refreshQuote() {
+    clearTimeout(quoteTimer);
+    quoteTimer = setTimeout(runQuote, 250);
+}
+
+async function runQuote() {
+    const inEl = el('[data-amount-in]');
+    const outEl = el('[data-amount-out]');
+    if (!outEl) return;
+    const raw = inEl?.value?.trim();
+    if (!raw || Number(raw) <= 0) {
+        outEl.textContent = '0.0';
+        return;
+    }
+    if (state.pool === 'unprotected' && !cfg.hasUnprotectedPool) {
+        outEl.textContent = '~';
+        return;
+    }
+    let amountIn;
+    try { amountIn = ethers.parseEther(raw); } catch { outEl.textContent = '~'; return; }
+
+    const fromAddr = tokenAddr(state.fromToken);
+    const zeroForOne = fromAddr.toLowerCase() === cfg.currency0.toLowerCase();
+    const poolKey = activePoolKey();
+
+    try {
+        // Read-only provider: a public RPC works for static calls. Reuses the
+        // wallet provider when connected to keep RPC traffic in one place.
+        const provider = state.provider ?? new ethers.JsonRpcProvider(cfg.rpcUrl);
+        const quoter = new ethers.Contract(cfg.quoterAddress, V4_QUOTER_ABI, provider);
+        const params = {
+            poolKey: [poolKey.currency0, poolKey.currency1, poolKey.fee, poolKey.tickSpacing, poolKey.hooks],
+            zeroForOne,
+            exactAmount: amountIn,
+            hookData: '0x',
+        };
+        const [amountOut] = await quoter.quoteExactInputSingle.staticCall([
+            params.poolKey, params.zeroForOne, params.exactAmount, params.hookData,
+        ]);
+        const formatted = Number(ethers.formatEther(amountOut)).toFixed(6).replace(/\.?0+$/, '');
+        outEl.textContent = formatted || '0';
+        outEl.classList.remove('text-fg-tertiary');
+        outEl.classList.add('text-fg-primary');
+    } catch (err) {
+        // Common cases: not enough liquidity, pool not initialized, hook
+        // rejected the simulated swap. Fall back to a tilde so the UI stays
+        // calm while the user adjusts the amount.
+        outEl.textContent = '~';
+        outEl.classList.add('text-fg-tertiary');
+        outEl.classList.remove('text-fg-primary');
+    }
 }
 
 // ---- Swap ------------------------------------------------------------------
@@ -299,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el('[data-flip]')?.addEventListener('click', flipDirection);
     el('[data-swap]')?.addEventListener('click', swap);
     el('[data-mint]')?.addEventListener('click', mintTestTokens);
+    el('[data-amount-in]')?.addEventListener('input', refreshQuote);
 
     els('[data-pool]').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -310,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             state.pool = next;
             paintPoolToggle();
+            refreshQuote();
         });
     });
 });
