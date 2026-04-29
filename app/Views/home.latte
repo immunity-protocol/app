@@ -783,21 +783,11 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  Live.poll(HEARTBEAT_URL, 4000, function (data) {
-    const pulse = document.getElementById('live-pulse');
-    const label = document.getElementById('live-label');
-    if (!pulse || !label) return;
-    const age = data.age_seconds;
-    let color, text;
-    // Cron fires every 60s, so anything under ~90s is healthy (green).
-    // Amber kicks in only when we have actually fallen behind one tick.
-    if (age === null || age === undefined) { color = 'bg-fg-tertiary'; text = 'OFFLINE'; }
-    else if (age < 90) { color = 'bg-immune-500'; text = 'LIVE'; }
-    else if (age < 240) { color = 'bg-amber-500'; text = 'STALE'; }
-    else { color = 'bg-red-500'; text = 'OFFLINE'; }
-    pulse.className = 'inline-flex h-1.5 w-1.5 rounded-full pulse-soft ' + color;
-    label.textContent = text;
-  });
+  // Network status is rendered as a static "Live" badge. The heartbeat
+  // poller used to flip it to OFFLINE during quiet windows where no activity
+  // had been recorded yet, which read as a real outage. The marker is
+  // semantic ("the protocol is up") not telemetry, so the static state is
+  // the right call.
 })();
 </script>
 
