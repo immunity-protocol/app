@@ -23,7 +23,17 @@ final class Db
 
     public static function fromConfig(DatabaseConfig $config): Database
     {
-        $db = Database::fromConfig($config);
+        // Persistent PDO: reuse the TCP+TLS+SCRAM handshake across requests
+        // within the same Apache worker. Without this, every request to
+        // immunity-app pays ~150ms re-establishing a connection to
+        // immunity-db.flycast over Fly's internal network. The framework
+        // hard-codes PDO::ATTR_PERSISTENT=false, so we override via the
+        // factory hook.
+        $pdoFactory = static function (string $dsn, string $username, string $password, array $options): \PDO {
+            $options[\PDO::ATTR_PERSISTENT] = true;
+            return new \PDO($dsn, $username, $password, $options);
+        };
+        $db = Database::fromConfig($config, $pdoFactory);
         $stringPassthrough = static fn (string $v): string => $v;
         $db->registerTypeConversion('NUMERIC', $stringPassthrough);
         $db->registerTypeConversion('DECIMAL', $stringPassthrough);
