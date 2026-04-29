@@ -63,6 +63,7 @@ final class MirrorNetworkRegistry
                 mirrorAddress:        strtolower((string) $mirror),
                 deployBlock:          (int) $deployBlock,
                 relayerPrivateKeyEnv: (string) ($entry['relayerPrivateKeyEnv'] ?? ''),
+                pollIntervalMs:       isset($entry['pollIntervalMs']) ? (int) $entry['pollIntervalMs'] : null,
             );
         }
 

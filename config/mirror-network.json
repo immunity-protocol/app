@@ -7,7 +7,8 @@
     "hook": "0xd3335F3d69e97C314350EDA63fB5Ba0163Dd0080",
     "deployedAt": "2026-04-27T18:34:41Z",
     "deployBlock": 10744251,
-    "relayerPrivateKeyEnv": "RELAYER_PRIVATE_KEY_SEPOLIA"
+    "relayerPrivateKeyEnv": "RELAYER_PRIVATE_KEY_SEPOLIA",
+    "pollIntervalMs": 3600000
   },
   "84532": {
     "name": "base-sepolia",

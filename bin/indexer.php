@@ -148,6 +148,10 @@ $ogPoller = new EventPoller(
     confirmations: $confirmations,
     chunkSize: $backfillChunk,
 );
+$ogPollerEntry = [
+    'poller'      => $ogPoller,
+    'intervalSec' => max(1, (int) round($pollIntervalMs / 1000)),
+];
 
 // One poller + bootstrap per Mirror chain. Each Mirror exposes the same event
 // surface (AntibodyMirrored / AntibodyUnmirrored / etc), so we share MirrorAbi
@@ -172,7 +176,7 @@ foreach ($mirrorNetworks->all() as $chain) {
               'SemanticPatternAdded', 'AdminTransferred', 'RelayerSet'] as $auxName) {
         $mirrorHandlers[$auxName] = fn (array $d) => $auditH->handle($d);
     }
-    $mirrorPollers[] = new EventPoller(
+    $mirrorPoller = new EventPoller(
         rpc: $mirrorRpc,
         decoder: $mirrorDecoder,
         state: $stateBroker,
@@ -182,6 +186,13 @@ foreach ($mirrorNetworks->all() as $chain) {
         confirmations: $confirmations,
         chunkSize: $backfillChunk,
     );
+    // Per-chain cadence overrides the supervisor's global tick. Sepolia
+    // mirror events fire at human pace so a once-per-hour poll is plenty.
+    $chainIntervalMs = $chain->pollIntervalMs ?? $pollIntervalMs;
+    $mirrorPollers[] = [
+        'poller'      => $mirrorPoller,
+        'intervalSec' => max(1, (int) round($chainIntervalMs / 1000)),
+    ];
     $mirrorBoots[] = new BackfillBootstrap($stateBroker, $chain->chainId, $chain->deployBlock);
 }
 
@@ -213,7 +224,7 @@ $pricingRetry = $pricingService === null
 
 $supervisor = new Supervisor(
     bootstraps: array_merge([$ogBootstrap], $mirrorBoots),
-    pollers: array_merge([$ogPoller], $mirrorPollers),
+    pollers: array_merge([$ogPollerEntry], $mirrorPollers),
     hydration: $hydrationWorker,
     ens: $ensWorker,
     statRefresher: $statRefresher,

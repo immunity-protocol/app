@@ -17,6 +17,11 @@ final class MirrorChainConfig
         public readonly string $mirrorAddress,
         public readonly int $deployBlock,
         public readonly string $relayerPrivateKeyEnv,
+        // Per-chain event-poll interval in milliseconds. Overrides the
+        // global INDEXER_POLL_INTERVAL_MS for this chain. Use it to crank
+        // down RPC traffic on slow chains (Sepolia mirror events fire at
+        // human pace; once-per-hour polling is fine).
+        public readonly ?int $pollIntervalMs = null,
     ) {
     }
 

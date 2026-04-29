@@ -38,7 +38,11 @@ class Supervisor
 
     /**
      * @param BackfillBootstrap[] $bootstraps  one per chain (0G + each Mirror chain)
-     * @param EventPoller[]       $pollers     one per chain (same order is fine; pollers are independent)
+     * @param array<int, array{poller: EventPoller, intervalSec: int}> $pollers
+     *        one entry per chain. The intervalSec is the per-chain cadence
+     *        (overrides the supervisor's global tick when larger). Tuples
+     *        keep the configuration flexible: Galileo can poll every 2s
+     *        while Sepolia polls every hour, all from the same loop.
      */
     public function __construct(
         private readonly array $bootstraps,
@@ -74,7 +78,15 @@ class Supervisor
             $start = microtime(true);
             $this->iterations++;
 
-            foreach ($this->pollers as $poller) {
+            foreach ($this->pollers as $entry) {
+                $poller = $entry['poller'];
+                // Locally scoped so we don't shadow the outer loop's
+                // $intervalSec (which controls the supervisor's own sleep).
+                $pollerIntervalSec = max(1, (int) $entry['intervalSec']);
+                $cadenceKey = "event_poller_chain_" . $poller->chainId();
+                if (!$this->cadence->due($cadenceKey, $pollerIntervalSec)) {
+                    continue;
+                }
                 try {
                     $this->totalEvents += $poller->tick();
                 } catch (Throwable $e) {
