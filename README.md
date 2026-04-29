@@ -29,51 +29,9 @@ Requires PHP 8.4+ with `mbstring`, `pdo`, `intl`, and `sodium` extensions if you
 
 ## Deployment (Fly.io)
 
-Production runs on a single Fly machine that bundles Apache + PHP + PostgreSQL together. Database files persist on a Fly volume mounted at `/data`.
+Production is split across one Fly app per tier (web, api, indexer, relayer, db, fleet) — see [Infrastructure](#infrastructure) below for the topology, per-app secrets, and the per-tier `fly_*.toml` deploy commands.
 
-Live at [immunity-app.fly.dev](https://immunity-app.fly.dev).
-
-### One-time setup
-
-Requires the `fly` CLI authenticated against the `ophelios` org.
-
-```bash
-fly apps create immunity-app --org ophelios
-fly volumes create pg_data --size 1 --region yyz --app immunity-app
-
-# Generate a 32-byte XChaCha20-Poly1305 key (base64url-encoded) and a DB password.
-ENC_KEY=$(php -r "echo rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');")
-DB_PASS=$(php -r "echo bin2hex(random_bytes(24));")
-fly secrets set ENCRYPTION_KEY="$ENC_KEY" DB_PASSWORD="$DB_PASS" --app immunity-app --stage
-```
-
-### Deploy
-
-```bash
-fly deploy --app immunity-app --ha=false
-```
-
-The first deploy initializes the Postgres cluster on the volume and applies `sql/init.sql`. Subsequent deploys skip the init step.
-
-### Operate
-
-```bash
-fly logs --app immunity-app                  # live logs
-fly ssh console --app immunity-app           # shell into the running machine
-fly status --app immunity-app                # machine + volume state
-fly secrets list --app immunity-app          # what is set, no values
-```
-
-Inside the machine, `psql -h localhost -U immunity -d immunity` opens the live database (password is the staged `DB_PASSWORD`).
-
-### Configuration files
-
-- `fly.toml` — app config (region, mounts, vm specs, env)
-- `.flyio/Dockerfile` — single-image build (PHP 8.4 + Postgres 15 + Apache)
-- `.flyio/supervisord.conf` — orchestrates postgres, init-db, and apache as siblings
-- `.flyio/scripts/init-db.sh` — idempotent role/database/schema bootstrap
-- `.flyio/vhosts/default.conf` — Apache vhost pointing at `public/`
-- `.flyio/php-production.ini` — production php.ini overrides
+There is intentionally no top-level `fly.toml`: every deploy must pass `--config fly_<tier>.toml --app immunity-<tier>` so it lands on the right machines. A bare `fly deploy` (no `--config`) is a foot-gun.
 
 ## Infrastructure
 
@@ -137,6 +95,35 @@ fly deploy --config fly_fleet.toml --app immunity-fleet --remote-only
 ```
 
 Logs: `fly logs --app <name>`. Status: `fly status --app <name>`. Secrets: `fly secrets list --app <name>`.
+
+### Database schema bootstrap
+
+`immunity-db` (Fly Managed Postgres) holds the schema for every tier. Schema is applied **once**, not per deploy — `fly deploy` never touches the database. The bundled SQL bootstrap is `sql/0-init-database.sql`, which `\ir`'s in each domain's `init.sql`. Tables are created with `IF NOT EXISTS`, so re-running on top of an existing schema is a no-op.
+
+To apply (or re-apply) the schema, run psql from any web/api/indexer machine — they all carry the bundled `sql/` tree at `/var/www/html/sql/` and have the `DATABASE_URL` secret in-env, so no password literal is ever typed:
+
+```sh
+fly ssh console --app immunity-app --command \
+  'psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /var/www/html/sql/0-init-database.sql'
+```
+
+Verify schemas + table counts:
+
+```sh
+fly ssh console --app immunity-app --command \
+  "psql \"\$DATABASE_URL\" -c \"SELECT table_schema, count(*) FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog','information_schema') GROUP BY 1 ORDER BY 1;\""
+```
+
+**Reset to a clean schema (destructive — drops every row across every domain):**
+
+```sh
+fly ssh console --app immunity-app --command \
+  'psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "DROP SCHEMA IF EXISTS antibody, agent, network, event, indexer, mirror, demo, core CASCADE;"'
+fly ssh console --app immunity-app --command \
+  'psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /var/www/html/sql/0-init-database.sql'
+```
+
+After a clean reset the indexer automatically backfills from the Registry's deploy block — no manual seeding step.
 
 ### Playground gate
 
