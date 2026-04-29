@@ -33,6 +33,7 @@ class Entry extends Entity
     public ?string $publisher_ens = null;
     public string $stake_amount;
     public string $attestation;
+    public ?string $publish_tx_hash = null;
     public ?string $seed_source = null;
     public ?string $redacted_reasoning = null;
     public string $created_at;
@@ -61,7 +62,7 @@ class Entry extends Entity
         return [
             'keccak_id', 'primary_matcher_hash', 'context_hash', 'evidence_cid',
             'embedding_hash', 'embedding_cid',
-            'publisher', 'attestation',
+            'publisher', 'attestation', 'publish_tx_hash',
         ];
     }
 }
