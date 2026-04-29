@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Immunity OG default</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&display=swap">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 1200px; height: 630px; overflow: hidden; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: #e8e8e3;
+            background: #0e0e0d;
+            position: relative;
+        }
+
+        /* Subtle radial vignette so the gradient bottom-line pops without
+           competing with the typography in the body. */
+        .bg-vignette {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 75% 25%, rgba(232, 212, 160, 0.06) 0%, transparent 55%),
+                radial-gradient(ellipse at 15% 80%, rgba(122, 184, 122, 0.04) 0%, transparent 50%);
+        }
+
+        /* Faint dotted grid pattern matching the home hero. Keeps the OG
+           recognizably part of the same visual system. */
+        .bg-dots {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding: 80px 84px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .brand-mark {
+            width: 56px;
+            height: 56px;
+            background: #e8e8e3;
+            -webkit-mask: url('/assets/images/immunity-mark.png') center/contain no-repeat;
+                    mask: url('/assets/images/immunity-mark.png') center/contain no-repeat;
+        }
+        .brand-name {
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 38px;
+            font-weight: 300;
+            letter-spacing: -0.025em;
+            color: #e8e8e3;
+            line-height: 1;
+        }
+        .brand-version {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #5e5e58;
+            margin-left: 8px;
+            margin-top: 8px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border: 1px solid rgba(122, 184, 122, 0.35);
+            border-radius: 999px;
+            background: rgba(122, 184, 122, 0.08);
+        }
+        .pill-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #7ab87a;
+        }
+        .pill-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #a8cfa8;
+        }
+
+        .headline {
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 76px;
+            font-weight: 300;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            color: #e8e8e3;
+            max-width: 1000px;
+        }
+        .headline em {
+            font-style: italic;
+            font-weight: 300;
+            color: #e8d4a0;
+        }
+
+        .lede {
+            font-family: 'Inter', system-ui, sans-serif;
+            font-size: 21px;
+            font-weight: 400;
+            line-height: 1.45;
+            color: #9a9a92;
+            max-width: 760px;
+            margin-top: 32px;
+        }
+
+        .footer-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #5e5e58;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+        .footer-row .url {
+            color: #9a9a92;
+        }
+
+        /* The defining touch the user asked for: a full-width gradient bar
+           pinned to the bottom edge. Maps the verdict spectrum
+           (immune green / accent cream / threat red) into a single ribbon. */
+        .gradient-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 6px;
+            background: linear-gradient(
+                90deg,
+                #7ab87a 0%,
+                #a8cfa8 22%,
+                #e8d4a0 50%,
+                #dca0a0 78%,
+                #c45a5a 100%
+            );
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-vignette"></div>
+    <div class="bg-dots"></div>
+
+    <div class="container">
+
+        <header style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="brand">
+                <span class="brand-mark"></span>
+                <span class="brand-name">Immunity</span>
+                <span class="brand-version">v0.1</span>
+            </div>
+            <div class="pill">
+                <span class="pill-dot"></span>
+                <span class="pill-text">Decentralized threat intel</span>
+            </div>
+        </header>
+
+        <div>
+            <h1 class="headline">
+                An attack on one<br>
+                is a <em>vaccine for all</em>.
+            </h1>
+            <p class="lede">
+                Antibodies are signed by their publisher, staked on chain, and addressable by a stable CVE-style identifier. Every agent's local cache updates within seconds.
+            </p>
+        </div>
+
+        <div class="footer-row">
+            <span class="url">immunity-protocol.com</span>
+            <span>0G Chain · Galileo testnet</span>
+        </div>
+    </div>
+
+    <div class="gradient-line"></div>
+</body>
+</html>
