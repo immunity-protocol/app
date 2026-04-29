@@ -206,7 +206,7 @@
         <div class="flex flex-wrap items-center gap-x-8 gap-y-3 mt-5 text-[12.5px]">
             <div class="flex items-center gap-2">
                 <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Published by</span>
-                <span class="text-fg-primary">{$ab['publisher']}</span>
+                <a href="/publisher/{$ab['publisher_addr']}" class="text-fg-primary hover:text-accent transition-colors" title="View publisher profile">{$ab['publisher']}</a>
                 <a href="{$explorerUrl}"
                    target="_blank"
                    rel="noopener noreferrer"
