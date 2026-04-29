@@ -1,0 +1,26 @@
+[
+  {
+    "type": "error",
+    "name": "TokenBlocked",
+    "inputs": [
+      { "name": "token", "type": "address" },
+      { "name": "keccakId", "type": "bytes32" }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "SenderBlocked",
+    "inputs": [
+      { "name": "sender", "type": "address" },
+      { "name": "keccakId", "type": "bytes32" }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "OriginBlocked",
+    "inputs": [
+      { "name": "origin", "type": "address" },
+      { "name": "keccakId", "type": "bytes32" }
+    ]
+  }
+]

@@ -41,7 +41,7 @@ final class SepoliaDexConfig
     {
         return new self(
             chainId:                11155111,
-            rpcUrl:                 getenv('SEPOLIA_RPC_URL')         ?: 'https://eth-sepolia.public.blastapi.io',
+            rpcUrl:                 getenv('SEPOLIA_RPC_URL')         ?: 'https://ethereum-sepolia-rpc.publicnode.com',
             blockExplorerUrl:       getenv('SEPOLIA_BLOCK_EXPLORER')  ?: 'https://sepolia.etherscan.io',
             mirrorAddress:          getenv('SEPOLIA_MIRROR_ADDRESS')  ?: '0x1be1Ec2F7E2230f9bB1Aa3d5589bB58F8DfD52c7',
             hookAddress:            getenv('SEPOLIA_HOOK_ADDRESS')    ?: '0xd3335F3d69e97C314350EDA63fB5Ba0163Dd0080',
