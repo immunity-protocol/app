@@ -22,37 +22,46 @@ CREATE TYPE antibody.mirror_status AS ENUM (
 -- ##################################################################################################################
 CREATE TABLE antibody.entry
 (
-    id                  bigserial PRIMARY KEY,
-    keccak_id           bytea NOT NULL UNIQUE,
-    imm_id              varchar(32) NOT NULL UNIQUE,
-    type                antibody.entry_type NOT NULL,
-    flavor              varchar(32),
-    verdict             antibody.entry_verdict NOT NULL,
-    confidence          smallint NOT NULL CHECK (confidence BETWEEN 0 AND 100),
-    severity            smallint NOT NULL CHECK (severity BETWEEN 0 AND 100),
-    status              antibody.entry_status NOT NULL DEFAULT 'active',
-    primary_matcher     jsonb NOT NULL,
-    secondary_matchers  jsonb NOT NULL DEFAULT '[]'::jsonb,
-    context_hash        bytea NOT NULL,
-    evidence_cid        bytea NOT NULL,
-    embedding_hash      bytea,
-    embedding_cid       bytea,
-    stake_lock_until    timestamptz NOT NULL,
-    expires_at          timestamptz,
-    publisher           bytea NOT NULL,
-    publisher_ens       varchar(255),
-    stake_amount        numeric(20, 6) NOT NULL,
-    attestation         bytea NOT NULL,
-    seed_source         varchar(64),
-    redacted_reasoning  text,
-    created_at          timestamptz NOT NULL DEFAULT now(),
-    updated_at          timestamptz NOT NULL DEFAULT now()
+    id                    bigserial PRIMARY KEY,
+    keccak_id             bytea NOT NULL UNIQUE,
+    imm_id                varchar(32) NOT NULL UNIQUE,
+    type                  antibody.entry_type NOT NULL,
+    flavor                varchar(32),
+    verdict               antibody.entry_verdict NOT NULL,
+    confidence            smallint NOT NULL CHECK (confidence BETWEEN 0 AND 100),
+    severity              smallint NOT NULL CHECK (severity BETWEEN 0 AND 100),
+    status                antibody.entry_status NOT NULL DEFAULT 'active',
+    primary_matcher       jsonb NOT NULL,
+    primary_matcher_hash  bytea,
+    secondary_matchers    jsonb NOT NULL DEFAULT '[]'::jsonb,
+    context_hash          bytea NOT NULL,
+    evidence_cid          bytea NOT NULL,
+    embedding_hash        bytea,
+    embedding_cid         bytea,
+    stake_lock_until      timestamptz NOT NULL,
+    expires_at            timestamptz,
+    publisher             bytea NOT NULL,
+    publisher_ens         varchar(255),
+    stake_amount          numeric(20, 6) NOT NULL,
+    attestation           bytea NOT NULL,
+    seed_source           varchar(64),
+    redacted_reasoning    text,
+    created_at            timestamptz NOT NULL DEFAULT now(),
+    updated_at            timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX entry_created_at_idx ON antibody.entry (created_at DESC);
 CREATE INDEX entry_type_idx       ON antibody.entry (type);
 CREATE INDEX entry_status_idx     ON antibody.entry (status);
 CREATE INDEX entry_publisher_idx  ON antibody.entry (publisher);
+
+-- Tier-2 lookup index: the SDK queries the on-chain matcherIndex by the
+-- canonical primary matcher hash; the app exposes the same lookup via
+-- /api/antibody/by-matcher-hash/{hash}. Partial unique because legacy rows
+-- (pre-v3 indexed envelopes) may have NULL hashes; nulls remain unconstrained.
+CREATE UNIQUE INDEX entry_primary_matcher_hash_idx
+    ON antibody.entry (primary_matcher_hash)
+    WHERE primary_matcher_hash IS NOT NULL;
 
 -- ##################################################################################################################
 -- MIRROR (per-chain replication of an antibody)
