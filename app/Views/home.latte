@@ -51,13 +51,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <div class="relative max-w-[1400px] mx-auto px-5 sm:px-7 pt-24 sm:pt-20 pb-16 sm:pb-24 min-h-screen flex flex-col justify-center">
 
-        {* Big hero brand block. Cross-fades to the small nav brand on scroll
-           via #hero-brand / #nav-brand opacity rules in app.css. Hidden on
-           phones where the nav brand is sufficient. *}
-        <div id="hero-brand" class="hero-brand hidden sm:flex absolute top-7 left-7 items-center gap-4 origin-left pointer-events-none select-none" aria-hidden="true">
-            <span class="block h-[88px] w-[88px] bg-fg-primary"
+        {* Big hero brand block. Cross-fades to the small nav brand on
+           scroll via #hero-brand / #nav-brand opacity rules in app.css.
+           Sized down on mobile so it doesn't crowd the headline, but still
+           bigger than the nav island so the scroll-shrink effect reads. *}
+        <div id="hero-brand" class="hero-brand flex absolute top-5 left-5 sm:top-7 sm:left-7 items-center gap-3 sm:gap-4 origin-left pointer-events-none select-none" aria-hidden="true">
+            <span class="block h-[60px] w-[60px] sm:h-[88px] sm:w-[88px] bg-fg-primary"
                   style="-webkit-mask: url(/assets/images/immunity-mark.png) center/contain no-repeat; mask: url(/assets/images/immunity-mark.png) center/contain no-repeat;"></span>
-            <span class="font-display text-[56px] font-light tracking-tighter text-fg-primary leading-none">Immunity</span>
+            <span class="font-display text-[40px] sm:text-[56px] font-light tracking-tighter text-fg-primary leading-none">Immunity</span>
         </div>
 
         {* Headline, two stanzas: the technical claim, then the philosophy *}
