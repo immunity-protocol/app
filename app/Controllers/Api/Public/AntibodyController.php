@@ -26,6 +26,30 @@ final class AntibodyController extends Controller
         if ($entry === null) {
             return Response::json(['error' => 'not found', 'imm_id' => $immId], 404);
         }
+        return $this->packEntry($entry);
+    }
+
+    /**
+     * Tier-2 mirror of the on-chain `getAntibodyByMatcherHash`. Lets external
+     * tooling (and the SDK, in degraded modes) resolve by canonical matcher
+     * hash without hitting RPC.
+     */
+    #[Get('/antibody/by-matcher-hash/{hash}')]
+    public function byMatcherHash(string $hash): Response
+    {
+        if (!preg_match('/^(?:0x)?[0-9a-fA-F]{64}$/', $hash)) {
+            return Response::json(['error' => 'invalid matcher hash', 'hash' => $hash], 400);
+        }
+        $this->entries ??= new EntryService();
+        $entry = $this->entries->findByPrimaryMatcherHash($hash);
+        if ($entry === null) {
+            return Response::json(['error' => 'not found', 'matcher_hash' => $hash], 404);
+        }
+        return $this->packEntry($entry);
+    }
+
+    private function packEntry(\App\Models\Antibody\Entities\Entry $entry): Response
+    {
         $this->mirrors ??= new MirrorService();
         $this->blocks ??= new BlockEventService();
         $this->publishers ??= new PublisherService();

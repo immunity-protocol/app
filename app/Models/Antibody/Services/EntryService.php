@@ -24,6 +24,11 @@ readonly class EntryService
         return Entry::build($this->broker->findByImmId($immId));
     }
 
+    public function findByPrimaryMatcherHash(string $hashHex): ?Entry
+    {
+        return Entry::build($this->broker->findByPrimaryMatcherHash($hashHex));
+    }
+
     /**
      * @return Entry[]
      */
