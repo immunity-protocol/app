@@ -34,10 +34,11 @@
         <div class="flex flex-wrap items-center gap-3">
             <a href="/"
                class="inline-flex items-center gap-2 bg-fg-primary text-ink-base font-mono text-[11.5px] uppercase tracking-widest2 px-4 py-2.5 rounded hover:bg-fg-secondary transition-colors">
+                {* Tabler icon: home (https://tabler.io/icons/icon/home) *}
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                     <path d="M5 12l-2 0l9 -9l9 9l-2 0"/>
-                    <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/>
+                    <path d="M5 12v7a2 2 0 0 0 2 2h14v-7"/>
                     <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/>
                 </svg>
                 Back to home
@@ -45,11 +46,16 @@
 
             <a href="/antibodies"
                class="inline-flex items-center gap-2 border border-ink-line hover:border-fg-tertiary text-fg-primary font-mono text-[11.5px] uppercase tracking-widest2 px-4 py-2.5 rounded transition-colors">
+                {* Tabler icon: vaccine (https://tabler.io/icons/icon/vaccine) *}
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                    <path d="M10 13a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                    <path d="M21 21l-4.3 -4.3"/>
-                    <path d="M16 13a6 6 0 1 0 -12 0a6 6 0 0 0 12 0z"/>
+                    <path d="M17 3l4 4"/>
+                    <path d="M19 5l-4.5 4.5l-4.5 -4.5"/>
+                    <path d="M11 21l5 -5l-7.5 -7.5l-5 5z"/>
+                    <path d="M16 16l4 -4"/>
+                    <path d="M14.5 9.5l-1.5 1.5"/>
+                    <path d="M12.5 11.5l-1.5 1.5"/>
+                    <path d="M10.5 13.5l-1.5 1.5"/>
                 </svg>
                 Browse antibodies
             </a>
@@ -57,6 +63,7 @@
             <a href="/dashboard"
                class="inline-flex items-center gap-2 text-fg-tertiary hover:text-fg-primary font-mono text-[11.5px] uppercase tracking-widest2 px-4 py-2.5 transition-colors">
                 Open dashboard
+                {* Tabler icon: arrow-right (https://tabler.io/icons/icon/arrow-right) *}
                 <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                     <path d="M5 12l14 0"/>
@@ -64,27 +71,6 @@
                     <path d="M13 6l6 6"/>
                 </svg>
             </a>
-        </div>
-
-        <div class="mt-16 pt-8 border-t border-ink-line/60 max-w-[640px]">
-            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Looking for something specific?</div>
-            <ul class="space-y-2 text-[13px] text-fg-secondary">
-                <li>
-                    <span class="text-fg-tertiary">·</span>
-                    Antibody by IMM ID:
-                    <span class="font-mono text-[12px] text-fg-primary">/antibody/IMM-2026-0001</span>
-                </li>
-                <li>
-                    <span class="text-fg-tertiary">·</span>
-                    Antibody by matcher hash (API):
-                    <span class="font-mono text-[12px] text-fg-primary">/v1/antibody/by-matcher-hash/&lt;hash&gt;</span>
-                </li>
-                <li>
-                    <span class="text-fg-tertiary">·</span>
-                    All antibodies:
-                    <span class="font-mono text-[12px] text-fg-primary">/antibodies</span>
-                </li>
-            </ul>
         </div>
     </div>
 </section>
