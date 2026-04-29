@@ -1,0 +1,253 @@
+{layout ../layouts/main.latte}
+
+{block title}{$publisher->ens ?? '0x' . substr($addressHex, 0, 6) . '...' . substr($addressHex, -4)} / Publisher / Immunity{/block}
+
+{block content}
+
+{*
+ * Publisher detail page.
+ *
+ * Shape mirrors `antibodies/show.latte`: breadcrumb, header w/ hero stats
+ * strip, then a grid of content + at-a-glance side panel. Stats are
+ * server-rendered (single DB roundtrip per metric) — no live polling on
+ * detail pages, the dashboard is the live surface.
+ *}
+
+{var $shortHex   = '0x' . substr($addressHex, 0, 6) . '...' . substr($addressHex, -4)}
+{var $isHexLabel = $publisher->ens === null}
+{var $displayName = $publisher->ens ?? $shortHex}
+
+{var $earnings = (float) $publisher->total_earned_usdc}
+{var $earningsLabel = $earnings >= 1
+    ? '$' . number_format($earnings, 2)
+    : '$' . rtrim(rtrim(number_format($earnings, 4), '0'), '.')}
+
+<section class="max-w-[1400px] mx-auto px-7 pt-10 pb-16">
+
+    {* ----------- BREADCRUMB ----------- *}
+    <nav class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-8 flex items-center gap-2" aria-label="Breadcrumb">
+        <a href="/publishers" class="hover:text-fg-secondary transition-colors">Publishers</a>
+        <span class="text-fg-dim" aria-hidden="true">/</span>
+        <span class="text-fg-secondary">{$shortHex}</span>
+    </nav>
+
+    {* ============== HEADER ============== *}
+    <header class="mb-14">
+
+        <div class="flex items-center gap-4 flex-wrap mb-3">
+            <h1 class="font-mono text-[28px] sm:text-[34px] text-fg-primary tracking-tight leading-none {$isHexLabel ? '' : 'font-display tracking-tight'}">{$displayName}</h1>
+            {if $rank !== null}
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border font-mono text-[10px] uppercase tracking-widest2 bg-accent/10 text-accent border-accent/30">
+                    Rank #{$rank} of {$totalContributors}
+                </span>
+            {/if}
+            <button data-copy="0x{$addressHex}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors inline-flex items-center gap-1.5" aria-label="Copy publisher address">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+            </button>
+            <a href="https://chainscan-galileo.0g.ai/address/0x{$addressHex}" target="_blank" rel="noopener noreferrer" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors inline-flex items-center gap-1.5">
+                Explorer
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6"/><path d="M11 13l9 -9"/><path d="M15 4h5v5"/></svg>
+            </a>
+        </div>
+
+        {* Address row (always shown — helps when ENS is the heading) *}
+        <div class="flex items-center gap-3 mb-7">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary shrink-0">Address</span>
+            <code class="font-mono text-[12px] text-fg-secondary truncate min-w-0">0x{$addressHex}</code>
+        </div>
+
+        {* Metric strip — 5 cells, same chrome as antibody/show *}
+        <div class="border-t border-b border-ink-line/60 grid grid-cols-2 md:grid-cols-5 divide-x divide-ink-line/40">
+            <div class="p-4">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Antibodies</div>
+                <div class="font-mono text-[15px] text-fg-primary tabular-nums">{format('decimal', $publisher->antibodies_published, 0)}</div>
+            </div>
+            <div class="p-4">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Blocks</div>
+                <div class="font-mono text-[15px] {$publisher->successful_blocks > 0 ? 'text-threat-300' : 'text-fg-primary'} tabular-nums">{format('decimal', $publisher->successful_blocks, 0)}</div>
+            </div>
+            <div class="p-4">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Value protected</div>
+                <div class="font-mono text-[15px] text-fg-primary tabular-nums">{format('money', (float) $valueProtectedUsd)}</div>
+            </div>
+            <div class="p-4" title="80% of the 0.002 USDC fee per match, paid by the Registry contract directly to this publisher">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Total earned</div>
+                <div class="font-mono text-[15px] {$earnings > 0 ? 'text-immune-500' : 'text-fg-dim'} tabular-nums">{$earningsLabel}</div>
+            </div>
+            <div class="p-4">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Last active</div>
+                <div class="font-mono text-[12px] text-fg-secondary">{format('timeago', $publisher->last_active_at)}</div>
+            </div>
+        </div>
+
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10">
+
+        {* ----------- ANTIBODIES PUBLISHED BY THIS WALLET ----------- *}
+        <div>
+            <header class="flex items-center justify-between gap-4 mb-5">
+                <h2 class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Antibodies authored</h2>
+                <span class="font-mono text-[10.5px] text-fg-dim">{$totalAntibodies} total</span>
+            </header>
+
+            <div class="overflow-x-auto -mr-7 pr-7 lg:mr-0 lg:pr-0">
+                <table class="w-full border-collapse text-[13px] tabular-nums">
+                    <thead>
+                        <tr class="text-left">
+                            <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">IMM ID</th>
+                            <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Type</th>
+                            <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Verdict</th>
+                            <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Sev</th>
+                            <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Blocks</th>
+                            <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Value protected</th>
+                            <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Status</th>
+                            <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 text-right">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {if count($antibodies) === 0}
+                        <tr><td colspan="8" class="py-12 text-center font-mono text-[12px] text-fg-dim">No antibodies on this page.</td></tr>
+                    {/if}
+                    {foreach $antibodies as $r}
+                        {var $typeUpper = strtoupper($r->type)}
+                        {var $verdictUpper = strtoupper($r->verdict)}
+                        {var $statusUpper = strtoupper($r->status)}
+                        {var $typeColor = match($typeUpper) {
+                            'ADDRESS'      => 'text-fg-secondary',
+                            'CALL_PATTERN' => 'text-caution-300',
+                            'BYTECODE'     => 'text-immune-300',
+                            'GRAPH'        => 'text-accent-soft',
+                            default        => 'text-threat-300',
+                        }}
+                        {var $verdictColor = $verdictUpper === 'MALICIOUS' ? 'text-threat-500' : 'text-caution-500'}
+                        {var $statusBadge = match($statusUpper) {
+                            'ACTIVE'     => 'bg-immune-500/10 text-immune-500',
+                            'CHALLENGED' => 'bg-caution-500/10 text-caution-500',
+                            'EXPIRED'    => 'bg-fg-dim/15 text-fg-tertiary',
+                            'SLASHED'    => 'bg-threat-500/15 text-threat-500',
+                            default      => 'bg-fg-dim/10 text-fg-tertiary',
+                        }}
+                        <tr class="border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
+                            <td class="py-3 pr-6">
+                                <a href="/antibody/{$r->imm_id}" class="font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">{$r->imm_id}</a>
+                            </td>
+                            <td class="py-3 pr-6">
+                                <span class="font-mono text-[10.5px] uppercase tracking-widest2 {$typeColor}">{$typeUpper}</span>
+                            </td>
+                            <td class="py-3 pr-6">
+                                <span class="font-mono text-[10.5px] uppercase tracking-widest2 {$verdictColor}">{$verdictUpper}</span>
+                            </td>
+                            <td class="py-3 pr-6 text-right text-fg-secondary">{$r->severity}</td>
+                            <td class="py-3 pr-6 text-right">
+                                {if $r->block_count > 0}
+                                    <span class="text-threat-300">{$r->block_count}</span>
+                                {else}
+                                    <span class="text-fg-dim">0</span>
+                                {/if}
+                            </td>
+                            <td class="py-3 pr-6 text-right">
+                                {var $vp = (float) $r->value_protected_usd}
+                                {if $vp > 0}
+                                    <span class="text-immune-500">{format('money', $vp)}</span>
+                                {else}
+                                    <span class="text-fg-dim">-</span>
+                                {/if}
+                            </td>
+                            <td class="py-3 pr-6">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-[10px] uppercase tracking-widest2 {$statusBadge}">{$statusUpper}</span>
+                            </td>
+                            <td class="py-3 text-right font-mono text-[11.5px] text-fg-tertiary">{format('timeago', $r->created_at)}</td>
+                        </tr>
+                    {/foreach}
+                    </tbody>
+                </table>
+            </div>
+
+            {if $totalAntibodies > $pagination->perPage}
+            <div class="flex items-center justify-between mt-8 pt-5 border-t border-ink-line/60 gap-6 flex-wrap">
+                <div class="font-mono text-[11px] uppercase tracking-widest2 text-fg-tertiary">
+                    Showing <span class="text-fg-secondary tabular-nums">{$pagination->showingFrom}</span> to <span class="text-fg-secondary tabular-nums">{$pagination->showingTo}</span> of <span class="text-fg-secondary tabular-nums">{$pagination->total}</span>
+                </div>
+                <nav class="flex items-center gap-1" aria-label="Pagination">
+                    {if $pagination->hasPrev}
+                        <a href="?page={$pagination->prevPage}" class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary px-3 py-1.5 rounded-sm hover:bg-ink-elevated/60 transition-colors"><span aria-hidden="true">&larr;</span> Prev</a>
+                    {else}
+                        <span class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim px-3 py-1.5 cursor-not-allowed"><span aria-hidden="true">&larr;</span> Prev</span>
+                    {/if}
+                    {foreach $pagination->pageLinks as $pl}
+                        {if $pl === '...'}<span class="font-mono text-[12px] text-fg-dim px-1 select-none">...</span>
+                        {elseif $pl === $pagination->page}<span class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm bg-accent/10 text-accent border border-accent/30" aria-current="page">{$pl}</span>
+                        {else}<a href="?page={$pl}" class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">{$pl}</a>
+                        {/if}
+                    {/foreach}
+                    {if $pagination->hasNext}
+                        <a href="?page={$pagination->nextPage}" class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary px-3 py-1.5 rounded-sm hover:bg-ink-elevated/60 transition-colors">Next <span aria-hidden="true">&rarr;</span></a>
+                    {else}
+                        <span class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim px-3 py-1.5 cursor-not-allowed">Next <span aria-hidden="true">&rarr;</span></span>
+                    {/if}
+                </nav>
+            </div>
+            {/if}
+        </div>
+
+        {* ----------- AT A GLANCE / RECENT MATCHES ----------- *}
+        <aside class="space-y-6">
+
+            <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-5">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">At a glance</div>
+                <dl class="space-y-3">
+                    <div class="flex items-baseline justify-between gap-3">
+                        <dt class="text-fg-tertiary text-[11.5px]">First seen</dt>
+                        <dd class="font-mono text-[12px] text-fg-secondary">{format('timeago', $publisher->first_seen_at)}</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3">
+                        <dt class="text-fg-tertiary text-[11.5px]">Last active</dt>
+                        <dd class="font-mono text-[12px] text-fg-secondary">{format('timeago', $publisher->last_active_at)}</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3">
+                        <dt class="text-fg-tertiary text-[11.5px]">Antibodies</dt>
+                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{$publisher->antibodies_published}</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3">
+                        <dt class="text-fg-tertiary text-[11.5px]">Blocks made</dt>
+                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{$publisher->successful_blocks}</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3" title="80% of the 0.002 USDC fee per match, paid by the Registry contract">
+                        <dt class="text-fg-tertiary text-[11.5px]">Total earned</dt>
+                        <dd class="font-mono text-[12px] {$earnings > 0 ? 'text-immune-500' : 'text-fg-dim'} tabular-nums">{$earningsLabel}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-5">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Recent matches</div>
+                {if count($recentMatches) === 0}
+                    <p class="font-mono text-[11.5px] text-fg-dim leading-relaxed">No on-chain matches recorded yet for this publisher's antibodies.</p>
+                {else}
+                <ul class="space-y-3">
+                    {foreach $recentMatches as $m}
+                        <li class="border-b border-ink-line/30 last:border-0 pb-3 last:pb-0">
+                            <div class="flex items-baseline justify-between gap-3 mb-1">
+                                <a href="/antibody/{$m->imm_id}" class="font-mono text-[11.5px] text-fg-primary hover:text-accent transition-colors">{$m->imm_id}</a>
+                                <span class="font-mono text-[10.5px] text-fg-tertiary">{format('timeago', $m->occurred_at)}</span>
+                            </div>
+                            <div class="flex items-baseline justify-between gap-3 font-mono text-[11px]">
+                                <span class="text-fg-tertiary truncate">agent {substr($m->agent_id, 0, 14)}</span>
+                                {var $reward = (float) ($m->publisher_reward_usdc ?? 0)}
+                                <span class="text-immune-500 tabular-nums">+{$reward >= 1 ? '$' . number_format($reward, 2) : '$' . rtrim(rtrim(number_format($reward, 4), '0'), '.')}</span>
+                            </div>
+                        </li>
+                    {/foreach}
+                </ul>
+                {/if}
+            </div>
+
+        </aside>
+
+    </div>
+
+</section>
+
+{/block}

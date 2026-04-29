@@ -36,6 +36,29 @@ class BlockEventBroker extends Broker
         );
     }
 
+    /**
+     * Recent matches across every antibody owned by this publisher. Joined
+     * back to `antibody.entry` so the caller can render the IMM-id and
+     * type next to each row without a second lookup.
+     *
+     * @return \stdClass[] rows: { id, agent_id, occurred_at, entry_id,
+     *   imm_id, type, value_protected_usd, publisher_reward_usdc }
+     */
+    public function findRecentByPublisher(string $publisherBytea, int $limit = 10): array
+    {
+        return $this->select(
+            "SELECT b.id, b.agent_id, b.occurred_at, b.entry_id,
+                    b.value_protected_usd, b.publisher_reward_usdc,
+                    e.imm_id, e.type::text AS type
+               FROM event.block_event b
+               JOIN antibody.entry e ON e.id = b.entry_id
+              WHERE e.publisher = decode(?, 'hex')
+           ORDER BY b.id DESC
+              LIMIT ?",
+            [$publisherBytea, $limit]
+        );
+    }
+
     public function countSince(string $sinceIso): int
     {
         return (int) $this->selectValue(

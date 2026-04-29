@@ -115,6 +115,49 @@ class EntryBroker extends Broker
         return $this->select($sql, [$limit]);
     }
 
+    /**
+     * Page of antibodies belonging to a single publisher, with the same
+     * per-row stats (cache_hits, block_count, mirror_count,
+     * value_protected_usd, last_block_at) as the dashboard's active
+     * registry table. Ordered newest-first.
+     *
+     * @param string $publisherBytea the publisher's bytea hex (no `0x` prefix or `\x`).
+     * @return stdClass[]
+     */
+    public function findPageByPublisher(string $publisherBytea, int $offset, int $limit): array
+    {
+        $sql = "
+            SELECT
+                e.id, e.imm_id, e.type::text AS type, e.verdict::text AS verdict,
+                e.status::text AS status, e.confidence, e.severity,
+                e.redacted_reasoning, e.publisher_ens, e.created_at,
+                encode(e.publisher, 'hex') AS publisher_hex,
+                (SELECT count(*) FROM event.check_event ce
+                  WHERE ce.matched_entry_id = e.id AND ce.cache_hit = true) AS cache_hits,
+                (SELECT count(*) FROM event.block_event be
+                  WHERE be.entry_id = e.id)                                 AS block_count,
+                (SELECT count(*) FROM antibody.mirror am
+                  WHERE am.entry_id = e.id AND am.status = 'active')        AS mirror_count,
+                (SELECT COALESCE(SUM(be.value_protected_usd), 0)
+                   FROM event.block_event be
+                  WHERE be.entry_id = e.id)::text                           AS value_protected_usd,
+                (SELECT MAX(be.occurred_at) FROM event.block_event be
+                  WHERE be.entry_id = e.id)                                 AS last_block_at
+              FROM antibody.entry e
+             WHERE e.publisher = decode(?, 'hex')
+             ORDER BY e.id DESC
+             LIMIT ? OFFSET ?";
+        return $this->select($sql, [$publisherBytea, $limit, $offset]);
+    }
+
+    public function countByPublisher(string $publisherBytea): int
+    {
+        return (int) $this->selectValue(
+            "SELECT count(*) FROM antibody.entry WHERE publisher = decode(?, 'hex')",
+            [$publisherBytea]
+        );
+    }
+
     public function countActive(): int
     {
         return (int) $this->selectValue(

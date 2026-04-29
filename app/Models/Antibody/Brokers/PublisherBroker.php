@@ -18,6 +18,45 @@ class PublisherBroker extends Broker
     }
 
     /**
+     * 1-based rank of this publisher on the leaderboard (sorted by total
+     * earned). Returns null if the publisher row doesn't exist.
+     */
+    public function rankByEarnings(string $addressHex): ?int
+    {
+        $row = $this->selectOne(
+            "WITH ranked AS (
+                SELECT address,
+                       row_number() OVER (
+                           ORDER BY total_earned_usdc DESC,
+                                    successful_blocks DESC,
+                                    last_active_at DESC,
+                                    address
+                       ) AS rank
+                  FROM antibody.publisher
+             )
+             SELECT rank FROM ranked WHERE address = decode(?, 'hex')",
+            [$addressHex]
+        );
+        return $row === null ? null : (int) $row->rank;
+    }
+
+    /**
+     * Total USD value protected by all of a publisher's antibodies put
+     * together. Returned as a decimal string so callers control formatting.
+     */
+    public function totalValueProtectedUsd(string $addressHex): string
+    {
+        $val = $this->selectValue(
+            "SELECT COALESCE(SUM(b.value_protected_usd), 0)::text
+               FROM event.block_event b
+               JOIN antibody.entry e ON e.id = b.entry_id
+              WHERE e.publisher = decode(?, 'hex')",
+            [$addressHex]
+        );
+        return (string) ($val ?? '0');
+    }
+
+    /**
      * @return stdClass[] ordered by antibodies_published desc
      */
     public function findTopByAntibodies(int $limit): array
