@@ -262,6 +262,14 @@ class EntryBroker extends Broker
                    FROM event.block_event WHERE entry_id = ?",
                 [$entryId]
             ) ?? '0'),
+            // Pool reverts: subset of blocks_made that came from the
+            // Sepolia hook (chain_id 11155111) — the DEX demo. Counted
+            // separately so the antibody detail can split the story.
+            'pool_reverts' => (int) $this->selectValue(
+                "SELECT count(*) FROM event.block_event
+                  WHERE entry_id = ? AND chain_id = 11155111",
+                [$entryId]
+            ),
             // First-check-after-publish latency. Returns null until at least
             // one matching check has been settled. Used by the "Network
             // propagation" stat in the at-a-glance panel.

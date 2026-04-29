@@ -100,6 +100,7 @@
     'cache_hits'           => $impact['cache_hits'],
     'agents_synced'        => $impact['agents_synced'],
     'blocks_made'          => $impact['blocks_made'],
+    'pool_reverts'         => $impact['pool_reverts'] ?? 0,
     'value_protected_usd'  => (float) $impact['value_protected_usd'],
     'ingestion'            => $impact['ingestion'],
     'propagation_seconds'  => $impact['propagation_seconds'] ?? null,
@@ -371,7 +372,7 @@
                 </header>
 
                 {* Counters strip *}
-                <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-ink-line/40 border-b border-ink-line/40">
+                <div class="grid grid-cols-2 md:grid-cols-5 divide-x divide-ink-line/40 border-b border-ink-line/40">
                     <div class="px-6 py-5">
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Cache hits</div>
                         <div class="font-mono text-[22px] text-fg-primary tabular-nums leading-none">{format('decimal', $ab['impact']['cache_hits'], 0)}</div>
@@ -386,6 +387,11 @@
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Attacks blocked</div>
                         <div class="font-mono text-[22px] text-threat-300 tabular-nums leading-none">{$ab['impact']['blocks_made']}</div>
                         <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">tx-level intercepts</div>
+                    </div>
+                    <div class="px-6 py-5">
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Pool reverts</div>
+                        <div class="font-mono text-[22px] text-accent-soft tabular-nums leading-none">{$ab['impact']['pool_reverts']}</div>
+                        <div class="font-mono text-[10.5px] text-fg-tertiary tabular-nums mt-1">Uniswap v4 hook</div>
                     </div>
                     <div class="px-6 py-5">
                         <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">USD protected</div>
