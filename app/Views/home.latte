@@ -133,14 +133,15 @@ window.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
 
-            <div class="md:px-7 md:border-r md:border-ink-line/60">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Cache hits / hr</div>
-                <div data-stat="cache_hits_per_hour" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">18,492</div>
+            <a href="/publishers" class="md:px-7 md:border-r md:border-ink-line/60 group block hover:bg-ink-elevated/20 -mx-5 sm:mx-0 px-5 sm:px-0 md:px-7 py-5 md:py-0 transition-colors" title="See all network contributors">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3 group-hover:text-fg-secondary transition-colors">Network contributors</div>
+                <div data-stat="publishers_total" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums group-hover:text-accent transition-colors">1</div>
                 <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
-                    <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span data-delta="cache_hits_per_hour">+0 in 1h</span>
+                    <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8M6 2v8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span data-stat-money="publisher_earnings_total_usdc">$0.0016</span>
+                    <span class="text-fg-tertiary">distributed</span>
                 </div>
-            </div>
+            </a>
 
             <div class="md:px-7 md:border-r md:border-ink-line/60">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">LLM calls saved</div>
@@ -725,6 +726,15 @@ window.addEventListener('DOMContentLoaded', () => {
     if (v === null || v === undefined || v === '') return '-';
     const n = Number(v);
     if (!Number.isFinite(n)) return '-';
+    // Sub-dollar amounts get extra precision so the publisher-earnings
+    // tile (which starts at $0.0016 per match) doesn't truncate to $0
+    // until the network has processed hundreds of blocks.
+    if (n > 0 && n < 1) {
+      return '$' + n.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+    }
+    if (n > 0 && n < 100) {
+      return '$' + n.toFixed(2);
+    }
     return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
   }
   function fmtDelta(v, money) {

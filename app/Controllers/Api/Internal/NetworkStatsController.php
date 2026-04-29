@@ -24,6 +24,8 @@ final class NetworkStatsController extends Controller
         'cache_hits_per_hour',
         'llm_calls_saved',
         'value_protected_usd',
+        'publishers_total',
+        'publisher_earnings_total_usdc',
     ];
 
     private StatService $stats;

@@ -33,6 +33,8 @@ class StatRefresher
         'cache_hits_per_hour',
         'llm_calls_saved',
         'value_protected_usd',
+        'publishers_total',
+        'publisher_earnings_total_usdc',
     ];
 
     public function __construct(
@@ -56,6 +58,16 @@ class StatRefresher
             ),
             'value_protected_usd' => $this->scalar(
                 "SELECT COALESCE(SUM(value_protected_usd), 0) FROM event.block_event"
+            ),
+            // Network-contributors leaderboard headline (also on /publishers).
+            // Sourced from antibody.publisher, which the AntibodyMatched
+            // handler upserts on every match — so the snapshot stays in
+            // sync with the underlying per-publisher counters.
+            'publishers_total' => $this->scalar(
+                "SELECT count(*) FROM antibody.publisher"
+            ),
+            'publisher_earnings_total_usdc' => $this->scalar(
+                "SELECT COALESCE(SUM(total_earned_usdc), 0) FROM antibody.publisher"
             ),
         ];
 
