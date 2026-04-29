@@ -95,3 +95,33 @@ CREATE TABLE demo.social_feed_read
 );
 
 CREATE INDEX social_feed_read_feed_id_idx ON demo.social_feed_read (feed_id);
+
+-- ##################################################################################################################
+-- AGENT_ACTIVITY (per-tick action log; one row per immunity.check / DM / scan / mint / command)
+-- Drives the live-activity table on /dashboard so the network looks alive.
+-- Pruned by ActivityBroker::pruneOlderThan() to keep the table bounded.
+-- ##################################################################################################################
+CREATE TABLE demo.agent_activity
+(
+    id              bigserial    PRIMARY KEY,
+    agent_id        varchar(64)  NOT NULL,
+    role            varchar(32)  NOT NULL,
+    display_name    varchar(128) NOT NULL,
+    -- swap | transfer | approve | social_dm_in | social_dm_out | feed_post |
+    -- feed_scan | publish_scan | publish_mint | command_attack | ...
+    action_type     varchar(64)  NOT NULL,
+    action_summary  text         NOT NULL,
+    -- allow | block | novel | error | info
+    status          varchar(16)  NOT NULL,
+    antibody_imm_id varchar(32),
+    tx_hash         varchar(80),
+    target          varchar(80),
+    family          varchar(64),
+    details         jsonb,
+    occurred_at     timestamptz  NOT NULL DEFAULT now()
+);
+
+CREATE INDEX agent_activity_occurred_at_idx ON demo.agent_activity (occurred_at DESC);
+CREATE INDEX agent_activity_id_desc_idx     ON demo.agent_activity (id DESC);
+CREATE INDEX agent_activity_agent_idx       ON demo.agent_activity (agent_id, occurred_at DESC);
+CREATE INDEX agent_activity_status_idx      ON demo.agent_activity (status);
