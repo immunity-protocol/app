@@ -30,7 +30,7 @@ const V4_ROUTER_ABI = [
 // signer required, no gas. Used to populate the "To (estimated)" field as
 // the user types, debounced.
 const V4_QUOTER_ABI = [
-    'function quoteExactInputSingle(((address,address,uint24,int24,address) poolKey,bool zeroForOne,uint256 exactAmount,bytes hookData)) returns (uint256 amountOut,uint256 gasEstimate)',
+    'function quoteExactInputSingle(((address,address,uint24,int24,address) poolKey,bool zeroForOne,uint128 exactAmount,bytes hookData)) returns (uint256 amountOut,uint256 gasEstimate)',
 ];
 
 const HOOK_ERROR_ABI = [
