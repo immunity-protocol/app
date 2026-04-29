@@ -64,6 +64,7 @@ class AntibodyPublishedHandler
         $embeddingHashHex = self::stripHex((string) $a['embeddingHash']);
         $attestationHex = self::stripHex((string) $a['attestation']);
         $primaryMatcherHashHex = self::stripHex((string) $a['primaryMatcherHash']);
+        $publishTxHashHex = self::stripHex((string) ($decoded['txHash'] ?? ''));
 
         $keccakIdBytea = '\\x' . $keccakIdHex;
         $publisherBytea = '\\x' . $publisherHex;
@@ -74,6 +75,9 @@ class AntibodyPublishedHandler
         $primaryMatcherHashBytea = self::isZeroHex($primaryMatcherHashHex)
             ? null
             : '\\x' . $primaryMatcherHashHex;
+        $publishTxHashBytea = self::isZeroHex($publishTxHashHex)
+            ? null
+            : '\\x' . $publishTxHashHex;
 
         $abType = (int) $a['abType'];
         $type = self::ENTRY_TYPES[$abType] ?? 'address';
@@ -102,7 +106,7 @@ class AntibodyPublishedHandler
                     primary_matcher, primary_matcher_hash, secondary_matchers,
                     context_hash, evidence_cid, embedding_hash, embedding_cid,
                     stake_lock_until, expires_at, publisher, publisher_ens,
-                    stake_amount, attestation, seed_source, redacted_reasoning,
+                    stake_amount, attestation, publish_tx_hash, seed_source, redacted_reasoning,
                     created_at, updated_at
                 )
                 VALUES (
@@ -112,7 +116,7 @@ class AntibodyPublishedHandler
                     ?, ?, ?, NULL,
                     to_timestamp(?), CASE WHEN ? > 0 THEN to_timestamp(?) ELSE NULL END,
                     ?, NULL,
-                    ?, ?, CASE WHEN ? THEN 'admin' ELSE NULL END, NULL,
+                    ?, ?, ?, CASE WHEN ? THEN 'admin' ELSE NULL END, NULL,
                     to_timestamp(?), to_timestamp(?)
                 )
                 ON CONFLICT (keccak_id) DO NOTHING
@@ -126,7 +130,7 @@ class AntibodyPublishedHandler
                     $stakeLockUntilSec,
                     $expiresAtSec, $expiresAtSec,
                     $publisherBytea,
-                    $stakeUsdc, $attestationBytea,
+                    $stakeUsdc, $attestationBytea, $publishTxHashBytea,
                     (bool) $a['isSeeded'] ? 't' : 'f',
                     $createdAtSec, $createdAtSec,
                 ]
