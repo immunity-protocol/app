@@ -63,6 +63,7 @@ class AntibodyPublishedHandler
         $evidenceCidHex = self::stripHex((string) $a['evidenceCid']);
         $embeddingHashHex = self::stripHex((string) $a['embeddingHash']);
         $attestationHex = self::stripHex((string) $a['attestation']);
+        $primaryMatcherHashHex = self::stripHex((string) $a['primaryMatcherHash']);
 
         $keccakIdBytea = '\\x' . $keccakIdHex;
         $publisherBytea = '\\x' . $publisherHex;
@@ -70,6 +71,9 @@ class AntibodyPublishedHandler
         $evidenceCidBytea = '\\x' . $evidenceCidHex;
         $embeddingHashBytea = '\\x' . $embeddingHashHex;
         $attestationBytea = '\\x' . $attestationHex;
+        $primaryMatcherHashBytea = self::isZeroHex($primaryMatcherHashHex)
+            ? null
+            : '\\x' . $primaryMatcherHashHex;
 
         $abType = (int) $a['abType'];
         $type = self::ENTRY_TYPES[$abType] ?? 'address';
@@ -95,7 +99,7 @@ class AntibodyPublishedHandler
                 INSERT INTO antibody.entry (
                     keccak_id, imm_id, type, flavor, verdict,
                     confidence, severity, status,
-                    primary_matcher, secondary_matchers,
+                    primary_matcher, primary_matcher_hash, secondary_matchers,
                     context_hash, evidence_cid, embedding_hash, embedding_cid,
                     stake_lock_until, expires_at, publisher, publisher_ens,
                     stake_amount, attestation, seed_source, redacted_reasoning,
@@ -104,7 +108,7 @@ class AntibodyPublishedHandler
                 VALUES (
                     ?, ?, ?::antibody.entry_type, ?, ?::antibody.entry_verdict,
                     ?, ?, 'active'::antibody.entry_status,
-                    '{}'::jsonb, '[]'::jsonb,
+                    '{}'::jsonb, ?, '[]'::jsonb,
                     ?, ?, ?, NULL,
                     to_timestamp(?), CASE WHEN ? > 0 THEN to_timestamp(?) ELSE NULL END,
                     ?, NULL,
@@ -117,6 +121,7 @@ class AntibodyPublishedHandler
                 [
                     $keccakIdBytea, $immId, $type, $flavor, $verdict,
                     (int) $a['confidence'], (int) $a['severity'],
+                    $primaryMatcherHashBytea,
                     $contextHashBytea, $evidenceCidBytea, $embeddingHashBytea,
                     $stakeLockUntilSec,
                     $expiresAtSec, $expiresAtSec,
