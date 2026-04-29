@@ -201,11 +201,19 @@
             <div class="flex items-center gap-2">
                 <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Published by</span>
                 <span class="text-fg-primary">{$ab['publisher']}</span>
-                <span class="font-mono text-[11px] text-fg-tertiary truncate max-w-[180px]">{$ab['publisher_addr']}</span>
+                <a href="https://chainscan-galileo.0g.ai/address/{$ab['publisher_addr']}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="inline-flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors border border-fg-tertiary/30 hover:border-fg-primary/40 rounded px-2 py-0.5">
+                    View on explorer
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path d="M4.5 2h5.5v5.5M10 2 4 8m-1 2.5h7v-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
             </div>
             <div class="flex items-center gap-2">
                 <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Created</span>
-                <span class="font-mono text-[11.5px] text-fg-secondary">{$ab['created_at']}</span>
+                <span class="font-mono text-[11.5px] text-fg-secondary">{format('datetime', $entry->created_at)}</span>
             </div>
         </div>
     </header>
