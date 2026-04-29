@@ -52,8 +52,17 @@ final class MoralisPriceService
         43114    => ['avalanche','0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7'], // WAVAX
     ];
 
+    /**
+     * `$moralis` is optional. When null, the service operates in
+     * overrides-only mode — `INDEXER_PRICE_OVERRIDES` still resolves so
+     * mock testnet tokens (e.g. the demo's MOCK_USDC) can price at $1
+     * without a Moralis API key. Any unsupported address returns null.
+     * Useful in lower-environment setups (local dev, demo testnet) where
+     * we never want to hit Moralis but still need the value-protected tile
+     * to populate.
+     */
     public function __construct(
-        private readonly MoralisService $moralis,
+        private readonly ?MoralisService $moralis,
         private readonly TokenPriceCacheBroker $cache,
     ) {
     }
@@ -76,6 +85,13 @@ final class MoralisPriceService
         $override = $this->resolveOverride($tokenAddress);
         if ($override !== null) {
             return $this->compute($tokenAmount, $override['price'], $hintDecimals ?? $override['decimals']);
+        }
+
+        // Override miss + no Moralis client = nothing more we can do. Returning
+        // null lets the handler mark pricing_failed=true so the retry worker
+        // can pick it up after an override is added later.
+        if ($this->moralis === null) {
+            return null;
         }
 
         $resolved = $this->resolveAddress($tokenAddress, $chainId);

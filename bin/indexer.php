@@ -85,15 +85,20 @@ $queueBroker = new HydrationQueueBroker($db);
 $contractEventBroker = new ContractEventBroker($db);
 $statBroker = new StatBroker($db);
 
-// Moralis pricing is optional — if no API key is configured the service is
-// not constructed and handlers fall back to NULL value_at_risk_usd.
+// Moralis is optional. The price service is now always constructed so the
+// `INDEXER_PRICE_OVERRIDES` env-var path works on its own — needed in demo
+// environments where we use mock tokens (e.g. MOCK_USDC pinned to $1 via
+// override) and never want to hit Moralis. Without a key, only overrides
+// resolve; non-overridden tokens come back null and the retry worker picks
+// them up if a later override matches.
 $moralisApiKey  = getenv('MORALIS_API_KEY') ?: '';
 $priceCacheBroker = new TokenPriceCacheBroker($db);
-$pricingService = $moralisApiKey === ''
-    ? null
-    : new MoralisPriceService(new MoralisService($moralisApiKey), $priceCacheBroker);
-if ($pricingService === null) {
-    fwrite(STDERR, "indexer: MORALIS_API_KEY not set; price lookups disabled\n");
+$pricingService = new MoralisPriceService(
+    $moralisApiKey === '' ? null : new MoralisService($moralisApiKey),
+    $priceCacheBroker,
+);
+if ($moralisApiKey === '') {
+    fwrite(STDERR, "indexer: MORALIS_API_KEY not set; pricing in overrides-only mode\n");
 }
 
 // Mirror enqueue plumbing: AntibodyPublished stashes the full envelope, the
