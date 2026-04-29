@@ -45,6 +45,10 @@ INSERT INTO demo.fleet_state (id, ambient_paused) VALUES (1, false)
 -- ##################################################################################################################
 -- AGENT_HEARTBEAT (one row per running agent; UPSERT on startup and every 60s)
 -- Lets the explorer substitute the curated display name for hex addresses.
+-- `axl_peer_id` is the agent's full ed25519 public key (64-char hex) read from
+-- its own AXL spoke's /topology endpoint. Other agents query this table to
+-- resolve a destination peer for /send (the X-From-Peer-Id on /recv is a
+-- truncated prefix and cannot be used as a destination — see AXL skill notes).
 -- ##################################################################################################################
 CREATE TABLE demo.agent_heartbeat
 (
@@ -52,9 +56,42 @@ CREATE TABLE demo.agent_heartbeat
     role          varchar(32)  NOT NULL,
     address       bytea        NOT NULL,
     display_name  varchar(128) NOT NULL,
+    axl_peer_id   varchar(64),
     last_seen     timestamptz  NOT NULL DEFAULT now()
 );
 
 CREATE INDEX agent_heartbeat_address_idx   ON demo.agent_heartbeat (address);
 CREATE INDEX agent_heartbeat_role_idx      ON demo.agent_heartbeat (role);
 CREATE INDEX agent_heartbeat_last_seen_idx ON demo.agent_heartbeat (last_seen DESC);
+
+-- ##################################################################################################################
+-- SOCIAL_FEED (mock "external content" feed — wolves post indirect-injection
+-- items here; traders periodically scan unread items and run immunity.check()
+-- with the content as ctx.sources.extractedText).
+-- `posted_by_agent_id` is null for the seeded benign baseline rows the demo
+-- ships with, and set to the wolf's agent_id when a wolf posts.
+-- ##################################################################################################################
+CREATE TABLE demo.social_feed
+(
+    id                  bigserial   PRIMARY KEY,
+    source              varchar(64) NOT NULL,
+    url                 text        NOT NULL,
+    content             text        NOT NULL,
+    posted_by_agent_id  varchar(64),
+    posted_at           timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX social_feed_posted_at_idx ON demo.social_feed (posted_at DESC);
+CREATE INDEX social_feed_source_idx    ON demo.social_feed (source);
+
+-- Per-agent read cursor. Avoids re-evaluating the same post; the trader's
+-- scan picks the most recent unread row for its own agent_id.
+CREATE TABLE demo.social_feed_read
+(
+    agent_id  varchar(64) NOT NULL,
+    feed_id   bigint      NOT NULL REFERENCES demo.social_feed(id) ON DELETE CASCADE,
+    read_at   timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (agent_id, feed_id)
+);
+
+CREATE INDEX social_feed_read_feed_id_idx ON demo.social_feed_read (feed_id);
