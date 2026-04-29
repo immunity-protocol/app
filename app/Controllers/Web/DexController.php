@@ -26,6 +26,7 @@ final class DexController extends Controller
             'poolManagerAddress'     => $cfg->poolManagerAddress,
             'positionManagerAddress' => $cfg->positionManagerAddress,
             'swapRouterAddress'      => $cfg->swapRouterAddress,
+            'quoterAddress'          => $cfg->quoterAddress,
             'tokenA'                 => $cfg->tokenA,
             'tokenB'                 => $cfg->tokenB,
             'currency0'              => $cfg->currency0,
