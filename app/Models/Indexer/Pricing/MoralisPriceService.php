@@ -200,19 +200,44 @@ final class MoralisPriceService
     }
 
     /**
-     * Compute `tokenAmount * usdPrice / 10^decimals` with bcmath for precision.
-     * Returns a decimal string suitable for `numeric(20, 6)` insertion.
+     * `numeric(20, 6)` holds values < 10^14 — past that the INSERT throws
+     * SQLSTATE 22003. ERC-20 `approve(MAX)` calls emit tokenAmount =
+     * 2^256 - 1 (~10^77), so any naive USD multiply blows the column by 60+
+     * orders of magnitude. We treat values that overflow the column as
+     * "uncomputable in USD" and return null — the row still inserts with
+     * NULL value_protected_usd (and pricing_failed=true), and the dashboard
+     * just doesn't roll a $99T fake number into "value protected." Approve
+     * blocks still surface as block events; their economic value is genuinely
+     * unbounded-until-exercised, so NULL is the truthful display.
      */
-    private function compute(string $tokenAmount, string $usdPrice, int $decimals): string
+    private const COLUMN_MAX_USD = '99999999999999.999999';
+
+    /**
+     * Compute `tokenAmount * usdPrice / 10^decimals` with bcmath for precision.
+     * Returns a decimal string fit for `numeric(20, 6)` insertion, or null
+     * if the result would overflow the column (treated as un-priceable).
+     */
+    private function compute(string $tokenAmount, string $usdPrice, int $decimals): ?string
     {
         if (function_exists('bcmul') && function_exists('bcdiv') && function_exists('bcpow')) {
             $divisor = bcpow('10', (string) $decimals);
             $tokens  = bcdiv($tokenAmount, $divisor, 18);
             $usd     = bcmul($tokens, $usdPrice, 6);
-            return $usd;
+            return self::nullOnOverflow($usd);
         }
         $value = ((float) $tokenAmount / (10 ** $decimals)) * (float) $usdPrice;
-        return number_format($value, 6, '.', '');
+        return self::nullOnOverflow(number_format($value, 6, '.', ''));
+    }
+
+    private static function nullOnOverflow(string $usd): ?string
+    {
+        if (function_exists('bccomp') && bccomp($usd, self::COLUMN_MAX_USD, 6) === 1) {
+            return null;
+        }
+        if ((float) $usd > (float) self::COLUMN_MAX_USD) {
+            return null;
+        }
+        return $usd;
     }
 
     private static function isFresh(string $fetchedAt): bool
