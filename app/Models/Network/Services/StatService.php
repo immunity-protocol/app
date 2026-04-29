@@ -7,10 +7,13 @@ namespace App\Models\Network\Services;
 use App\Models\Network\Brokers\StatBroker;
 use App\Models\Network\Entities\Stat;
 
-readonly class StatService
+class StatService
 {
+    /** @var array<string, string>|null memo for `current()` across one request */
+    private static ?array $cached = null;
+
     public function __construct(
-        private StatBroker $broker = new StatBroker(),
+        private readonly StatBroker $broker = new StatBroker(),
     ) {
     }
 
@@ -42,4 +45,34 @@ readonly class StatService
     {
         return $this->broker->maxCapturedAt();
     }
+
+    /**
+     * Convenience accessor for templates (e.g. nav.latte) that need the
+     * latest snapshot values without spinning up a controller-side fetch.
+     * Returns a flat metric => float-as-string map for the headline metrics
+     * surfaced site-wide. Memoized per request — multiple calls within the
+     * same request hit the DB once.
+     *
+     * @return array<string, string>
+     */
+    public static function current(): array
+    {
+        if (self::$cached !== null) {
+            return self::$cached;
+        }
+        $svc = new self();
+        $rows = $svc->latestForMetrics([
+            'value_protected_usd',
+            'antibodies_active',
+            'publishers_total',
+            'publisher_earnings_total_usdc',
+        ]);
+        $out = [];
+        foreach ($rows as $metric => $stat) {
+            $out[$metric] = (string) $stat->value;
+        }
+        self::$cached = $out;
+        return $out;
+    }
+
 }

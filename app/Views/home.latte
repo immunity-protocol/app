@@ -111,53 +111,62 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <div class="relative max-w-[1400px] mx-auto px-7 py-12">
 
+        {* Tiles render server-side from the latest network.stat snapshot.
+           Landing-page is intentionally static - the dashboard is where the
+           live polling lives. Trade: slightly stale (60s snapshot cadence)
+           for fewer ajax requests and a calmer first paint. *}
+        {var $antibodies = (int) ($tiles['antibodies_active'] ?? 0)}
+        {var $publishersTotal = (int) ($tiles['publishers_total'] ?? 0)}
+        {var $earningsTotal = (float) ($tiles['publisher_earnings_total_usdc'] ?? 0)}
+        {var $llmSaved = (int) ($tiles['llm_calls_saved'] ?? 0)}
+        {var $valueProtected = (float) ($tiles['value_protected_usd'] ?? 0)}
+
+        {var $earningsLabel = $earningsTotal >= 1
+            ? '$' . number_format($earningsTotal, 2)
+            : '$' . rtrim(rtrim(number_format($earningsTotal, 4), '0'), '.')}
+        {* 0G Compute pricing for qwen-2.5-7b-instruct: ~$0.00015 per call.
+           Cumulative since registry deploy. Keep in sync with home.latte JS. *}
+        {var $computeSavedUsd = $llmSaved * 0.00015}
+        {var $computeSavedLabel = $computeSavedUsd <= 0
+            ? '≈ $0'
+            : ($computeSavedUsd < 0.01 ? '≈ <$0.01'
+                : ($computeSavedUsd < 1 ? '≈ $' . number_format($computeSavedUsd, 2)
+                    : '≈ $' . number_format($computeSavedUsd, 0)))}
+
         <div class="flex items-center gap-3 mb-7">
             <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">01</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network status</span>
-            <span id="live-pulse" class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-            <span id="live-label" class="font-mono text-[10.5px] uppercase tracking-widest2 text-immune-500">Live</span>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-y-10 md:gap-0">
 
             <div class="md:px-7 md:first:pl-0 md:border-r md:border-ink-line/60 md:last:border-r-0 md:last:pr-0">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3 flex items-center gap-2">
-                    <span>Antibodies active</span>
-                    <span class="inline-flex h-1 w-1 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-                </div>
-                <div data-stat="antibodies_active" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">312</div>
-                <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
-                    <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span data-delta="antibodies_active">+14 in 1h</span>
-                </div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Antibodies active</div>
+                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{format('decimal', $antibodies, 0)}</div>
             </div>
 
             <a href="/publishers" class="md:px-7 md:border-r md:border-ink-line/60 group block hover:bg-ink-elevated/20 -mx-5 sm:mx-0 px-5 sm:px-0 md:px-7 py-5 md:py-0 transition-colors" title="See all network contributors">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3 group-hover:text-fg-secondary transition-colors">Network contributors</div>
-                <div data-stat="publishers_total" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums group-hover:text-accent transition-colors">1</div>
+                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums group-hover:text-accent transition-colors">{format('decimal', $publishersTotal, 0)}</div>
                 <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
                     <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8M6 2v8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span data-stat-money="publisher_earnings_total_usdc">$0.0016</span>
+                    <span>{$earningsLabel}</span>
                     <span class="text-fg-tertiary">distributed</span>
                 </div>
             </a>
 
             <div class="md:px-7 md:border-r md:border-ink-line/60">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">LLM calls saved</div>
-                <div data-stat="llm_calls_saved" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">4,217</div>
+                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{format('decimal', $llmSaved, 0)}</div>
                 <div class="font-mono text-[11px] text-fg-tertiary mt-3">
-                    <span class="text-immune-500" data-compute-saved="llm_calls_saved">≈ $0.42</span> in compute
+                    <span class="text-immune-500">{$computeSavedLabel}</span> in compute
                 </div>
             </div>
 
             <div class="md:px-7 md:last:pr-0">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Value protected</div>
-                <div data-stat-money="value_protected_usd" class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">$248,300</div>
-                <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
-                    <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span data-delta-money="value_protected_usd">+$4,200 in 1h</span>
-                </div>
+                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{format('money', $valueProtected)}</div>
             </div>
 
         </div>
@@ -710,94 +719,8 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
-<script src="{asset('/javascripts/live.js')}"></script>
-<script>
-(function () {
-  const STATS_URL = '/api/v1/network/stats';
-  const HEARTBEAT_URL = '/api/v1/network/heartbeat-status';
-
-  function fmtNumber(v) {
-    if (v === null || v === undefined || v === '') return '-';
-    const n = Number(v);
-    if (!Number.isFinite(n)) return '-';
-    return n.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  }
-  function fmtMoney(v) {
-    if (v === null || v === undefined || v === '') return '-';
-    const n = Number(v);
-    if (!Number.isFinite(n)) return '-';
-    // Sub-dollar amounts get extra precision so the publisher-earnings
-    // tile (which starts at $0.0016 per match) doesn't truncate to $0
-    // until the network has processed hundreds of blocks.
-    if (n > 0 && n < 1) {
-      return '$' + n.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
-    }
-    if (n > 0 && n < 100) {
-      return '$' + n.toFixed(2);
-    }
-    return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  }
-  function fmtDelta(v, money) {
-    if (v === null || v === undefined || v === '') return '';
-    const n = Number(v);
-    if (!Number.isFinite(n)) return '';
-    const sign = n >= 0 ? '+' : '-';
-    const abs = Math.abs(n);
-    return sign + (money ? '$' : '') + abs.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' in 1h';
-  }
-  // 0G Compute pricing for qwen-2.5-7b-instruct: 50 gwei in / 100 gwei out,
-  // 0G assumed at ~$0.50 spot. SDK's verdict prompt now runs ~750 tokens of
-  // definitions + few-shot examples plus a typical 500-token distilled
-  // bundle, with 2-5 sentences of reasoning out (~200 output tokens). That
-  // works out to ~1450 tokens per inference and a realistic ~$0.00007 per
-  // call. We display $0.00015 as a slightly conservative round-up to cover
-  // larger bundles. Update if 0G pricing, token volume, or 0G/USD rate
-  // moves materially.
-  const COST_PER_CALL_USD = 0.00015;
-  function fmtComputeSaved(callsSaved) {
-    if (callsSaved === null || callsSaved === undefined || callsSaved === '') return '≈ $0';
-    const n = Number(callsSaved);
-    if (!Number.isFinite(n) || n <= 0) return '≈ $0';
-    const usd = n * COST_PER_CALL_USD;
-    if (usd < 0.01) return '≈ <$0.01';
-    if (usd < 1)    return '≈ $' + usd.toFixed(2);
-    return '≈ $' + usd.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  }
-
-  // Skip the DOM write when the formatted value hasn't changed; reassigning
-  // the same string still triggers a brief repaint that reads as a flicker.
-  function setText(el, next) { if (el.textContent !== next) el.textContent = next; }
-
-  Live.poll(STATS_URL, 4000, function (data) {
-    const tiles = data.tiles || {};
-    document.querySelectorAll('[data-stat]').forEach(function (el) {
-      const m = el.getAttribute('data-stat');
-      if (tiles[m]) setText(el, fmtNumber(tiles[m].value));
-    });
-    document.querySelectorAll('[data-stat-money]').forEach(function (el) {
-      const m = el.getAttribute('data-stat-money');
-      if (tiles[m]) setText(el, fmtMoney(tiles[m].value));
-    });
-    document.querySelectorAll('[data-delta]').forEach(function (el) {
-      const m = el.getAttribute('data-delta');
-      if (tiles[m]) setText(el, fmtDelta(tiles[m].delta_1h, false));
-    });
-    document.querySelectorAll('[data-delta-money]').forEach(function (el) {
-      const m = el.getAttribute('data-delta-money');
-      if (tiles[m]) setText(el, fmtDelta(tiles[m].delta_1h, true));
-    });
-    document.querySelectorAll('[data-compute-saved]').forEach(function (el) {
-      const m = el.getAttribute('data-compute-saved');
-      if (tiles[m]) setText(el, fmtComputeSaved(tiles[m].value));
-    });
-  });
-
-  // Network status is rendered as a static "Live" badge. The heartbeat
-  // poller used to flip it to OFFLINE during quiet windows where no activity
-  // had been recorded yet, which read as a real outage. The marker is
-  // semantic ("the protocol is up") not telemetry, so the static state is
-  // the right call.
-})();
-</script>
+{* Landing-page tiles render once server-side from the latest network.stat
+   snapshot. Removed the per-tile ajax poller and live.js dependency entirely:
+   the dashboard at /dashboard is the live surface. *}
 
 {/block}

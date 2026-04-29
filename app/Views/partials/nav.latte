@@ -20,11 +20,18 @@
             <a href="https://docs.immunity.xyz" rel="noopener" class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Docs</a>
         </div>
 
+        {var $valueProtected = (float) (\App\Models\Network\Services\StatService::current()['value_protected_usd'] ?? 0)}
+        {var $valueProtectedLabel = $valueProtected >= 1_000_000
+            ? '$' . rtrim(rtrim(number_format($valueProtected / 1_000_000, 1), '0'), '.') . 'M'
+            : ($valueProtected >= 1_000
+                ? '$' . round($valueProtected / 1_000) . 'K'
+                : '$' . number_format($valueProtected, 0))}
+
         {* Right status + GitHub star (desktop only) *}
         <div class="hidden md:flex items-center gap-5 text-[11.5px] text-fg-tertiary font-mono uppercase tracking-widest2">
             <span class="hidden lg:inline-flex items-center gap-2">
-                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent pulse-soft" style="animation-delay: -1.2s;"></span>
-                <span><span id="nav-value-protected" data-stat-money="value_protected_usd">$0</span> protected</span>
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent" style="animation-delay: -1.2s;"></span>
+                <span><span id="nav-value-protected">{$valueProtectedLabel}</span> protected</span>
             </span>
             {var $starCount = \App\Models\Network\Services\GitHubStarService::current('immunity-protocol/sdk')}
             {var $starLabel = $starCount >= 10000
@@ -89,8 +96,8 @@
             {* Status pill + Star button stacked *}
             <div class="mt-3 pt-3 border-t border-ink-line/40 flex items-center justify-between gap-3 text-[11.5px] text-fg-tertiary font-mono uppercase tracking-widest2">
                 <span class="inline-flex items-center gap-2">
-                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent pulse-soft" style="animation-delay: -1.2s;"></span>
-                    <span><span data-stat-money="value_protected_usd">$0</span> protected</span>
+                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-accent" style="animation-delay: -1.2s;"></span>
+                    <span><span>{$valueProtectedLabel}</span> protected</span>
                 </span>
                 <a href="https://github.com/immunity-protocol/sdk" rel="noopener" aria-label="Star Immunity SDK on GitHub"
                    class="group inline-flex items-stretch border border-ink-line/80 rounded-sm overflow-hidden hover:border-fg-tertiary transition-colors">
@@ -109,37 +116,6 @@
 </nav>
 
 <script>
-// Live "X protected" indicator. Polls /api/v1/network/stats every 8s and
-// updates any element with data-stat-money="value_protected_usd". Idempotent
-// across pages that already poll (home/dashboard) - they target the same
-// data attribute, this script just adds coverage on pages that don't.
-(function () {
-  const tag = document.querySelector('[data-stat-money="value_protected_usd"]');
-  if (!tag) return;
-  function fmtMoney(v) {
-    const n = Number(v);
-    if (!Number.isFinite(n)) return '$0';
-    if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (n >= 1_000)     return '$' + Math.round(n / 1_000) + 'K';
-    return '$' + Math.round(n).toLocaleString('en-US');
-  }
-  function paint() {
-    fetch('/api/v1/network/stats', { credentials: 'same-origin' })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        const tile = d && d.tiles && d.tiles.value_protected_usd;
-        if (!tile) return;
-        const next = fmtMoney(tile.value);
-        document.querySelectorAll('[data-stat-money="value_protected_usd"]').forEach(el => {
-          if (el.textContent !== next) el.textContent = next;
-        });
-      })
-      .catch(() => { /* swallow; will retry */ });
-  }
-  paint();
-  setInterval(paint, 8000);
-})();
-
 // Hamburger toggle. Opens / closes the mobile panel, toggles the icon, traps
 // click-outside, and closes on Escape. Runs once per page load.
 (function () {
