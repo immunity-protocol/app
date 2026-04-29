@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Internal-only paths.
+Disallow: /playground
+
+# Public sitemap with every antibody URL.
+Sitemap: https://immunity-protocol.com/sitemap.xml
