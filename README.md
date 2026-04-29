@@ -111,7 +111,7 @@ Outside Fly:
 |---|---|---|---|---|---|---|
 | `immunity-app` | `WEB` | Public site at immunity-protocol.com. Landing, dashboard, antibody explorer, antibody detail, RSS / JSON feeds, the password-gated `/playground` console. | shared-cpu-1x | 512 MB | yes (HTTPS) | `DATABASE_URL`, `ENCRYPTION_KEY`, `PLAYGROUND_PASSWORD`, `ADMIN_PASSWORD` |
 | `immunity-api` | `API` | Public developer REST API at api.immunity-protocol.com (`/v1/antibodies`, `/v1/internal/*`). Two processes from one image: `app` (Apache) and `cron` (supercronic). | shared-cpu-1x ×2 | 512 + 256 MB | yes (HTTPS, app only) | `DATABASE_URL`, `CRON_TOKEN` |
-| `immunity-indexer` | `INDEXER` | Single long-running PHP CLI process (`bin/indexer.php`). Workers: EventPoller (2s) → 0G chain logs, HydrationWorker (2s) → downloads envelopes from 0G storage, StatRefresher (60s) → recomputes the dashboard tiles, EnsResolutionWorker (30s), ExpirySweep (60s). | shared-cpu-1x | 512 MB | no | `DATABASE_URL`, `MORALIS_API_KEY` (optional) |
+| `immunity-indexer` | `INDEXER` | Single long-running PHP CLI process (`bin/indexer.php`). Workers: EventPoller (2s) → 0G chain logs, HydrationWorker (2s) → downloads envelopes from 0G storage, StatRefresher (60s) → recomputes the dashboard tiles, EnsResolutionWorker (30s). v1 antibodies are permanent so ExpirySweep is no longer registered. | shared-cpu-1x | 512 MB | no | `DATABASE_URL`, `MORALIS_API_KEY` (optional) |
 | `immunity-relayer` | `RELAYER` | Single process (`bin/relayer.php`). Polls `mirror.pending_jobs`, batches them, submits cross-chain mirror txs on Sepolia (and other configured destinations) via the Mirror contract. Postgres advisory lock prevents nonce collisions if two instances ever run. | shared-cpu-1x | 256 MB | no | `DATABASE_URL`, `SEPOLIA_RPC_URL`, `RELAYER_PRIVATE_KEY_SEPOLIA` |
 | `immunity-db` | (Fly Managed Postgres) | The source of truth for everything except chain state. Schemas: `antibody`, `agent`, `event`, `network`, `indexer`, `mirror`, `demo`. Reached via `immunity-db.flycast:5432`. | (managed) | (managed) | n/a | n/a |
 | `immunity-fleet` | (demo swarm) | Packed 60-agent showcase fleet + AXL spoke under supervisord. Lives in **`/Users/dtucker/www/immunity-demo`** (separate repo). Boot with `./scripts/fly-boot.sh`, fully shut down with `./scripts/fly-shutdown.sh`. Pause/resume of ambient activity is controlled from the admin tier of `/playground`. | shared-cpu-4x | 8 GB | no | `DATABASE_URL`, `MASTER_SEED`, `DEPLOYER_PRIVATE_KEY`, `MOCK_USDC_ADDRESS` |
@@ -196,9 +196,21 @@ All env vars have safe testnet defaults; override via `.env` or `docker-compose.
 ### Known limitations
 
 - 0G Storage hydration may briefly lag the on-chain event ingest (it runs in the same loop, capped per tick). Antibody rows appear immediately with NULL `primary_matcher`; the worker fills it shortly.
-- Expiry status flips up to 60 seconds after `expires_at`. The contract intentionally emits no expiry event.
 - Reorg policy is N=2 confirmations (testnet-grade). Mainnet would need a deeper window and a hash-based detector; revisit before mainnet deploy.
 - ENS reverse resolution depends on a public Ethereum mainnet RPC and is best-effort. Failures back off for 24h.
+- v1 antibodies are permanent: `expires_at` is stored on the row but never displayed or enforced. The `ExpirySweep` worker is no longer registered (the file is kept as dead code for v2).
+
+## Three-tier lookup (Tier-2 mirror)
+
+The SDK gates every `check()` against three tiers — local cache, on-chain Registry, then TEE detection. The on-chain tier resolves antibodies by **canonical primary matcher hash** via the Registry's `matcherIndex` state mapping. This app exposes the same lookup at the database and API level:
+
+- **Schema.** `antibody.entry.primary_matcher_hash bytea`, partial-unique index for fast lookup. The indexer persists the hash from every `AntibodyPublished` event.
+- **Broker.** `EntryBroker::findByPrimaryMatcherHash(string $hashHex)` accepts `0x`-prefixed or bare 64-hex strings, case-insensitive. Returns `null` for unknown or malformed input.
+- **API.** `GET /api/antibody/by-matcher-hash/{hash}` returns the same envelope shape as `/api/antibody/{immId}` (entry + mirrors + recent blocks + publisher). 400 on malformed hex, 404 if the hash is unknown.
+
+The matcher hash format is locked client-side by the SDK (`immunity-sdk/test/unit/keccak/matcher-format-parity.test.ts`); for reference, ADDRESS antibodies hash as `keccak256(abi.encode(uint256 chainId, address target))` and other types follow the per-type formats documented in the SDK's `docs/lookup-tiers.md`.
+
+The contract enforces matcher uniqueness on publish: a second publisher claiming an existing matcher hash hits `AntibodyAlreadyExistsForMatcher(existingKeccakId)`, the SDK surfaces it as `MatcherAlreadyClaimedError`, and the explorer's downstream invariants (one antibody row per `primary_matcher_hash`) hold.
 
 ## Value-protected telemetry
 
