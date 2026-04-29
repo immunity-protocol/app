@@ -147,10 +147,18 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         max-width 320ms cubic-bezier(0.4, 0, 0.2, 1),
         min-height 320ms cubic-bezier(0.4, 0, 0.2, 1);
 }
-/* Tall band only on pages with a hero brand to align with (home).
-   Center links + right items sit at y=72, matching the 88px hero mark at top:28. */
+/* Tall band only on pages with a hero brand to align with (home). The nav
+   inner's vertical center must match the hero brand's vertical center for
+   the hamburger / status-pill / star-button to sit on the same baseline.
+   Hero is 60px mark at top:20 on mobile (center y=50), 88px mark at top:28
+   on desktop (center y=72). */
 body:has(#hero-brand):not([data-scrolled="true"]) .site-nav-inner {
-    min-height: 144px;
+    min-height: 100px;
+}
+@media (min-width: 640px) {
+    body:has(#hero-brand):not([data-scrolled="true"]) .site-nav-inner {
+        min-height: 144px;
+    }
 }
 body[data-scrolled="true"] .site-nav {
     top: 18px;
