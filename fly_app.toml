@@ -28,5 +28,5 @@ primary_region = 'yyz'
     soft_limit = 20
 
 [[vm]]
-  size = 'shared-cpu-1x'
-  memory = '512mb'
+  size = 'performance-cpu-2x'
+  memory = '4gb'
