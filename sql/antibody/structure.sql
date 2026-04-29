@@ -44,6 +44,7 @@ CREATE TABLE antibody.entry
     publisher_ens         varchar(255),
     stake_amount          numeric(20, 6) NOT NULL,
     attestation           bytea NOT NULL,
+    publish_tx_hash       bytea,
     seed_source           varchar(64),
     redacted_reasoning    text,
     created_at            timestamptz NOT NULL DEFAULT now(),
