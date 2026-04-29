@@ -48,7 +48,7 @@ final class SepoliaDexConfig
             poolManagerAddress:     getenv('SEPOLIA_POOL_MANAGER')    ?: '0xE03A1074c86CFeDd5C142C4F04F1a1536e203543',
             positionManagerAddress: getenv('SEPOLIA_POSITION_MANAGER') ?: '0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4',
             swapRouterAddress:      getenv('SEPOLIA_SWAP_ROUTER')     ?: '0xf13D190e9117920c703d79B5F33732e10049b115',
-            quoterAddress:          getenv('SEPOLIA_QUOTER')          ?: '0xCd8716395D55aD17496448a4b2C42557001e9743',
+            quoterAddress:          getenv('SEPOLIA_QUOTER')          ?: '0x61b3f2011a92d183c7dbadbda940a7555ccf9227',
             tokenA:                 getenv('SEPOLIA_DEX_TOKEN_A')     ?: '0xF4F4d4f459b339c7234511547880E101073DCbCd',
             tokenB:                 getenv('SEPOLIA_DEX_TOKEN_B')     ?: '0x479504943734d01548B2975227Bb6BfCF725c222',
             currency0:              getenv('SEPOLIA_DEX_CURRENCY0')   ?: '0x479504943734d01548B2975227Bb6BfCF725c222',
