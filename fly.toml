@@ -13,9 +13,13 @@ primary_region = 'yyz'
   DB_NAME = 'immunity'
   DB_USERNAME = 'immunity'
 
-[[mounts]]
-  source = 'pg_data'
-  destination = '/data'
+# The database now lives in the immunity-db Postgres-flex app and is
+# reached via the DATABASE_URL secret over flycast; the local Postgres
+# previously embedded in this image is no longer used. The pg_data volume
+# mount was removed in 2026-04 because the existing machines have run
+# without it for some time (no attached volumes), and the rolling-deploy
+# requirement to provision new pg_data volumes per machine was blocking
+# normal deploys.
 
 [http_service]
   internal_port = 80
