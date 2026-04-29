@@ -55,18 +55,22 @@ function els(sel) { return Array.from(document.querySelectorAll(sel)); }
 function setText(sel, text) { const e = el(sel); if (e) e.textContent = text; }
 function shortAddr(a) { return a ? `${a.slice(0, 6)}...${a.slice(-4)}` : ''; }
 
+const SPINNER_SVG = '<svg class="animate-spin shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+
 function setResult(kind, text) {
     const r = el('[data-result]');
     if (!r) return;
     r.classList.remove('hidden');
     r.innerHTML = '';
     const map = {
-        success: 'border-immune-500/40 bg-immune-500/5 text-immune-500',
-        error:   'border-threat-500/40 bg-threat-500/5 text-threat-300',
-        info:    'border-ink-line/60 bg-ink-sunken/40 text-fg-secondary',
+        success:  'border-immune-500/40 bg-immune-500/5 text-immune-500',
+        error:    'border-threat-500/40 bg-threat-500/5 text-threat-300',
+        info:     'border-ink-line/60 bg-ink-sunken/40 text-fg-secondary',
+        progress: 'border-ink-line/60 bg-ink-sunken/40 text-fg-secondary',
     };
-    r.className = `mt-5 border rounded-sm p-4 text-[12.5px] ${map[kind] || map.info}`;
-    r.innerHTML = text;
+    const flex = kind === 'progress' ? 'flex items-center gap-2.5' : '';
+    r.className = `mt-5 border rounded-sm p-4 text-[12.5px] ${map[kind] || map.info} ${flex}`.trim();
+    r.innerHTML = kind === 'progress' ? `${SPINNER_SVG}<span>${text}</span>` : text;
 }
 
 function tokenAddr(side) {
@@ -281,7 +285,7 @@ async function ensureApproval(tokenAddress, spender, amountWei) {
     const erc = new ethers.Contract(tokenAddress, ERC20_ABI, state.signer);
     const allowance = await erc.allowance(state.address, spender);
     if (allowance >= amountWei) return;
-    setResult('info', 'Approving token transfer...');
+    setResult('progress', 'Approving token transfer...');
     const tx = await erc.approve(spender, ethers.MaxUint256);
     await tx.wait();
 }
@@ -306,7 +310,7 @@ async function swap() {
     try {
         await ensureApproval(fromAddr, cfg.swapRouterAddress, amountIn);
 
-        setResult('info', 'Submitting swap...');
+        setResult('progress', 'Submitting swap...');
         const router = new ethers.Contract(cfg.swapRouterAddress, V4_ROUTER_ABI, state.signer);
         const deadline = Math.floor(Date.now() / 1000) + 600;
         const tx = await router.swapExactTokensForTokens(
@@ -370,7 +374,7 @@ async function reportBlockedSwap(txHash) {
 async function mintTestTokens() {
     if (!state.address) { await connect(); return; }
     try {
-        setResult('info', 'Minting 100 of each token...');
+        setResult('progress', 'Minting 100 of each token...');
         const amount = ethers.parseEther('100');
         const a = new ethers.Contract(cfg.tokenA, ERC20_ABI, state.signer);
         const b = new ethers.Contract(cfg.tokenB, ERC20_ABI, state.signer);
