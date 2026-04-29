@@ -191,7 +191,6 @@ $nodeBridge = new NodeBridge(
 );
 
 $hydrationWorker = new HydrationWorker($db, $queueBroker, $nodeBridge);
-$expirySweep = new ExpirySweep($db);
 
 // ENS is best-effort. Disable if no RPC URL.
 $ensWorker = null;
@@ -216,7 +215,6 @@ $supervisor = new Supervisor(
     bootstraps: array_merge([$ogBootstrap], $mirrorBoots),
     pollers: array_merge([$ogPoller], $mirrorPollers),
     hydration: $hydrationWorker,
-    expiry: $expirySweep,
     ens: $ensWorker,
     statRefresher: $statRefresher,
     cadence: $cadence,

@@ -7,7 +7,6 @@ namespace App\Models\Indexer\Console;
 use App\Models\Indexer\Workers\BackfillBootstrap;
 use App\Models\Indexer\Workers\EnsResolutionWorker;
 use App\Models\Indexer\Workers\EventPoller;
-use App\Models\Indexer\Workers\ExpirySweep;
 use App\Models\Indexer\Workers\HydrationWorker;
 use App\Models\Indexer\Workers\PricingRetryWorker;
 use App\Models\Indexer\Workers\StatRefresher;
@@ -19,13 +18,16 @@ use Throwable;
  * Runs sequential cadence-aware loops in one PHP process:
  *   - EventPoller       : every poll-interval (default 2s)
  *   - HydrationWorker   : every poll-interval, capped at maxHydrationJobs
- *   - ExpirySweep       : every 60s
  *   - EnsResolutionWorker: every 30s
  *   - StatRefresher     : every 60s
  *   - SummaryLogger     : every 60s
  *
  * Handles SIGTERM / SIGINT to stop cleanly between iterations. Memory ceiling
  * triggers a non-zero exit so the orchestrator (Docker / Fly) restarts.
+ *
+ * v1 antibodies are permanent (`expires_at` is reserved for v2), so the
+ * ExpirySweep worker is no longer registered here. Re-add the constructor
+ * argument and the cadence block when v2 honors expiries.
  */
 class Supervisor
 {
@@ -33,7 +35,6 @@ class Supervisor
     private int $iterations = 0;
     private int $totalEvents = 0;
     private int $totalHydrated = 0;
-    private int $totalExpired = 0;
 
     /**
      * @param BackfillBootstrap[] $bootstraps  one per chain (0G + each Mirror chain)
@@ -43,7 +44,6 @@ class Supervisor
         private readonly array $bootstraps,
         private readonly array $pollers,
         private readonly HydrationWorker $hydration,
-        private readonly ExpirySweep $expiry,
         private readonly ?EnsResolutionWorker $ens,
         private readonly StatRefresher $statRefresher,
         private readonly Cadence $cadence,
@@ -89,14 +89,6 @@ class Supervisor
                 $this->log("hydration error: " . $e->getMessage());
             }
 
-            if ($this->cadence->due('expiry_sweep', 60)) {
-                try {
-                    $this->totalExpired += $this->expiry->run();
-                } catch (Throwable $e) {
-                    $this->log("expiry error: " . $e->getMessage());
-                }
-            }
-
             if ($this->ens !== null && $this->cadence->due('ens_resolution', 30)) {
                 try {
                     $this->ens->tick();
@@ -123,11 +115,10 @@ class Supervisor
 
             if ($this->cadence->due('summary_log', 60)) {
                 $this->log(sprintf(
-                    "summary: iter=%d events=%d hydrated=%d expired=%d mem=%dMB",
+                    "summary: iter=%d events=%d hydrated=%d mem=%dMB",
                     $this->iterations,
                     $this->totalEvents,
                     $this->totalHydrated,
-                    $this->totalExpired,
                     (int) (memory_get_usage(true) / 1048576)
                 ));
             }
