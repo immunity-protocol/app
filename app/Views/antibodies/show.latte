@@ -196,18 +196,27 @@
             </div>
         </div>
 
+        {var $publishTxHex = $entry->publish_tx_hash !== null ? '0x' . bin2hex($entry->publish_tx_hash) : null}
+        {var $explorerUrl = $publishTxHex !== null
+            ? 'https://chainscan-galileo.0g.ai/tx/' . $publishTxHex
+            : 'https://chainscan-galileo.0g.ai/address/' . $ab['publisher_addr']}
         {* Publisher + timestamps row *}
         <div class="flex flex-wrap items-center gap-x-8 gap-y-3 mt-5 text-[12.5px]">
             <div class="flex items-center gap-2">
                 <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Published by</span>
                 <span class="text-fg-primary">{$ab['publisher']}</span>
-                <a href="https://chainscan-galileo.0g.ai/address/{$ab['publisher_addr']}"
+                <a href="{$explorerUrl}"
                    target="_blank"
                    rel="noopener noreferrer"
-                   class="inline-flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors border border-fg-tertiary/30 hover:border-fg-primary/40 rounded px-2 py-0.5">
+                   title="{$publishTxHex !== null ? 'View publish transaction on Galileo explorer' : 'View publisher on Galileo explorer'}"
+                   class="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors border border-fg-tertiary/30 hover:border-fg-primary/40 rounded px-2 py-0.5">
                     View on explorer
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                        <path d="M4.5 2h5.5v5.5M10 2 4 8m-1 2.5h7v-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    {* Tabler icon: external-link (https://tabler.io/icons/icon/external-link) *}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6"/>
+                        <path d="M11 13l9 -9"/>
+                        <path d="M15 4h5v5"/>
                     </svg>
                 </a>
             </div>
