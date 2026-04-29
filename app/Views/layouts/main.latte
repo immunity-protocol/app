@@ -3,8 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Decentralized threat intelligence for AI agents.">
     <title>{block title}Immunity{/block}</title>
+
+    {var $siteUrl = 'https://immunity-protocol.com'}
+    {var $defaultDescription = 'Decentralized threat intelligence for AI agents. An attack on one is a vaccine for all.'}
+    {var $defaultTitle = 'Immunity, decentralized threat intelligence for AI agents'}
+    {var $defaultOgImage = $siteUrl . '/assets/og/og-default.png'}
+
+    {* Pages can set $metaTitle / $metaDescription / $metaUrl / $metaImage
+       at the top of their template before the layout block is rendered;
+       defaults fall back to the protocol-wide tagline below. *}
+    {var $metaTitle = $metaTitle ?? $defaultTitle}
+    {var $metaDescription = $metaDescription ?? $defaultDescription}
+    {var $metaUrl = $metaUrl ?? $siteUrl}
+    {var $metaImage = $metaImage ?? $defaultOgImage}
+
+    <meta name="description" content="{$metaDescription}">
+    <meta name="author" content="Immunity Protocol">
+    <meta name="theme-color" content="#0e0e0d">
+    <meta name="color-scheme" content="dark">
+
+    <link rel="canonical" href="{$metaUrl}">
+
+    {* Open Graph (Facebook, LinkedIn, Discord, Slack, etc.) *}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Immunity">
+    <meta property="og:title" content="{$metaTitle}">
+    <meta property="og:description" content="{$metaDescription}">
+    <meta property="og:url" content="{$metaUrl}">
+    <meta property="og:image" content="{$metaImage}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Immunity, decentralized threat intelligence for AI agents">
+
+    {* Twitter card *}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{$metaTitle}">
+    <meta name="twitter:description" content="{$metaDescription}">
+    <meta name="twitter:image" content="{$metaImage}">
+
+    {* Feed auto-discovery *}
+    <link rel="alternate" type="application/rss+xml"  title="Immunity antibodies (RSS)"        href="/feed/antibodies.rss">
+    <link rel="alternate" type="application/feed+json" title="Immunity antibodies (JSON Feed)" href="/feed/antibodies.json">
+    <link rel="alternate" type="application/atom+xml" title="Immunity antibodies (Atom)"       href="/feed/antibodies.atom">
+
+    {* Organization rich-result schema *}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Immunity Protocol",
+        "url": "https://immunity-protocol.com",
+        "logo": "https://immunity-protocol.com/assets/images/immunity-mark.png",
+        "description": "Decentralized threat intelligence for AI agents.",
+        "sameAs": [
+            "https://github.com/immunity-protocol"
+        ]
+    }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
