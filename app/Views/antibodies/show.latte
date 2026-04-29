@@ -97,13 +97,14 @@
   ],
 
   'impact' => [
-    'cache_hits'           => $impact['cache_hits'],
-    'agents_synced'        => $impact['agents_synced'],
-    'blocks_made'          => $impact['blocks_made'],
-    'pool_reverts'         => $impact['pool_reverts'] ?? 0,
-    'value_protected_usd'  => (float) $impact['value_protected_usd'],
-    'ingestion'            => $impact['ingestion'],
-    'propagation_seconds'  => $impact['propagation_seconds'] ?? null,
+    'cache_hits'                => $impact['cache_hits'],
+    'agents_synced'             => $impact['agents_synced'],
+    'blocks_made'               => $impact['blocks_made'],
+    'pool_reverts'              => $impact['pool_reverts'] ?? 0,
+    'value_protected_usd'       => (float) $impact['value_protected_usd'],
+    'publisher_earnings_usdc'   => (float) ($impact['publisher_earnings_usdc'] ?? 0),
+    'ingestion'                 => $impact['ingestion'],
+    'propagation_seconds'       => $impact['propagation_seconds'] ?? null,
     'block_events'       => array_map(fn ($b) => [
       'agent'    => $b->agent_id,
       'method'   => $b->chain_id == 16602 ? 'SDK check()' : 'Uniswap v4 hook',
@@ -194,6 +195,18 @@
             <div class="p-4">
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Value at risk</div>
                 <div class="font-mono text-[15px] text-fg-primary tabular-nums">{format('money', $ab['impact']['value_protected_usd'])}</div>
+            </div>
+            <div class="p-4">
+                {* Sub-cent precision when earnings are below $1 — the per-match
+                   reward (0.0016 USDC default) only crosses $0.01 after ~7
+                   blocks, so dropping to 2 decimals there would just print
+                   "$0.00" misleadingly for tonight's first matches. *}
+                {var $earnings = $ab['impact']['publisher_earnings_usdc']}
+                {var $earningsDisplay = $earnings >= 1
+                    ? '$' . number_format($earnings, 2)
+                    : '$' . rtrim(rtrim(number_format($earnings, 4), '0'), '.')}
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Publisher earned</div>
+                <div class="font-mono text-[15px] text-immune-500 tabular-nums" title="80% of the 0.002 USDC fee per match, paid by the Registry contract directly to the publisher">{$earningsDisplay}</div>
             </div>
         </div>
 

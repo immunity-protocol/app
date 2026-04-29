@@ -1,0 +1,147 @@
+{layout ../layouts/main.latte}
+
+{block title}Publishers / Immunity network{/block}
+
+{block content}
+
+{*
+ * Network contributors leaderboard. Rows come from
+ * PublisherService::listWithStatsPage, ordered by total_earned_usdc DESC.
+ * No filters, no search — pagination is the only navigation.
+ *}
+
+<section class="max-w-[1400px] mx-auto px-5 sm:px-7 pt-20 sm:pt-14 pb-10">
+
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-8 sm:mb-10 gap-6 md:gap-8">
+        <div class="min-w-0">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network</span>
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+            </div>
+            <h1 class="font-display text-[42px] sm:text-[60px] font-light tracking-tightest text-fg-primary leading-[1.0]">
+                Publishers
+            </h1>
+            <p class="text-fg-secondary text-[14px] sm:text-[15px] mt-4 max-w-[640px] leading-[1.6]">
+                Every address that has ever published an antibody on the Immunity network, with their lifetime impact: antibodies authored, threats blocked across the fleet, value protected, and USDC earned from the protocol's per-match publisher reward.
+            </p>
+        </div>
+        <div class="md:text-right md:shrink-0">
+            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Network total</div>
+            <div class="font-mono text-[12.5px] text-fg-secondary leading-[1.6]">
+                <div><span class="text-fg-primary tabular-nums">{$total}</span> contributors</div>
+            </div>
+        </div>
+    </div>
+
+    {* ----------- TABLE ----------- *}
+    <div class="overflow-x-auto -mr-7 pr-7 lg:mr-0 lg:pr-0">
+        <table class="w-full border-collapse text-[13px] tabular-nums">
+            <thead>
+                <tr class="text-left">
+                    <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Rank</th>
+                    <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Publisher</th>
+                    <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Antibodies</th>
+                    <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Blocks</th>
+                    <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Value protected</th>
+                    <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Total earned</th>
+                    <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 text-right">Last active</th>
+                </tr>
+            </thead>
+            <tbody>
+            {if count($rows) === 0}
+                <tr>
+                    <td colspan="7" class="py-12 text-center font-mono text-[12px] text-fg-dim">
+                        No publishers yet. Rows will appear when the first antibody lands on chain.
+                    </td>
+                </tr>
+            {/if}
+            {foreach $rows as $i => $r}
+                {var $rank = $pagination->showingFrom + $i}
+                {var $hex = bin2hex($r->address)}
+                {var $shortHex = '0x' . substr($hex, 0, 6) . '..' . substr($hex, -4)}
+                {var $isHexPub = $r->ens === null}
+                {var $publisherDisplay = $r->ens ?? $shortHex}
+                {var $earned = (float) $r->total_earned_usdc}
+                {var $earnedDisplay = $earned >= 1
+                    ? '$' . number_format($earned, 2)
+                    : '$' . rtrim(rtrim(number_format($earned, 4), '0'), '.')}
+                {var $valueProtected = (float) $r->total_value_protected_usd}
+                <tr class="border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
+                    <td class="py-3 pr-6 font-mono text-[12px] text-fg-tertiary">#{$rank}</td>
+                    <td class="py-3 pr-6">
+                        <a href="https://chainscan-galileo.0g.ai/address/0x{$hex}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="{$isHexPub ? 'font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors' : 'text-[13px] text-fg-primary group-hover:text-accent transition-colors'}"
+                           title="0x{$hex}">{$publisherDisplay}</a>
+                    </td>
+                    <td class="py-3 pr-6 text-right text-fg-primary">{$r->antibodies_published}</td>
+                    <td class="py-3 pr-6 text-right text-fg-secondary">{$r->successful_blocks}</td>
+                    <td class="py-3 pr-6 text-right">
+                        {if $valueProtected > 0}
+                            <span class="text-immune-500">{format('money', $valueProtected)}</span>
+                        {else}
+                            <span class="text-fg-dim">-</span>
+                        {/if}
+                    </td>
+                    <td class="py-3 pr-6 text-right">
+                        {if $earned > 0}
+                            <span class="font-mono text-immune-500">{$earnedDisplay}</span>
+                        {else}
+                            <span class="text-fg-dim">-</span>
+                        {/if}
+                    </td>
+                    <td class="py-3 text-right font-mono text-[11.5px] text-fg-tertiary">
+                        {format('timeago', $r->last_active_at)}
+                    </td>
+                </tr>
+            {/foreach}
+            </tbody>
+        </table>
+    </div>
+
+    {* ----------- PAGINATION ----------- *}
+    {if $total > $pagination->perPage}
+    <div class="flex items-center justify-between mt-8 pt-5 border-t border-ink-line/60 gap-6 flex-wrap">
+
+        <div class="font-mono text-[11px] uppercase tracking-widest2 text-fg-tertiary">
+            Showing <span class="text-fg-secondary tabular-nums">{$pagination->showingFrom}</span> to <span class="text-fg-secondary tabular-nums">{$pagination->showingTo}</span> of <span class="text-fg-secondary tabular-nums">{$pagination->total}</span>
+        </div>
+
+        <nav class="flex items-center gap-1" aria-label="Pagination">
+            {if $pagination->hasPrev}
+                <a href="?page={$pagination->prevPage}" class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary px-3 py-1.5 rounded-sm hover:bg-ink-elevated/60 transition-colors" aria-label="Previous page">
+                    <span aria-hidden="true">&larr;</span> Prev
+                </a>
+            {else}
+                <span class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim px-3 py-1.5 rounded-sm cursor-not-allowed" aria-label="Previous page" aria-disabled="true">
+                    <span aria-hidden="true">&larr;</span> Prev
+                </span>
+            {/if}
+
+            {foreach $pagination->pageLinks as $pl}
+                {if $pl === '...'}
+                    <span class="font-mono text-[12px] text-fg-dim px-1 select-none">...</span>
+                {elseif $pl === $pagination->page}
+                    <span class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm bg-accent/10 text-accent border border-accent/30" aria-current="page">{$pl}</span>
+                {else}
+                    <a href="?page={$pl}" class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">{$pl}</a>
+                {/if}
+            {/foreach}
+
+            {if $pagination->hasNext}
+                <a href="?page={$pagination->nextPage}" class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary px-3 py-1.5 rounded-sm hover:bg-ink-elevated/60 transition-colors" aria-label="Next page">
+                    Next <span aria-hidden="true">&rarr;</span>
+                </a>
+            {else}
+                <span class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim px-3 py-1.5 rounded-sm cursor-not-allowed" aria-label="Next page" aria-disabled="true">
+                    Next <span aria-hidden="true">&rarr;</span>
+                </span>
+            {/if}
+        </nav>
+
+    </div>
+    {/if}
+
+</section>
+
+{/block}

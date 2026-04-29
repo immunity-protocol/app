@@ -109,8 +109,9 @@ class AntibodyMatchedHandler
             "INSERT INTO event.block_event
                 (check_event_id, entry_id, agent_id, value_protected_usd, pricing_failed,
                  token_address, token_amount, origin_chain_id,
-                 tx_hash_attempt, chain_id, occurred_at, tx_hash, log_index)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, now(), ?, ?)
+                 tx_hash_attempt, chain_id, occurred_at, tx_hash, log_index,
+                 publisher_reward_usdc)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, now(), ?, ?, ?)
              ON CONFLICT (tx_hash, log_index) DO NOTHING
              RETURNING id",
             [
@@ -125,6 +126,7 @@ class AntibodyMatchedHandler
                 $this->network->chainId,
                 '\\x' . $txHashHex,
                 (int) $decoded['logIndex'],
+                $publisherReward,
             ]
         );
         $inserted = $row->fetch(\PDO::FETCH_ASSOC) !== false;

@@ -31,4 +31,17 @@ readonly class PublisherService
     {
         return $this->broker->countAll();
     }
+
+    /**
+     * Raw stdClass rows for the leaderboard page. Returned as-is (not
+     * wrapped in the Publisher entity) because the leaderboard needs the
+     * derived `total_value_protected_usd` column that the entity doesn't
+     * model.
+     *
+     * @return \stdClass[]
+     */
+    public function listWithStatsPage(int $offset, int $limit): array
+    {
+        return $this->broker->listWithStatsPage($offset, $limit);
+    }
 }

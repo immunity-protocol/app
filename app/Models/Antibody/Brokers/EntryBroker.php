@@ -237,6 +237,7 @@ class EntryBroker extends Broker
      *   agents_synced: int,
      *   blocks_made: int,
      *   value_protected_usd: string,
+     *   publisher_earnings_usdc: string,
      *   ingestion: list<int>
      * }
      */
@@ -259,6 +260,14 @@ class EntryBroker extends Broker
             ),
             'value_protected_usd' => (string) ($this->selectValue(
                 "SELECT COALESCE(SUM(value_protected_usd), 0)::text
+                   FROM event.block_event WHERE entry_id = ?",
+                [$entryId]
+            ) ?? '0'),
+            // Sum of the per-block publisher reward fields (80% of the
+            // 0.002 USDC fee per match by default). Always returns a
+            // numeric string so the view can format with sub-cent precision.
+            'publisher_earnings_usdc' => (string) ($this->selectValue(
+                "SELECT COALESCE(SUM(publisher_reward_usdc), 0)::text
                    FROM event.block_event WHERE entry_id = ?",
                 [$entryId]
             ) ?? '0'),

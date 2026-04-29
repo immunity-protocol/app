@@ -36,6 +36,42 @@ class PublisherBroker extends Broker
     }
 
     /**
+     * Page of publishers with derived totals for the contributors leaderboard.
+     *
+     * Aggregates `antibody.publisher` (per-publisher counters) with a join
+     * onto `event.block_event` so we surface the *value protected* across
+     * all of a publisher's antibodies — not just per-publisher earnings,
+     * which already live as a column. Sort is "earned-first" by default
+     * (the leaderboard intent), with successful_blocks and last_active_at
+     * as tie-breakers so two publishers with identical $0 earnings still
+     * order deterministically.
+     *
+     * @return \stdClass[] rows: { address (bytea), ens, antibodies_published,
+     *   successful_blocks, total_earned_usdc, total_value_protected_usd,
+     *   first_seen_at, last_active_at }
+     */
+    public function listWithStatsPage(int $offset, int $limit): array
+    {
+        return $this->select(
+            "SELECT p.address, p.ens, p.antibodies_published, p.successful_blocks,
+                    p.total_earned_usdc, p.first_seen_at, p.last_active_at,
+                    COALESCE((
+                        SELECT SUM(b.value_protected_usd)
+                          FROM event.block_event b
+                          JOIN antibody.entry e ON e.id = b.entry_id
+                         WHERE e.publisher = p.address
+                    ), 0)::text AS total_value_protected_usd
+               FROM antibody.publisher p
+           ORDER BY p.total_earned_usdc DESC,
+                    p.successful_blocks DESC,
+                    p.last_active_at DESC,
+                    p.address
+              LIMIT ? OFFSET ?",
+            [$limit, $offset]
+        );
+    }
+
+    /**
      * @param array<string, mixed> $data
      */
     public function upsert(array $data): void

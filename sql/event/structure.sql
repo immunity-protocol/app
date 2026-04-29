@@ -58,8 +58,14 @@ CREATE TABLE event.block_event
     check_event_id       bigint NOT NULL REFERENCES event.check_event (id) ON DELETE CASCADE,
     entry_id             bigint NOT NULL REFERENCES antibody.entry (id) ON DELETE CASCADE,
     agent_id             varchar(128) NOT NULL,
-    value_protected_usd  numeric(20, 6),
-    pricing_failed       boolean NOT NULL DEFAULT false,
+    value_protected_usd   numeric(20, 6),
+    pricing_failed        boolean NOT NULL DEFAULT false,
+    -- 80% of the per-check fee that the Registry contract paid the
+    -- antibody's publisher for this match. Decoded from the on-chain
+    -- AntibodyMatched event's `publisherReward` field (uint256 wei,
+    -- 6 decimals to USDC). Summing this column across an entry yields
+    -- the publisher's total earnings for that antibody.
+    publisher_reward_usdc numeric(20, 6),
     -- Same tx facts as event.check_event — the AntibodyMatched event emits the
     -- identical trio. Redundant but lets price-retry queries hit one table.
     token_address        bytea,
