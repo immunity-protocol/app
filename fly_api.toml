@@ -5,6 +5,7 @@ primary_region = 'yyz'
   dockerfile = '.flyio/Dockerfile.app'
 
 [env]
+  INDEXER_PRICE_OVERRIDES = '{"0xF4F4d4f459b339c7234511547880E101073DCbCd":"1.0","0x479504943734d01548B2975227Bb6BfCF725c222":"3500.0"}'
   APP_ENV      = 'production'
   APP_DEBUG    = 'false'
   APP_TIMEZONE = 'UTC'
