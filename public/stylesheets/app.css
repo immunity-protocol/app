@@ -174,10 +174,14 @@ body[data-scrolled="true"] .site-nav-inner {
         opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
         transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
-/* Hide nav brand only on pages where a hero brand owns the slot */
-body:has(#hero-brand):not([data-scrolled="true"]) .nav-brand {
-    opacity: 0;
-    transform: translateX(-6px);
+/* Hide nav brand only on pages where a hero brand owns the slot, AND the
+   hero brand is actually visible. On <sm viewports the hero brand is set
+   to display:none in the template, so the nav brand should keep its slot. */
+@media (min-width: 640px) {
+    body:has(#hero-brand):not([data-scrolled="true"]) .nav-brand {
+        opacity: 0;
+        transform: translateX(-6px);
+    }
 }
 
 /* Inner pages (no hero) need explicit top padding to clear the fixed nav */
