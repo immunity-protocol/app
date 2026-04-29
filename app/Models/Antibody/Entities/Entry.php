@@ -21,6 +21,7 @@ class Entry extends Entity
     public int $severity;
     public string $status;
     public $primary_matcher;
+    public ?string $primary_matcher_hash = null;
     public $secondary_matchers;
     public string $context_hash;
     public string $evidence_cid;
@@ -58,7 +59,7 @@ class Entry extends Entity
     protected static function byteaProperties(): array
     {
         return [
-            'keccak_id', 'context_hash', 'evidence_cid',
+            'keccak_id', 'primary_matcher_hash', 'context_hash', 'evidence_cid',
             'embedding_hash', 'embedding_cid',
             'publisher', 'attestation',
         ];
