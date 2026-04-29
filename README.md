@@ -206,7 +206,7 @@ The SDK gates every `check()` against three tiers — local cache, on-chain Regi
 
 - **Schema.** `antibody.entry.primary_matcher_hash bytea`, partial-unique index for fast lookup. The indexer persists the hash from every `AntibodyPublished` event.
 - **Broker.** `EntryBroker::findByPrimaryMatcherHash(string $hashHex)` accepts `0x`-prefixed or bare 64-hex strings, case-insensitive. Returns `null` for unknown or malformed input.
-- **API.** `GET /api/antibody/by-matcher-hash/{hash}` returns the same envelope shape as `/api/antibody/{immId}` (entry + mirrors + recent blocks + publisher). 400 on malformed hex, 404 if the hash is unknown.
+- **API.** `GET /v1/antibody/by-matcher-hash/{hash}` returns the same envelope shape as `/v1/antibody/{immId}` (entry + mirrors + recent blocks + publisher). 400 on malformed hex, 404 if the hash is unknown.
 
 The matcher hash format is locked client-side by the SDK (`immunity-sdk/test/unit/keccak/matcher-format-parity.test.ts`); for reference, ADDRESS antibodies hash as `keccak256(abi.encode(uint256 chainId, address target))` and other types follow the per-type formats documented in the SDK's `docs/lookup-tiers.md`.
 
