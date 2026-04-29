@@ -330,6 +330,38 @@ async function swap() {
             ? '<br><span class="opacity-80">This is the hook doing its job. Toggle to the unprotected pool to compare.</span>'
             : '';
         setResult('error', `Swap reverted: <code class="font-mono">${decoded}</code>${explanation}`);
+
+        // Best-effort: report the failed tx hash so the antibody's
+        // pool_reverts and value_protected counters increment. The backend
+        // verifies on chain so a forged hash won't persist; the front-end
+        // doesn't await this — it's pure side effect.
+        const failedHash = err?.receipt?.hash ?? err?.transactionHash ?? err?.transaction?.hash;
+        if (failedHash && state.pool === 'protected') {
+            reportBlockedSwap(failedHash);
+        }
+    }
+}
+
+async function reportBlockedSwap(txHash) {
+    try {
+        const r = await fetch('/api/v1/dex/blocked-swap', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ txHash, pool: state.pool }),
+        });
+        if (!r.ok) return;
+        const data = await r.json();
+        if (data?.ingested) {
+            const result = el('[data-result]');
+            if (result) {
+                result.insertAdjacentHTML(
+                    'beforeend',
+                    `<div class="mt-2 pt-2 border-t border-current opacity-70 text-[11px]">Recorded $${Number(data.valueProtectedUsd).toLocaleString('en-US', { maximumFractionDigits: 2 })} as value protected.</div>`,
+                );
+            }
+        }
+    } catch {
+        // silent — UX shouldn't suffer if telemetry POST flakes.
     }
 }
 
