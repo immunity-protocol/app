@@ -49,25 +49,26 @@ window.addEventListener('DOMContentLoaded', () => {
     {* Subtle grain so the video doesn't read as a stock-footage embed *}
     <div class="absolute inset-0 dot-bg opacity-50 pointer-events-none" aria-hidden="true"></div>
 
-    <div class="relative max-w-[1400px] mx-auto px-7 pt-20 pb-24 min-h-screen flex flex-col justify-center">
+    <div class="relative max-w-[1400px] mx-auto px-5 sm:px-7 pt-24 sm:pt-20 pb-16 sm:pb-24 min-h-screen flex flex-col justify-center">
 
         {* Big hero brand block. Cross-fades to the small nav brand on scroll
-           via #hero-brand / #nav-brand opacity rules in app.css. *}
-        <div id="hero-brand" class="hero-brand absolute top-7 left-7 flex items-center gap-4 origin-left pointer-events-none select-none" aria-hidden="true">
+           via #hero-brand / #nav-brand opacity rules in app.css. Hidden on
+           phones where the nav brand is sufficient. *}
+        <div id="hero-brand" class="hero-brand hidden sm:flex absolute top-7 left-7 items-center gap-4 origin-left pointer-events-none select-none" aria-hidden="true">
             <span class="block h-[88px] w-[88px] bg-fg-primary"
                   style="-webkit-mask: url(/assets/images/immunity-mark.png) center/contain no-repeat; mask: url(/assets/images/immunity-mark.png) center/contain no-repeat;"></span>
             <span class="font-display text-[56px] font-light tracking-tighter text-fg-primary leading-none">Immunity</span>
         </div>
 
         {* Headline, two stanzas: the technical claim, then the philosophy *}
-        <h1 class="font-display display-xl font-light tracking-tightest text-fg-primary text-[44px] sm:text-[60px] md:text-[78px] leading-[1.0] mb-9 max-w-[1100px]">
+        <h1 class="font-display display-xl font-light tracking-tightest text-fg-primary text-[34px] sm:text-[52px] md:text-[78px] leading-[1.05] sm:leading-[1.0] mb-7 sm:mb-9 max-w-[1100px]">
             <span class="block">Decentralized threat intelligence</span>
             <span class="block">for AI agents. An attack on one</span>
             <span class="block">is a <span class="italic font-light text-accent">vaccine for all</span>.</span>
         </h1>
 
         {* Lede *}
-        <p class="text-fg-secondary text-[18px] leading-[1.6] max-w-[640px] mb-10">
+        <p class="text-fg-secondary text-[15px] sm:text-[18px] leading-[1.6] max-w-[640px] mb-8 sm:mb-10">
             Antibodies are signed by their publisher, staked on chain, and addressable by a stable CVE-style identifier. Cheap matches resolve locally in microseconds. Novel threats verify in a 0G Compute TEE. The network is the immune system.
         </p>
 
