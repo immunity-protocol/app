@@ -196,18 +196,6 @@
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Value at risk</div>
                 <div class="font-mono text-[15px] text-fg-primary tabular-nums">{format('money', $ab['impact']['value_protected_usd'])}</div>
             </div>
-            <div class="p-4">
-                {* Sub-cent precision when earnings are below $1 — the per-match
-                   reward (0.0016 USDC default) only crosses $0.01 after ~7
-                   blocks, so dropping to 2 decimals there would just print
-                   "$0.00" misleadingly for tonight's first matches. *}
-                {var $earnings = $ab['impact']['publisher_earnings_usdc']}
-                {var $earningsDisplay = $earnings >= 1
-                    ? '$' . number_format($earnings, 2)
-                    : '$' . rtrim(rtrim(number_format($earnings, 4), '0'), '.')}
-                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Publisher earned</div>
-                <div class="font-mono text-[15px] text-immune-500 tabular-nums" title="80% of the 0.002 USDC fee per match, paid by the Registry contract directly to the publisher">{$earningsDisplay}</div>
-            </div>
         </div>
 
         {var $publishTxHex = $entry->publish_tx_hash !== null ? '0x' . bin2hex($entry->publish_tx_hash) : null}
@@ -611,6 +599,14 @@
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="text-fg-tertiary text-[11.5px]">Attacks blocked</dt>
                         <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{format('decimal', $ab['impact']['blocks_made'], 0)}</dd>
+                    </div>
+                    {var $earnings = $ab['impact']['publisher_earnings_usdc']}
+                    {var $earningsDisplay = $earnings >= 1
+                        ? '$' . number_format($earnings, 2)
+                        : '$' . rtrim(rtrim(number_format($earnings, 4), '0'), '.')}
+                    <div class="flex items-baseline justify-between gap-3" title="80% of the 0.002 USDC fee per match, paid by the Registry contract directly to the publisher">
+                        <dt class="text-fg-tertiary text-[11.5px]">Publisher earned</dt>
+                        <dd class="font-mono text-[12px] {$earnings > 0 ? 'text-immune-500' : 'text-fg-dim'} tabular-nums">{$earningsDisplay}</dd>
                     </div>
                 </dl>
             </div>
