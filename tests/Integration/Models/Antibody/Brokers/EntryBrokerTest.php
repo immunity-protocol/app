@@ -83,6 +83,57 @@ final class EntryBrokerTest extends IntegrationTestCase
         $this->assertSame(1, $counts['semantic']);
     }
 
+    public function testFindByPrimaryMatcherHashRoundTrip(): void
+    {
+        $hashHex = str_repeat('ab', 32);
+        $id = $this->broker->insert($this->fixture(
+            immId: 'IMM-2026-0042',
+            primaryMatcherHash: '\\x' . $hashHex,
+        ));
+
+        $found = $this->broker->findByPrimaryMatcherHash('0x' . $hashHex);
+        $this->assertNotNull($found);
+        $this->assertSame($id, (int) $found->id);
+    }
+
+    public function testFindByPrimaryMatcherHashAcceptsBareHex(): void
+    {
+        $hashHex = str_repeat('cd', 32);
+        $this->broker->insert($this->fixture(
+            immId: 'IMM-2026-0043',
+            primaryMatcherHash: '\\x' . $hashHex,
+        ));
+
+        $found = $this->broker->findByPrimaryMatcherHash($hashHex);
+        $this->assertNotNull($found);
+    }
+
+    public function testFindByPrimaryMatcherHashIsCaseInsensitive(): void
+    {
+        $hashHex = str_repeat('ef', 32);
+        $this->broker->insert($this->fixture(
+            immId: 'IMM-2026-0044',
+            primaryMatcherHash: '\\x' . $hashHex,
+        ));
+
+        $found = $this->broker->findByPrimaryMatcherHash('0x' . strtoupper($hashHex));
+        $this->assertNotNull($found);
+    }
+
+    public function testFindByPrimaryMatcherHashReturnsNullForUnknown(): void
+    {
+        $this->assertNull(
+            $this->broker->findByPrimaryMatcherHash('0x' . str_repeat('11', 32)),
+        );
+    }
+
+    public function testFindByPrimaryMatcherHashRejectsMalformedInput(): void
+    {
+        $this->assertNull($this->broker->findByPrimaryMatcherHash('0xnothex'));
+        $this->assertNull($this->broker->findByPrimaryMatcherHash('0xabcd'));
+        $this->assertNull($this->broker->findByPrimaryMatcherHash(''));
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -93,9 +144,10 @@ final class EntryBrokerTest extends IntegrationTestCase
         int $confidence = 85,
         int $severity = 70,
         string $status = 'active',
+        ?string $primaryMatcherHash = null,
     ): array {
         $stubHex = '\\x' . hash('sha256', $immId);
-        return [
+        $row = [
             'keccak_id'         => $stubHex,
             'imm_id'            => $immId,
             'type'              => $type,
@@ -111,5 +163,9 @@ final class EntryBrokerTest extends IntegrationTestCase
             'stake_amount'      => '1.000000',
             'attestation'       => $stubHex,
         ];
+        if ($primaryMatcherHash !== null) {
+            $row['primary_matcher_hash'] = $primaryMatcherHash;
+        }
+        return $row;
     }
 }
