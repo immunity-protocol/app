@@ -18,10 +18,15 @@ RUN locale-gen en_US.UTF-8 && update-locale
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # PHP extensions.
-RUN docker-php-ext-install pdo_pgsql pgsql intl mbstring sodium zip
+RUN docker-php-ext-install pdo_pgsql pgsql intl mbstring sodium zip opcache
 
 # Production php.ini overrides (shared with the legacy image).
 COPY .flyio/php-production.ini /usr/local/etc/php/conf.d/zz-production.ini
+
+# OPcache config: production perf win. Without it PHP reparses every
+# Zephyrus + Latte + app file on every request. validate_timestamps=0
+# is safe because files only change when the image is rebuilt.
+COPY .flyio/opcache.ini /usr/local/etc/php/conf.d/zz-opcache.ini
 
 # Apache modules + vhost.
 RUN a2enmod rewrite headers expires deflate
