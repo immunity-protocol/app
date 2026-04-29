@@ -89,6 +89,19 @@ final class PlaygroundController extends Controller
     }
 
     /**
+     * Card 09 helper: list online traders so the inject-prompt dropdown
+     * can populate without requiring the full status payload.
+     */
+    #[Get('/playground/online-traders')]
+    public function onlineTraders(): Response
+    {
+        $this->heartbeats ??= new HeartbeatBroker();
+        return Response::json([
+            'agents' => $this->heartbeats->listOnlineByRole('trader'),
+        ])->withHeader('Cache-Control', 'no-store');
+    }
+
+    /**
      * Poll a command's status. Cards POST to enqueue and then GET this until
      * `result_status` is "completed" or "failed".
      */
@@ -207,6 +220,46 @@ final class PlaygroundController extends Controller
             'amount_usd'   => 100,
         ]);
         return Response::json(['command_id' => $commandId, 'agent_id' => $agentId], 202);
+    }
+
+    /**
+     * Card 9 - Inject a prompt at a specific trader. Targets a chosen
+     * online trader (vs Card 3's random pick) and runs `inject_prompt`,
+     * which evaluates the payload as ctx.conversation. Lets a judge demo
+     * SDK 0.5 SEMANTIC auto-mint by typing a novel injection phrase.
+     */
+    #[Post('/playground/inject-prompt')]
+    public function injectPrompt(Request $request): Response
+    {
+        $body = $request->body();
+        $target = (string) $body->get('target_agent', '');
+        if (!preg_match('/^trader-\d+$/', $target)) {
+            return Response::json(['error' => 'target_agent must be trader-N'], 400);
+        }
+        $payload = trim((string) $body->get('payload', ''));
+        if ($payload === '') {
+            return Response::json(['error' => 'payload is required'], 400);
+        }
+        if (strlen($payload) > 2000) {
+            return Response::json(['error' => 'payload exceeds 2000 chars'], 400);
+        }
+
+        $this->heartbeats ??= new HeartbeatBroker();
+        // Verify the target is actually online; otherwise the command will
+        // sit unread until next boot.
+        $online = $this->heartbeats->listOnlineByRole('trader');
+        $found = false;
+        foreach ($online as $a) { if ($a['agent_id'] === $target) { $found = true; break; } }
+        if (!$found) {
+            return Response::json(['error' => "target_agent {$target} is not online"], 503);
+        }
+
+        $this->commands ??= new CommandBroker();
+        $commandId = $this->commands->enqueue($target, 'inject_prompt', [
+            'payload' => $payload,
+            'source'  => 'playground',
+        ]);
+        return Response::json(['command_id' => $commandId, 'agent_id' => $target], 202);
     }
 
     /**
