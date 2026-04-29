@@ -1,0 +1,91 @@
+{layout ../layouts/main.latte}
+
+{block title}404 — page not found · Immunity{/block}
+
+{block content}
+<section class="relative min-h-[calc(100vh-180px)] flex items-center">
+    <div class="relative max-w-[1100px] mx-auto px-7 py-24 w-full">
+        <div class="flex items-center gap-3 mb-10">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Status</span>
+            <span class="inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-widest2 text-amber-500/80 border border-amber-500/30 rounded-full px-2.5 py-0.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500/70 inline-block"></span>
+                404 not found
+            </span>
+        </div>
+
+        <h1 class="font-display font-light leading-[1.05] tracking-tight text-fg-primary mb-8 text-[clamp(48px,7vw,96px)]">
+            <span class="block">This antibody is</span>
+            <span class="block italic" style="font-family: 'Fraunces', serif; font-style: italic; font-weight: 300;">not in the registry.</span>
+        </h1>
+
+        <p class="text-[15px] leading-relaxed text-fg-secondary max-w-[640px] mb-10">
+            The page you tried to reach does not exist on the network. It may have been
+            moved, the antibody identifier may be wrong, or the link you followed may be
+            stale. The registry only carries published, signed, on-chain entries.
+        </p>
+
+        {if isset($requestPath) && $requestPath !== ''}
+            <div class="bg-ink-elevated border border-ink-line rounded p-4 mb-10 max-w-[640px]">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Requested path</div>
+                <div class="font-mono text-[12.5px] text-fg-secondary truncate">{$requestPath}</div>
+            </div>
+        {/if}
+
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="/"
+               class="inline-flex items-center gap-2 bg-fg-primary text-ink-base font-mono text-[11.5px] uppercase tracking-widest2 px-4 py-2.5 rounded hover:bg-fg-secondary transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M5 12l-2 0l9 -9l9 9l-2 0"/>
+                    <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/>
+                    <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/>
+                </svg>
+                Back to home
+            </a>
+
+            <a href="/antibodies"
+               class="inline-flex items-center gap-2 border border-ink-line hover:border-fg-tertiary text-fg-primary font-mono text-[11.5px] uppercase tracking-widest2 px-4 py-2.5 rounded transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M10 13a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
+                    <path d="M21 21l-4.3 -4.3"/>
+                    <path d="M16 13a6 6 0 1 0 -12 0a6 6 0 0 0 12 0z"/>
+                </svg>
+                Browse antibodies
+            </a>
+
+            <a href="/dashboard"
+               class="inline-flex items-center gap-2 text-fg-tertiary hover:text-fg-primary font-mono text-[11.5px] uppercase tracking-widest2 px-4 py-2.5 transition-colors">
+                Open dashboard
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M5 12l14 0"/>
+                    <path d="M13 18l6 -6"/>
+                    <path d="M13 6l6 6"/>
+                </svg>
+            </a>
+        </div>
+
+        <div class="mt-16 pt-8 border-t border-ink-line/60 max-w-[640px]">
+            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Looking for something specific?</div>
+            <ul class="space-y-2 text-[13px] text-fg-secondary">
+                <li>
+                    <span class="text-fg-tertiary">·</span>
+                    Antibody by IMM ID:
+                    <span class="font-mono text-[12px] text-fg-primary">/antibody/IMM-2026-0001</span>
+                </li>
+                <li>
+                    <span class="text-fg-tertiary">·</span>
+                    Antibody by matcher hash (API):
+                    <span class="font-mono text-[12px] text-fg-primary">/v1/antibody/by-matcher-hash/&lt;hash&gt;</span>
+                </li>
+                <li>
+                    <span class="text-fg-tertiary">·</span>
+                    All antibodies:
+                    <span class="font-mono text-[12px] text-fg-primary">/antibodies</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+{/block}

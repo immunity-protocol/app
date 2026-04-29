@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace App\Models\Core;
 
 use App\Models\Demo\PlaygroundSession;
+use Throwable;
 use Zephyrus\Core\App;
 use Zephyrus\Core\ApplicationBuilder;
 use Zephyrus\Formatting\Formatter;
 use Zephyrus\Core\Config\SessionConfig;
+use Zephyrus\Http\Request;
+use Zephyrus\Http\Response;
 use Zephyrus\Rendering\Asset;
+use Zephyrus\Routing\Exception\RouteNotFoundException;
+use Zephyrus\Routing\Exception\RouteParameterException;
 use Zephyrus\Security\AuthGuardMiddleware;
 use Zephyrus\Security\HeaderTokenGuard;
 use Zephyrus\Security\PredicateAuthGuard;
@@ -94,6 +99,38 @@ final class Application extends Kernel
             ),
         );
 
+        // Pretty 404 for HTML clients; JSON-shaped 404 for API clients.
+        // The framework's default returns plain text "Not Found", which is
+        // jarring on a styled site. Negotiate by Accept header so curl /
+        // Accept: application/json keep getting machine-readable bodies.
+        $notFoundHandler = function (Throwable $exception, ?Request $request): Response {
+            return $this->renderNotFound($request);
+        };
+        $builder = $builder
+            ->withExceptionHandler(RouteNotFoundException::class, $notFoundHandler)
+            ->withExceptionHandler(RouteParameterException::class, $notFoundHandler);
+
         return $builder;
+    }
+
+    private function renderNotFound(?Request $request): Response
+    {
+        $accept = $request?->headers()->get('accept', '') ?? '';
+        $path = $request?->uri()->path() ?? '';
+
+        $wantsJson = str_contains($accept, 'application/json')
+            || str_contains($accept, '+json')
+            || str_starts_with($path, '/v1/')
+            || str_starts_with($path, '/api/');
+
+        if ($wantsJson) {
+            return Response::json([
+                'error' => 'not found',
+                'path'  => $path,
+            ], 404);
+        }
+
+        $html = $this->renderEngine->render('errors/404', ['requestPath' => $path]);
+        return Response::html((string) $html, 404);
     }
 }
