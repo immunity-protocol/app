@@ -1,0 +1,190 @@
+{layout ../layouts/main.latte}
+
+{var $metaTitle = 'DEX demo / Immunity-protected Uniswap v4 swap'}
+{var $metaDescription = 'Swap on a Uniswap v4 pool gated by the Immunity hook, then toggle to an unprotected pool to see the difference. Sepolia testnet.'}
+
+{block title}DEX demo / Immunity{/block}
+
+{block head}
+<script defer type="module" src="{asset('/javascripts/dex.js')}"></script>
+{/block}
+
+{block content}
+
+<section class="max-w-[1100px] mx-auto px-5 sm:px-7 pt-20 sm:pt-14 pb-16">
+
+    <div class="mb-10 sm:mb-12">
+        <div class="flex items-center gap-3 mb-3">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Sepolia demo</span>
+            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+        </div>
+        <h1 class="font-display text-[42px] sm:text-[60px] font-light tracking-tightest text-fg-primary leading-[1.0]">
+            A protected swap, side by side
+        </h1>
+        <p class="text-fg-secondary text-[14px] sm:text-[16px] mt-4 max-w-[680px] leading-[1.6]">
+            Two Uniswap v4 pools on Sepolia, identical in every way except one is gated by the Immunity hook. Swap on the protected pool against a flagged token and the transaction reverts on chain. Toggle to the unprotected pool and the same swap goes through.
+        </p>
+    </div>
+
+    <div class="hr-fade mb-8"></div>
+
+    {* JSON-injected config the JS picks up from the DOM. *}
+    <script id="dex-config" type="application/json">{$configJson|noescape}</script>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 lg:gap-10 items-start">
+
+        {* ============== SWAP CARD ============== *}
+        <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/30 p-5 sm:p-6">
+
+            {* Wallet connect strip *}
+            <div class="flex items-center justify-between gap-3 mb-5">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span data-wallet-status class="inline-flex h-2 w-2 rounded-full bg-fg-dim shrink-0"></span>
+                    <span data-wallet-label class="font-mono text-[11px] uppercase tracking-widest2 text-fg-tertiary truncate">Wallet not connected</span>
+                </div>
+                <button type="button" data-connect
+                        class="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-widest2 px-3 py-1.5 rounded-sm border border-ink-line/80 text-fg-primary hover:border-fg-tertiary hover:text-accent transition-colors">
+                    Connect
+                </button>
+            </div>
+
+            {* Pool toggle *}
+            <div role="tablist" aria-label="Pool selector"
+                 class="flex items-stretch p-1 rounded-sm border border-ink-line/60 bg-ink-sunken/40 mb-6">
+                <button type="button" role="tab" data-pool="protected" aria-selected="true"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-sm font-mono text-[11px] uppercase tracking-widest2 transition-colors min-h-[44px]">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/>
+                    </svg>
+                    <span>Protected</span>
+                </button>
+                <button type="button" role="tab" data-pool="unprotected" aria-selected="false"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-sm font-mono text-[11px] uppercase tracking-widest2 transition-colors min-h-[44px]">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>
+                        <path d="M5.7 5.7l12.6 12.6"/>
+                    </svg>
+                    <span>Unprotected</span>
+                </button>
+            </div>
+
+            {* From token *}
+            <div class="border border-ink-line/40 rounded-sm bg-ink-base/40 p-4 mb-2">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">From</span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">
+                        Balance <span data-balance-from class="text-fg-secondary">-</span>
+                    </span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="number" inputmode="decimal" min="0" step="0.001" placeholder="0.0"
+                           data-amount-in
+                           class="flex-1 bg-transparent border-none outline-none font-display text-[28px] sm:text-[32px] text-fg-primary placeholder:text-fg-dim tabular-nums min-w-0"/>
+                    <button type="button" data-token-from
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-sm border border-ink-line/60 hover:border-fg-tertiary text-fg-primary font-mono text-[12px] uppercase tracking-widest2 shrink-0 transition-colors">
+                        <span data-token-from-label>{$cfg->tokenALabel}</span>
+                    </button>
+                </div>
+            </div>
+
+            {* Swap direction button *}
+            <div class="flex justify-center -my-1.5 relative z-10">
+                <button type="button" data-flip
+                        class="inline-flex items-center justify-center h-9 w-9 rounded-sm border border-ink-line/60 bg-ink-elevated text-fg-secondary hover:text-accent hover:border-fg-tertiary transition-colors"
+                        aria-label="Swap direction">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M3 7l4 -4l4 4"/>
+                        <path d="M7 3l0 18"/>
+                        <path d="M21 17l-4 4l-4 -4"/>
+                        <path d="M17 21l0 -18"/>
+                    </svg>
+                </button>
+            </div>
+
+            {* To token (display only — output amount estimated client-side) *}
+            <div class="border border-ink-line/40 rounded-sm bg-ink-base/40 p-4 mt-2 mb-5">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">To (estimated)</span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">
+                        Balance <span data-balance-to class="text-fg-secondary">-</span>
+                    </span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span data-amount-out class="flex-1 font-display text-[28px] sm:text-[32px] text-fg-tertiary tabular-nums min-w-0">0.0</span>
+                    <span data-token-to-label class="inline-flex items-center px-3 py-2 rounded-sm border border-ink-line/30 text-fg-secondary font-mono text-[12px] uppercase tracking-widest2 shrink-0">{$cfg->tokenBLabel}</span>
+                </div>
+            </div>
+
+            {* Status / hook indicator *}
+            <div class="flex items-center justify-between gap-3 mb-5 text-[12px]">
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Hook</span>
+                <span data-hook-display class="font-mono text-[11px] text-immune-500 truncate">0xd333...d0080</span>
+            </div>
+
+            <button type="button" data-swap
+                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-sm bg-fg-primary text-ink-base font-mono text-[12px] uppercase tracking-widest2 hover:bg-fg-secondary disabled:bg-ink-elevated disabled:text-fg-tertiary disabled:cursor-not-allowed transition-colors min-h-[48px]">
+                <span data-swap-label>Connect to swap</span>
+            </button>
+
+            {* Inline result banner *}
+            <div data-result class="hidden mt-5 border rounded-sm p-4 text-[12.5px]"></div>
+        </div>
+
+        {* ============== SIDE PANEL ============== *}
+        <aside class="space-y-4">
+
+            <div class="border border-ink-line/60 rounded-sm bg-ink-sunken/40 p-5">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">How it works</div>
+                <ol class="space-y-2.5 text-[12.5px] text-fg-secondary leading-[1.55] list-decimal list-inside marker:text-fg-tertiary">
+                    <li>Pick which pool to use with the toggle.</li>
+                    <li>Connect a wallet on Sepolia testnet.</li>
+                    <li>Mint test tokens if you don't have any.</li>
+                    <li>Approve and swap. The Immunity hook gates only the protected pool.</li>
+                </ol>
+            </div>
+
+            <div class="border border-ink-line/60 rounded-sm bg-ink-sunken/40 p-5">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Test tokens</div>
+                <p class="text-[12.5px] text-fg-secondary leading-[1.55] mb-3">
+                    These are mock ERC20s. Mint freely; they have no real-world value.
+                </p>
+                <button type="button" data-mint
+                        class="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-sm border border-ink-line/80 text-fg-primary hover:border-fg-tertiary hover:text-accent font-mono text-[11px] uppercase tracking-widest2 transition-colors min-h-[40px]">
+                    Mint 100 of each
+                </button>
+            </div>
+
+            <div class="border border-ink-line/60 rounded-sm bg-ink-sunken/40 p-5">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Contracts</div>
+                <dl class="space-y-2 text-[11px] font-mono">
+                    <div class="flex items-center justify-between gap-2">
+                        <dt class="text-fg-tertiary uppercase tracking-widest2">Hook</dt>
+                        <dd><a href="{$cfg->blockExplorerUrl}/address/{$cfg->hookAddress}" target="_blank" rel="noopener" class="text-fg-secondary hover:text-accent transition-colors">{$shortHook}</a></dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                        <dt class="text-fg-tertiary uppercase tracking-widest2">Mirror</dt>
+                        <dd><a href="{$cfg->blockExplorerUrl}/address/{$cfg->mirrorAddress}" target="_blank" rel="noopener" class="text-fg-secondary hover:text-accent transition-colors">{$shortMirror}</a></dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                        <dt class="text-fg-tertiary uppercase tracking-widest2">{$cfg->tokenALabel}</dt>
+                        <dd><a href="{$cfg->blockExplorerUrl}/address/{$cfg->tokenA}" target="_blank" rel="noopener" class="text-fg-secondary hover:text-accent transition-colors">{$shortTokenA}</a></dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                        <dt class="text-fg-tertiary uppercase tracking-widest2">{$cfg->tokenBLabel}</dt>
+                        <dd><a href="{$cfg->blockExplorerUrl}/address/{$cfg->tokenB}" target="_blank" rel="noopener" class="text-fg-secondary hover:text-accent transition-colors">{$shortTokenB}</a></dd>
+                    </div>
+                </dl>
+            </div>
+
+            {if !$cfg->hasUnprotectedPool()}
+                <div class="border border-caution-500/30 rounded-sm bg-caution-500/5 p-4 text-[12px] text-caution-500 font-mono leading-[1.5]">
+                    Unprotected pool not yet seeded. Toggle disabled until SeedUnprotectedPool deploys.
+                </div>
+            {/if}
+        </aside>
+    </div>
+</section>
+{/block}
