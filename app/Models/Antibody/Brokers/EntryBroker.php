@@ -166,6 +166,18 @@ class EntryBroker extends Broker
     }
 
     /**
+     * Antibodies created on or after the given ISO timestamp. Drives the
+     * "+N in 1h" sub-stat on the landing page tile.
+     */
+    public function countCreatedSince(string $sinceIso): int
+    {
+        return (int) $this->selectValue(
+            "SELECT count(*) FROM antibody.entry WHERE created_at >= ?::timestamptz",
+            [$sinceIso]
+        );
+    }
+
+    /**
      * Filtered list for the explorer.
      *
      * @return stdClass[]

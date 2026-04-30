@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controllers\Web;
 
+use App\Models\Antibody\Brokers\EntryBroker;
 use App\Models\Antibody\Services\EntryService;
 use App\Models\Demo\Brokers\HeartbeatBroker;
+use App\Models\Event\Brokers\BlockEventBroker;
 use App\Models\Network\Services\StatService;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;
@@ -42,6 +44,13 @@ final class HomeController extends Controller
         }
         // agents_online is a live demo metric, not a snapshot — read directly.
         $tiles['agents_online'] = (new HeartbeatBroker())->countOnline();
+
+        // 1h deltas for the Antibodies-active and Value-protected tiles.
+        // Computed server-side so the landing page can stay AJAX-free; same
+        // shape as the dashboard's "+X in 1h" sub-stat for visual parity.
+        $oneHourAgo = gmdate('Y-m-d\TH:i:s\Z', strtotime('-1 hour'));
+        $tiles['antibodies_published_1h'] = (new EntryBroker())->countCreatedSince($oneHourAgo);
+        $tiles['value_protected_1h'] = (new BlockEventBroker())->sumValueProtectedSince($oneHourAgo);
 
         return $this->render('home', [
             'topAntibodies' => $topAntibodies,

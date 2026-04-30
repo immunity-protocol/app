@@ -120,6 +120,8 @@ window.addEventListener('DOMContentLoaded', () => {
         {var $earningsTotal = (float) ($tiles['publisher_earnings_total_usdc'] ?? 0)}
         {var $llmSaved = (int) ($tiles['llm_calls_saved'] ?? 0)}
         {var $valueProtected = (float) ($tiles['value_protected_usd'] ?? 0)}
+        {var $antibodiesPublished1h = (int) ($tiles['antibodies_published_1h'] ?? 0)}
+        {var $valueProtected1h = (float) ($tiles['value_protected_1h'] ?? 0)}
 
         {* Compact label, mirrors partials/nav.latte so the landing-page tile
            and the header pill agree at any magnitude. *}
@@ -128,6 +130,12 @@ window.addEventListener('DOMContentLoaded', () => {
             : ($valueProtected >= 1_000
                 ? '$' . round($valueProtected / 1_000) . 'K'
                 : '$' . number_format($valueProtected, 0))}
+
+        {var $valueProtected1hLabel = $valueProtected1h >= 1_000_000
+            ? '$' . rtrim(rtrim(number_format($valueProtected1h / 1_000_000, 1), '0'), '.') . 'M'
+            : ($valueProtected1h >= 1_000
+                ? '$' . round($valueProtected1h / 1_000) . 'K'
+                : '$' . number_format($valueProtected1h, 0))}
 
         {var $earningsLabel = $earningsTotal >= 1
             ? '$' . number_format($earningsTotal, 2)
@@ -152,6 +160,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="md:px-7 md:first:pl-0 md:border-r md:border-ink-line/60 md:last:border-r-0 md:last:pr-0">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Antibodies active</div>
                 <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{format('decimal', $antibodies, 0)}</div>
+                <div class="font-mono text-[11px] text-immune-500 tabular-nums mt-3">+{format('decimal', $antibodiesPublished1h, 0)} <span class="text-fg-tertiary">in 1h</span></div>
             </div>
 
             <a href="/publishers" class="md:px-7 md:border-r md:border-ink-line/60 group block hover:bg-ink-elevated/20 -mx-5 sm:mx-0 px-5 sm:px-0 md:px-7 py-5 md:py-0 transition-colors" title="See all network contributors">
@@ -175,6 +184,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="md:px-7 md:last:pr-0">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Value protected</div>
                 <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{$valueProtectedLabel}</div>
+                <div class="font-mono text-[11px] text-immune-500 tabular-nums mt-3">+{$valueProtected1hLabel} <span class="text-fg-tertiary">in 1h</span></div>
             </div>
 
         </div>
