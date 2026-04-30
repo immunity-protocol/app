@@ -113,10 +113,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <section class="max-w-[1400px] mx-auto px-5 sm:px-7 pt-10 pb-16">
 
-    {* ============== ACTIVITY FEED + AGENT LIST ==============
-       Activity feed sits on its own row at full width; the agent list
-       follows below, also full width and laid out as a responsive grid
-       so we use the horizontal space instead of a tall scroll column.
+    {* ============== ACTIVITY FEED + (MAP | AGENT LIST) ==============
+       Activity feed sits on its own row at full width.
+       Below it the propagation map (left, 1fr) sits next to the agent
+       list aside (right, 360px) — clicking a row in the list pulses
+       the matching node on the map.
        The Active-registry table that used to live underneath was
        removed because /antibodies covers the same surface in more
        depth — the dashboard should focus on live fleet behavior. *}
@@ -194,53 +195,70 @@ window.addEventListener('DOMContentLoaded', () => {
 
         </section>
 
-        {* Propagation map removed — see git history if you need to restore it.
-           Trivial revert: drop the activity feed section above back to the
-           bottom of the page, and uncomment the original block in the
-           preceding commit. *}
+        {* ============== MAP + AGENT LIST ==============
+           Map left (1fr), agent roster right (360px). Clicking an agent
+           row triggers a pulse on its node via window.__dashMap, which
+           is constructed in the {block head} script above. *}
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10">
 
-        {* ============== AGENT LIST ==============
-           Full demo fleet roster, full width, laid out as a responsive
-           grid so the page uses horizontal space instead of a tall
-           scroll. The dashboard activity poll updates each row in place
-           every 2s so dot color, last-seen, and 24h counters stay live. *}
-        <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 flex flex-col" data-agent-panel>
-            <header class="px-5 sm:px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-2 shrink-0">
-                <div class="flex items-center gap-2.5">
-                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-immune-500">Agent fleet</span>
-                </div>
-                <span class="font-mono text-[10px] text-fg-dim"><span data-agent-online-count>0</span> / <span data-agent-total-count>{count($agents ?? [])}</span> online</span>
-            </header>
-            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-1 p-3 sm:p-4" data-agent-list>
-            {if count($agents ?? []) === 0}
-                <li class="col-span-full px-5 py-8 text-center font-mono text-[11px] text-fg-dim italic">
-                    No agents heartbeating. Start the demo fleet to populate this list.
-                </li>
-            {/if}
-            {foreach $agents ?? [] as $a}
-                {var $online = (bool) $a->online}
-                {var $roleUpper = strtoupper((string) $a->role)}
-                {var $roleTone = match($roleUpper) {
-                    'TRADER'    => 'text-fg-secondary',
-                    'WOLF'      => 'text-threat-300',
-                    'PUBLISHER' => 'text-accent-soft',
-                    'WATCHER'   => 'text-immune-300',
-                    'SCENARIO'  => 'text-caution-300',
-                    default     => 'text-fg-tertiary',
-                }}
-                {var $displayName = trim((string) $a->display_name) !== '' ? $a->display_name : $a->agent_id}
-                <li data-agent-row="{$a->agent_id}" class="px-3 py-2 flex items-center gap-3 rounded-sm hover:bg-ink-elevated/40 transition-colors cursor-pointer">
-                    <span class="inline-flex h-1.5 w-1.5 rounded-full shrink-0 {if $online}bg-immune-500{else}bg-fg-dim{/if}" aria-hidden="true" data-agent-dot></span>
-                    <span class="font-mono text-[11.5px] text-fg-primary truncate flex-1 min-w-0" data-agent-name>{$displayName}</span>
-                    <span class="font-mono text-[9px] uppercase tracking-widest2 {$roleTone} shrink-0" data-agent-role>{$roleUpper}</span>
-                    <span class="font-mono text-[10.5px] text-fg-secondary tabular-nums shrink-0 w-8 text-right" data-agent-checks title="Checks in the last 24h">{(int) $a->checks_24h}</span>
-                    <span class="font-mono text-[10.5px] tabular-nums shrink-0 w-8 text-right {if $a->blocks_24h > 0}text-threat-300{else}text-fg-dim{/if}" data-agent-blocks title="Blocks in the last 24h">{(int) $a->blocks_24h}</span>
-                    <span class="font-mono text-[10px] text-fg-dim shrink-0 w-14 text-right" data-agent-seen>{format('timeago', $a->last_seen)}</span>
-                </li>
-            {/foreach}
-            </ul>
-        </section>
+            {* Propagation map *}
+            <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-5 sm:p-7 flex flex-col gap-4">
+                <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Propagation map</span>
+                        <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 text-immune-500">
+                            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+                            60 nodes
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">
+                        <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true"></span>Publisher</span>
+                        <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-immune-500" aria-hidden="true"></span>Receiver</span>
+                        <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-fg-dim" aria-hidden="true"></span>Offline</span>
+                    </div>
+                </header>
+                <div id="dash-map" class="relative w-full aspect-square max-w-[640px] mx-auto" aria-label="Live agent propagation map"></div>
+            </div>
+
+            {* Agent list aside — single-column scroll, paired with the map. *}
+            <aside class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 flex flex-col" data-agent-panel>
+                <header class="px-5 py-3 border-b border-ink-line/40 flex items-center justify-between gap-2 shrink-0">
+                    <div class="flex items-center gap-2.5">
+                        <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+                        <span class="font-mono text-[10px] uppercase tracking-widest2 text-immune-500">Agent fleet</span>
+                    </div>
+                    <span class="font-mono text-[10px] text-fg-dim"><span data-agent-online-count>0</span> / <span data-agent-total-count>{count($agents ?? [])}</span> online</span>
+                </header>
+                <ul class="divide-y divide-ink-line/30 overflow-y-auto max-h-[640px]" data-agent-list>
+                {if count($agents ?? []) === 0}
+                    <li class="px-5 py-8 text-center font-mono text-[11px] text-fg-dim italic">
+                        No agents heartbeating. Start the demo fleet to populate this list.
+                    </li>
+                {/if}
+                {foreach $agents ?? [] as $a}
+                    {var $online = (bool) $a->online}
+                    {var $roleUpper = strtoupper((string) $a->role)}
+                    {var $roleTone = match($roleUpper) {
+                        'TRADER'    => 'text-fg-secondary',
+                        'WOLF'      => 'text-threat-300',
+                        'PUBLISHER' => 'text-accent-soft',
+                        'WATCHER'   => 'text-immune-300',
+                        'SCENARIO'  => 'text-caution-300',
+                        default     => 'text-fg-tertiary',
+                    }}
+                    {var $displayName = trim((string) $a->display_name) !== '' ? $a->display_name : $a->agent_id}
+                    <li data-agent-row="{$a->agent_id}" class="px-5 py-2.5 flex items-center gap-3 hover:bg-ink-elevated/40 transition-colors cursor-pointer">
+                        <span class="inline-flex h-1.5 w-1.5 rounded-full shrink-0 {if $online}bg-immune-500{else}bg-fg-dim{/if}" aria-hidden="true" data-agent-dot></span>
+                        <span class="font-mono text-[11.5px] text-fg-primary truncate flex-1 min-w-0" data-agent-name>{$displayName}</span>
+                        <span class="font-mono text-[9px] uppercase tracking-widest2 {$roleTone} shrink-0" data-agent-role>{$roleUpper}</span>
+                        <span class="font-mono text-[10.5px] text-fg-secondary tabular-nums shrink-0 w-10 text-right" data-agent-checks title="Checks in the last 24h">{(int) $a->checks_24h}</span>
+                        <span class="font-mono text-[10.5px] tabular-nums shrink-0 w-10 text-right {if $a->blocks_24h > 0}text-threat-300{else}text-fg-dim{/if}" data-agent-blocks title="Blocks in the last 24h">{(int) $a->blocks_24h}</span>
+                        <span class="font-mono text-[10px] text-fg-dim shrink-0 w-14 text-right" data-agent-seen>{format('timeago', $a->last_seen)}</span>
+                    </li>
+                {/foreach}
+                </ul>
+            </aside>
+        </div>
     </div>
 
     {* The Active-registry table that used to live here was removed:
