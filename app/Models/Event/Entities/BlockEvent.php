@@ -15,7 +15,12 @@ class BlockEvent extends Entity
     public int $check_event_id;
     public int $entry_id;
     public string $agent_id;
-    public string $value_protected_usd;
+    // Nullable: the pricing overflow guard in MoralisPriceService returns
+    // null on tokenAmounts that would overflow `numeric(20,6)` — typical
+    // for `approve(MAX)` blocks where tokenAmount = 2^256-1. The block_event
+    // still records (count goes up, audit trail intact); the column stays
+    // NULL and the dashboard renders "-" instead of a phantom $99T figure.
+    public ?string $value_protected_usd = null;
     public ?string $tx_hash_attempt = null;
     public int $chain_id;
     public string $occurred_at;
