@@ -344,7 +344,7 @@ final class PlaygroundController extends Controller
     #[Get('/playground/mirror-status')]
     public function mirrorStatus(Request $request): Response
     {
-        $immId = (string) $request->parameter('immId', '');
+        $immId = (string) $request->query('immId', '');
         if (!preg_match('/^IMM-\d{4}-\d{4}$/', $immId)) {
             return Response::json(['error' => 'immId must look like IMM-YYYY-NNNN'], 400);
         }
@@ -396,7 +396,7 @@ final class PlaygroundController extends Controller
     #[Get('/playground/publisher-earnings')]
     public function publisherEarnings(Request $request): Response
     {
-        $address = (string) $request->parameter('address', '');
+        $address = (string) $request->query('address', '');
         if (!preg_match('/^0x[0-9a-fA-F]{40}$/', $address)) {
             return Response::json(['error' => 'address must be 0x-prefixed 20-byte hex'], 400);
         }
