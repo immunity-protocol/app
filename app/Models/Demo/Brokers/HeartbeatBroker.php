@@ -34,6 +34,25 @@ class HeartbeatBroker extends Broker
         return $out;
     }
 
+    /**
+     * Online agents in a single role, with display_name + last_seen.
+     * Used by playground card 09 (inject prompt) to populate its target
+     * dropdown without dragging the entire roster snapshot client-side.
+     *
+     * @return \stdClass[] rows: { agent_id, display_name, last_seen }
+     */
+    public function listOnlineByRole(string $role): array
+    {
+        return $this->select(
+            "SELECT agent_id, display_name, last_seen
+               FROM demo.agent_heartbeat
+              WHERE role = ?
+                AND last_seen >= now() - make_interval(secs => ?)
+           ORDER BY agent_id",
+            [$role, self::ONLINE_WINDOW_SECONDS]
+        );
+    }
+
     public function countOnline(): int
     {
         return (int) $this->selectValue(
