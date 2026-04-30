@@ -37,9 +37,9 @@ final class DexBlockController extends Controller
             $rpc = new JsonRpcClient($cfg->rpcUrl);
             $apiKey = (string) (getenv('MORALIS_API_KEY') ?: '');
             $moralis = new MoralisService($apiKey);
+            $db = Db::current();
             $cache = new TokenPriceCacheBroker($db);
             $prices = new MoralisPriceService($moralis, $cache);
-            $db = Db::current();
             $ingestor = new DexBlockIngestor($cfg, $rpc, $prices, $db);
             $result = $ingestor->ingest($txHash);
             return Response::json($result, 200);
