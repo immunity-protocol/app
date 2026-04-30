@@ -67,11 +67,15 @@ class CommandBroker extends Broker
      */
     public function recentAddressAntibodies(int $limit = 20): array
     {
+        // Postgres's `?` JSONB key-existence operator collides with PDO's
+        // parameter placeholder syntax — Zephyrus binds `?` as a literal
+        // arg, not as the JSONB operator. Equivalent and PDO-safe: pull
+        // the field via `->>` and filter on IS NOT NULL.
         $rows = $this->select(
             "SELECT imm_id, primary_matcher->>'target' AS target
                FROM antibody.entry
               WHERE type = 'address' AND status = 'active'
-                AND primary_matcher ? 'target'
+                AND primary_matcher->>'target' IS NOT NULL
               ORDER BY id DESC
               LIMIT ?",
             [$limit]

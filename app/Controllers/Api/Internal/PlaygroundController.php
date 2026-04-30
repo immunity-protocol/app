@@ -249,7 +249,7 @@ final class PlaygroundController extends Controller
         // sit unread until next boot.
         $online = $this->heartbeats->listOnlineByRole('trader');
         $found = false;
-        foreach ($online as $a) { if ($a['agent_id'] === $target) { $found = true; break; } }
+        foreach ($online as $a) { if ($a->agent_id === $target) { $found = true; break; } }
         if (!$found) {
             return Response::json(['error' => "target_agent {$target} is not online"], 503);
         }
