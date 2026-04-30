@@ -121,6 +121,14 @@ window.addEventListener('DOMContentLoaded', () => {
         {var $llmSaved = (int) ($tiles['llm_calls_saved'] ?? 0)}
         {var $valueProtected = (float) ($tiles['value_protected_usd'] ?? 0)}
 
+        {* Compact label, mirrors partials/nav.latte so the landing-page tile
+           and the header pill agree at any magnitude. *}
+        {var $valueProtectedLabel = $valueProtected >= 1_000_000
+            ? '$' . rtrim(rtrim(number_format($valueProtected / 1_000_000, 1), '0'), '.') . 'M'
+            : ($valueProtected >= 1_000
+                ? '$' . round($valueProtected / 1_000) . 'K'
+                : '$' . number_format($valueProtected, 0))}
+
         {var $earningsLabel = $earningsTotal >= 1
             ? '$' . number_format($earningsTotal, 2)
             : '$' . rtrim(rtrim(number_format($earningsTotal, 4), '0'), '.')}
@@ -166,7 +174,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             <div class="md:px-7 md:last:pr-0">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Value protected</div>
-                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{format('money', $valueProtected)}</div>
+                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{$valueProtectedLabel}</div>
             </div>
 
         </div>
