@@ -86,10 +86,17 @@ class JsonRpcClient
             throw new RuntimeException("RPC non-JSON response from $method");
         }
         if (isset($decoded['error'])) {
-            $msg = is_array($decoded['error']) && isset($decoded['error']['message'])
-                ? $decoded['error']['message']
-                : json_encode($decoded['error']);
-            throw new RuntimeException("RPC error from $method: $msg");
+            $err = $decoded['error'];
+            $msg = is_array($err) && isset($err['message']) ? $err['message'] : json_encode($err);
+            // Include the `data` payload when present. Reverts on eth_call
+            // surface the custom-error selector here, and DexBlockIngestor's
+            // probeRevertData() regex-extracts it from the thrown message
+            // to recover the hook's TokenBlocked / SenderBlocked / OriginBlocked.
+            // Public Sepolia nodes (e.g. publicnode.com) keep `data` on the
+            // error object rather than concatenating it into `message`.
+            $data = is_array($err) && isset($err['data']) ? $err['data'] : null;
+            $tail = is_string($data) && $data !== '' ? " data=$data" : '';
+            throw new RuntimeException("RPC error from $method: $msg$tail");
         }
         return $decoded['result'] ?? null;
     }
