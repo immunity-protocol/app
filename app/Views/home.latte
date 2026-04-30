@@ -399,9 +399,9 @@ window.addEventListener('DOMContentLoaded', () => {
   <span class="text-fg-dim italic">// Defaults to "deny" if not provided.</span>
   onEscalate<span class="text-fg-tertiary">:</span> <span class="text-threat-300">async</span> <span class="text-fg-tertiary">(</span>verdict<span class="text-fg-tertiary">)</span> <span class="text-fg-tertiary">=&gt;</span> <span class="text-fg-tertiary">{</span>
     <span class="text-threat-300">return</span> <span class="text-threat-300">await</span> <span class="text-accent-soft">notifyOperator</span><span class="text-fg-tertiary">({</span>
-      antibody<span class="text-fg-tertiary">:</span> verdict<span class="text-fg-tertiary">.</span>antibodies<span class="text-fg-tertiary">[</span><span class="text-accent-soft">0</span><span class="text-fg-tertiary">],</span>
+      antibody<span class="text-fg-tertiary">:</span> verdict<span class="text-fg-tertiary">.</span>matched<span class="text-fg-tertiary">[</span><span class="text-accent-soft">0</span><span class="text-fg-tertiary">],</span>
       confidence<span class="text-fg-tertiary">:</span> verdict<span class="text-fg-tertiary">.</span>confidence<span class="text-fg-tertiary">,</span>
-      explanation<span class="text-fg-tertiary">:</span> verdict<span class="text-fg-tertiary">.</span>explanation<span class="text-fg-tertiary">,</span>
+      reason<span class="text-fg-tertiary">:</span> verdict<span class="text-fg-tertiary">.</span>reason<span class="text-fg-tertiary">,</span>
     <span class="text-fg-tertiary">});</span>
   <span class="text-fg-tertiary">},</span>
 
@@ -457,6 +457,42 @@ window.addEventListener('DOMContentLoaded', () => {
                 </a>
             </div>
 
+        </div>
+
+        {* Cost strip: real numbers from the live demo fleet's recent publishes
+           (Galileo testnet @ 4 gwei). Mainnet pricing follows the same gas
+           economics so the relative magnitudes stay valid; only the absolute
+           USD shifts with the OG token price. Three tiles match the visual
+           cadence of the "01 · Network status" strip above. *}
+        <div class="mt-16 pt-10 border-t border-ink-line/60">
+            <div class="flex items-baseline justify-between gap-4 mb-7">
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Costs on 0G mainnet</div>
+                <div class="font-mono text-[10.5px] text-fg-dim hidden sm:block">measured on Galileo · 4 gwei</div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-y-10 sm:gap-0">
+                <div class="sm:px-7 sm:first:pl-0 sm:border-r sm:border-ink-line/60">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Cache hit (Tier-1)</div>
+                    <div class="font-display text-[44px] font-light tracking-tighter text-immune-500 leading-none tabular-nums">~$0</div>
+                    <div class="font-mono text-[11px] text-fg-tertiary mt-3">99% of agent checks <span class="text-fg-dim">(off-chain, axl-pubsub)</span></div>
+                </div>
+
+                <div class="sm:px-7 sm:border-r sm:border-ink-line/60">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">On-chain check</div>
+                    <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">~$0.0001</div>
+                    <div class="font-mono text-[11px] text-fg-tertiary mt-3">per protected swap <span class="text-fg-dim">(~30k extra gas)</span></div>
+                </div>
+
+                <div class="sm:px-7 sm:last:pr-0">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Publish antibody</div>
+                    <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">~$0.0005</div>
+                    <div class="font-mono text-[11px] text-fg-tertiary mt-3">per ADDRESS antibody <span class="text-fg-dim">(~248k gas)</span></div>
+                </div>
+            </div>
+
+            <p class="font-mono text-[11px] text-fg-dim mt-7 leading-[1.6] max-w-[640px]">
+                Mainnet pricing follows the same gas economics; multiply by your live gas price. Publisher stakes 1 USDC for 72h, refunded on expiry or rolled into rewards on a match.
+            </p>
         </div>
     </div>
 </section>
