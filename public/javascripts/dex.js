@@ -367,6 +367,13 @@ async function swap() {
         setResult('progress', 'Submitting swap...');
         const router = new ethers.Contract(cfg.swapRouterAddress, V4_ROUTER_ABI, state.signer);
         const deadline = Math.floor(Date.now() / 1000) + 600;
+        // Hard-code a gas limit so ethers / MetaMask skip eth_estimateGas.
+        // Without this, the wallet's pre-flight simulation reverts on the
+        // protected pool when a flagged token is in play and the tx never
+        // gets broadcast — we want it to broadcast and revert on chain so
+        // (a) the user sees a real Etherscan link, and (b) the backend
+        // ingestor can verify the on-chain revert and increment the
+        // antibody's pool_reverts / value_protected counters.
         const tx = await router.swapExactTokensForTokens(
             amountIn,
             0n,
@@ -375,6 +382,7 @@ async function swap() {
             '0x',
             state.address,
             deadline,
+            { gasLimit: 500_000n },
         );
         const receipt = await tx.wait();
         setResult('success',
