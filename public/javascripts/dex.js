@@ -233,7 +233,20 @@ async function runQuote() {
 
     const fromAddr = tokenAddr(state.fromToken);
     const zeroForOne = fromAddr.toLowerCase() === cfg.currency0.toLowerCase();
-    const poolKey = activePoolKey();
+
+    // Quote against the no-hook variant of the pool key: the AMM math is
+    // identical between the protected and unprotected pools (same reserves,
+    // same fee, same tick spacing) — the hook only decides allow/block, it
+    // never changes the price. Static-calling through the live hook would
+    // revert when the user tries to quote a flagged token, leaving the "To
+    // (estimated)" field stuck on `~` even though the swap math is fine.
+    const poolKey = {
+        currency0: cfg.currency0,
+        currency1: cfg.currency1,
+        fee: cfg.fee,
+        tickSpacing: cfg.tickSpacing,
+        hooks: HOOK_ZERO,
+    };
 
     try {
         // Read-only provider: a public RPC works for static calls. Reuses the
@@ -254,9 +267,8 @@ async function runQuote() {
         outEl.classList.remove('text-fg-tertiary');
         outEl.classList.add('text-fg-primary');
     } catch (err) {
-        // Common cases: not enough liquidity, pool not initialized, hook
-        // rejected the simulated swap. Fall back to a tilde so the UI stays
-        // calm while the user adjusts the amount.
+        // Pool might not be initialized or RPC is having a moment. Fall back
+        // to a tilde so the UI stays calm while the user adjusts the amount.
         outEl.textContent = '~';
         outEl.classList.add('text-fg-tertiary');
         outEl.classList.remove('text-fg-primary');
@@ -265,19 +277,61 @@ async function runQuote() {
 
 // ---- Swap ------------------------------------------------------------------
 
+// Map our own selectors to a friendly label. Used both when a top-level
+// hook revert lands directly on the call and when we have to extract it
+// from a nested wrapper.
+const HOOK_ERROR_SELECTORS = (() => {
+    const map = {};
+    for (const name of ['TokenBlocked', 'SenderBlocked', 'OriginBlocked']) {
+        map[HOOK_ERROR_IFACE.getError(name).selector.toLowerCase()] = name;
+    }
+    return map;
+})();
+
+const FRIENDLY_LABEL = {
+    TokenBlocked:  'Immunity hook blocked the swap: token is on the registry',
+    SenderBlocked: 'Immunity hook blocked the swap: sender is on the registry',
+    OriginBlocked: 'Immunity hook blocked the swap: tx origin is on the registry',
+};
+
+function tryParseHookError(hex) {
+    try {
+        const parsed = HOOK_ERROR_IFACE.parseError(hex);
+        if (!parsed) return null;
+        const friendly = FRIENDLY_LABEL[parsed.name] ?? parsed.name;
+        const tokenArg = parsed.args[0];
+        return `${friendly} (${tokenArg})`;
+    } catch {
+        return null;
+    }
+}
+
 function decodeRevert(err) {
     const data = err?.data ?? err?.info?.error?.data ?? err?.error?.data;
     if (typeof data === 'string' && data.startsWith('0x')) {
-        try {
-            const parsed = HOOK_ERROR_IFACE.parseError(data);
-            if (parsed) {
-                return `${parsed.name}(${parsed.args.map((a) => String(a)).join(', ')})`;
-            }
-        } catch {}
+        // Best case: the call surfaced the hook's custom error directly.
+        const direct = tryParseHookError(data);
+        if (direct) return direct;
+
+        // Uniswap v4 wraps hook reverts in CustomRevert.WrappedError, which
+        // nests further wrappers before the original selector. Search the
+        // raw hex for any of our hook selectors and decode from there.
+        const stripped = data.slice(2).toLowerCase();
+        for (const sel of Object.keys(HOOK_ERROR_SELECTORS)) {
+            const needle = sel.slice(2);
+            const idx = stripped.indexOf(needle);
+            if (idx < 0) continue;
+            const slice = '0x' + stripped.slice(idx);
+            const nested = tryParseHookError(slice);
+            if (nested) return nested;
+        }
     }
     const msg = err?.shortMessage || err?.message || String(err);
     const m = msg.match(/(TokenBlocked|SenderBlocked|OriginBlocked)\([^)]*\)/);
-    if (m) return m[0];
+    if (m) {
+        const name = m[0].split('(')[0];
+        return FRIENDLY_LABEL[name] ?? m[0];
+    }
     return msg;
 }
 
