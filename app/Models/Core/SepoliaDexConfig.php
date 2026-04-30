@@ -17,6 +17,7 @@ final class SepoliaDexConfig
     public function __construct(
         public readonly int $chainId,
         public readonly string $rpcUrl,
+        public readonly string $probeRpcUrl,
         public readonly string $blockExplorerUrl,
         public readonly string $mirrorAddress,
         public readonly string $hookAddress,
@@ -42,6 +43,12 @@ final class SepoliaDexConfig
         return new self(
             chainId:                11155111,
             rpcUrl:                 getenv('SEPOLIA_RPC_URL')         ?: 'https://ethereum-sepolia-rpc.publicnode.com',
+            // Archive-enabled RPC used only by DexBlockIngestor::probeRevertData
+            // when re-running a failed swap at its original block. publicnode is
+            // state-pruning, so historical eth_call returns "state not available"
+            // and the hook's TokenBlocked / SenderBlocked / OriginBlocked never
+            // surface. drpc.org keeps full Sepolia archive on its free tier.
+            probeRpcUrl:            getenv('SEPOLIA_PROBE_RPC_URL')   ?: 'https://sepolia.drpc.org',
             blockExplorerUrl:       getenv('SEPOLIA_BLOCK_EXPLORER')  ?: 'https://sepolia.etherscan.io',
             mirrorAddress:          getenv('SEPOLIA_MIRROR_ADDRESS')  ?: '0x1be1Ec2F7E2230f9bB1Aa3d5589bB58F8DfD52c7',
             hookAddress:            getenv('SEPOLIA_HOOK_ADDRESS')    ?: '0xd3335F3d69e97C314350EDA63fB5Ba0163Dd0080',

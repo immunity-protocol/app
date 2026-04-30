@@ -35,12 +35,18 @@ final class DexBlockController extends Controller
         try {
             $cfg = SepoliaDexConfig::default();
             $rpc = new JsonRpcClient($cfg->rpcUrl);
+            // Separate archive-enabled client for the historical eth_call replay
+            // inside the ingestor. Reuse $rpc when the URLs match so we don't
+            // open a redundant connection in dev.
+            $probeRpc = $cfg->probeRpcUrl !== '' && $cfg->probeRpcUrl !== $cfg->rpcUrl
+                ? new JsonRpcClient($cfg->probeRpcUrl)
+                : $rpc;
             $apiKey = (string) (getenv('MORALIS_API_KEY') ?: '');
             $moralis = new MoralisService($apiKey);
             $db = Db::current();
             $cache = new TokenPriceCacheBroker($db);
             $prices = new MoralisPriceService($moralis, $cache);
-            $ingestor = new DexBlockIngestor($cfg, $rpc, $prices, $db);
+            $ingestor = new DexBlockIngestor($cfg, $rpc, $probeRpc, $prices, $db);
             $result = $ingestor->ingest($txHash);
             return Response::json($result, 200);
         } catch (Throwable $e) {
