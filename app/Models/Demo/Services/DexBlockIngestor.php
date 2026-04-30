@@ -36,6 +36,10 @@ final class DexBlockIngestor
     public function __construct(
         private readonly SepoliaDexConfig $cfg,
         private readonly JsonRpcClient $rpc,
+        // Separate (archive-enabled) client used only for the historical
+        // eth_call replay in probeRevertData(). The default $rpc points at a
+        // pruning public node which can't serve the original block's state.
+        private readonly JsonRpcClient $probeRpc,
         private readonly MoralisPriceService $prices,
         private readonly Database $db,
     ) {
@@ -210,7 +214,7 @@ final class DexBlockIngestor
     private function probeRevertData(array $callParams, string $blockHex): ?string
     {
         try {
-            $this->rpc->call('eth_call', [$callParams, $blockHex]);
+            $this->probeRpc->call('eth_call', [$callParams, $blockHex]);
             return null;
         } catch (Throwable $e) {
             $msg = $e->getMessage();
@@ -228,6 +232,45 @@ final class DexBlockIngestor
     {
         $hex = strtolower($hex);
         if (!str_starts_with($hex, '0x') || strlen($hex) < 10) {
+            return null;
+        }
+
+        // Fast path: revert data starts with one of our hook selectors.
+        $direct = $this->decodeHookErrorAt($hex);
+        if ($direct !== null) {
+            return $direct;
+        }
+
+        // Uniswap v4 wraps hook reverts in CustomRevert.WrappedError, which can
+        // nest further wrappers before the original 4-byte selector. Scan the
+        // raw hex for any of our hook selectors and decode at the first match.
+        // Mirrors the prefix-search approach used in public/javascripts/dex.js.
+        $body = substr($hex, 2);
+        foreach (array_keys($this->errorSelectorMap) as $selector) {
+            $needle = substr($selector, 2);
+            $idx = strpos($body, $needle);
+            if ($idx === false) {
+                continue;
+            }
+            $candidate = '0x' . substr($body, $idx);
+            $decoded = $this->decodeHookErrorAt($candidate);
+            if ($decoded !== null) {
+                return $decoded;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Decode a hex blob assumed to start with a hook-error selector. Returns
+     * null if the leading selector isn't one of ours or if the trailing args
+     * are too short to carry (target, keccakId).
+     *
+     * @return array{errorName: string, target: string, keccakId: string} | null
+     */
+    private function decodeHookErrorAt(string $hex): ?array
+    {
+        if (strlen($hex) < 10) {
             return null;
         }
         $selector = substr($hex, 0, 10);
