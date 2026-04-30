@@ -6,7 +6,7 @@ FROM php:8.4-apache-bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl unzip zip locales ca-certificates \
     libonig-dev libcurl4-openssl-dev libsqlite3-dev libpq-dev libicu-dev \
-    libxml2-dev zlib1g-dev libzip-dev libsodium-dev \
+    libxml2-dev zlib1g-dev libzip-dev libsodium-dev libgmp-dev \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
@@ -17,8 +17,10 @@ RUN locale-gen en_US.UTF-8 && update-locale
 # Composer.
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# PHP extensions.
-RUN docker-php-ext-install pdo_pgsql pgsql intl mbstring sodium zip opcache
+# PHP extensions. gmp is used by DexBlockIngestor::hexToDecimal to decode
+# 256-bit swap amounts without PHP's integer-overflow risk; bcmath is the
+# fallback path inside that helper.
+RUN docker-php-ext-install pdo_pgsql pgsql intl mbstring sodium zip opcache gmp bcmath
 
 # Production php.ini overrides (shared with the legacy image).
 COPY .flyio/php-production.ini /usr/local/etc/php/conf.d/zz-production.ini
