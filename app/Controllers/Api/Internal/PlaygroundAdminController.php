@@ -135,9 +135,11 @@ final class PlaygroundAdminController extends Controller
     /**
      * Card 8 (Resilience test). Hard-kills N random trader containers.
      *
-     * Requires the web container to have access to the docker socket
-     * (mounted at /var/run/docker.sock). When that's not available, returns
-     * a 501 with the command the operator can run manually instead.
+     * Local mode: shells out to `docker kill` against the docker-compose
+     * fleet. Prod mode (FLY_APP_NAME set): the fleet runs on a separate
+     * Fly machine and is not reachable from this container's shell, so
+     * we return a clean 200 explaining the constraint instead of a scary
+     * 501. The local demo path is unchanged.
      */
     #[Post('/playground/admin/resilience-test')]
     public function resilienceTest(Request $request): Response
@@ -146,6 +148,14 @@ final class PlaygroundAdminController extends Controller
         $count = (int) $body->get('count', 5);
         if ($count < 1 || $count > 10) {
             return Response::json(['error' => 'count must be 1..10'], 400);
+        }
+
+        if (getenv('FLY_APP_NAME') !== false && getenv('FLY_APP_NAME') !== '') {
+            return Response::json([
+                'mode'  => 'prod',
+                'note'  => 'Resilience kill is a local-fleet demonstration; the prod fleet runs on a separate Fly machine without an exposed kill API. Run the local docker-compose stack and re-trigger this card to see it live.',
+                'count' => $count,
+            ]);
         }
 
         $cmd = sprintf(
