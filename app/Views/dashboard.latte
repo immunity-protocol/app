@@ -114,15 +114,13 @@ window.addEventListener('DOMContentLoaded', () => {
 <section class="max-w-[1400px] mx-auto px-5 sm:px-7 pt-10 pb-16">
 
     {* ============== ACTIVITY FEED + AGENT LIST ==============
-       Activity feed (left, 1fr) replaces the previous propagation map —
-       the map looked great but produced no operator signal beyond what
-       the agent list already shows. The live activity table is the
-       primary "what is the fleet doing right now" surface and benefits
-       from sitting beside the agent roster. The old map markup is
-       intentionally left commented out below; the propagation-map.js
-       asset, the __dashMap JS handles, and the click-to-pulse wiring
-       around it are also no-ops now (kept in place for trivial revert). *}
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 mb-10">
+       Activity feed sits on its own row at full width; the agent list
+       follows below, also full width and laid out as a responsive grid
+       so we use the horizontal space instead of a tall scroll column.
+       The Active-registry table that used to live underneath was
+       removed because /antibodies covers the same surface in more
+       depth — the dashboard should focus on live fleet behavior. *}
+    <div class="space-y-10 mb-10">
 
         {* Live agent activity feed *}
         <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 flex flex-col">
@@ -202,24 +200,21 @@ window.addEventListener('DOMContentLoaded', () => {
            preceding commit. *}
 
         {* ============== AGENT LIST ==============
-           Full demo fleet roster, scrollable, server-rendered for first
-           paint. The dashboard activity poll updates each row in place
-           every 2s so dot color, last-seen, and 24h counters stay live
-           without losing the scroll position.
-
-           Click a row -> the corresponding node on the propagation map
-           pulses, so an operator can find any agent visually. *}
-        <aside class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 flex flex-col" data-agent-panel>
-            <header class="px-5 py-3 border-b border-ink-line/40 flex items-center justify-between gap-2 shrink-0">
+           Full demo fleet roster, full width, laid out as a responsive
+           grid so the page uses horizontal space instead of a tall
+           scroll. The dashboard activity poll updates each row in place
+           every 2s so dot color, last-seen, and 24h counters stay live. *}
+        <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 flex flex-col" data-agent-panel>
+            <header class="px-5 sm:px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-2 shrink-0">
                 <div class="flex items-center gap-2.5">
                     <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-                    <span class="font-mono text-[10px] uppercase tracking-widest2 text-immune-500">Agent fleet</span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-immune-500">Agent fleet</span>
                 </div>
                 <span class="font-mono text-[10px] text-fg-dim"><span data-agent-online-count>0</span> / <span data-agent-total-count>{count($agents ?? [])}</span> online</span>
             </header>
-            <ul class="divide-y divide-ink-line/30 overflow-y-auto max-h-[640px]" data-agent-list>
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-1 p-3 sm:p-4" data-agent-list>
             {if count($agents ?? []) === 0}
-                <li class="px-5 py-8 text-center font-mono text-[11px] text-fg-dim italic">
+                <li class="col-span-full px-5 py-8 text-center font-mono text-[11px] text-fg-dim italic">
                     No agents heartbeating. Start the demo fleet to populate this list.
                 </li>
             {/if}
@@ -235,103 +230,25 @@ window.addEventListener('DOMContentLoaded', () => {
                     default     => 'text-fg-tertiary',
                 }}
                 {var $displayName = trim((string) $a->display_name) !== '' ? $a->display_name : $a->agent_id}
-                <li data-agent-row="{$a->agent_id}" class="px-5 py-2.5 flex items-center gap-3 hover:bg-ink-elevated/40 transition-colors cursor-pointer">
+                <li data-agent-row="{$a->agent_id}" class="px-3 py-2 flex items-center gap-3 rounded-sm hover:bg-ink-elevated/40 transition-colors cursor-pointer">
                     <span class="inline-flex h-1.5 w-1.5 rounded-full shrink-0 {if $online}bg-immune-500{else}bg-fg-dim{/if}" aria-hidden="true" data-agent-dot></span>
                     <span class="font-mono text-[11.5px] text-fg-primary truncate flex-1 min-w-0" data-agent-name>{$displayName}</span>
                     <span class="font-mono text-[9px] uppercase tracking-widest2 {$roleTone} shrink-0" data-agent-role>{$roleUpper}</span>
-                    <span class="font-mono text-[10.5px] text-fg-secondary tabular-nums shrink-0 w-10 text-right" data-agent-checks title="Checks in the last 24h">{(int) $a->checks_24h}</span>
-                    <span class="font-mono text-[10.5px] tabular-nums shrink-0 w-10 text-right {if $a->blocks_24h > 0}text-threat-300{else}text-fg-dim{/if}" data-agent-blocks title="Blocks in the last 24h">{(int) $a->blocks_24h}</span>
+                    <span class="font-mono text-[10.5px] text-fg-secondary tabular-nums shrink-0 w-8 text-right" data-agent-checks title="Checks in the last 24h">{(int) $a->checks_24h}</span>
+                    <span class="font-mono text-[10.5px] tabular-nums shrink-0 w-8 text-right {if $a->blocks_24h > 0}text-threat-300{else}text-fg-dim{/if}" data-agent-blocks title="Blocks in the last 24h">{(int) $a->blocks_24h}</span>
                     <span class="font-mono text-[10px] text-fg-dim shrink-0 w-14 text-right" data-agent-seen>{format('timeago', $a->last_seen)}</span>
                 </li>
             {/foreach}
             </ul>
-        </aside>
+        </section>
     </div>
 
-    {* ============== ACTIVE REGISTRY ==============
-       Latest 10 antibodies with per-row stats (block_count, value_protected,
-       last_block_at). Server-rendered for first paint;
-       /api/v1/dashboard/activity poll keeps it live in subsequent ticks. *}
-
-    <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
-
-        <header class="px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Active registry</span>
-                <span class="font-mono text-[10px] text-fg-dim">latest 10 published</span>
-            </div>
-            <a href="/antibodies" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-secondary hover:text-accent transition-colors inline-flex items-center gap-1.5">
-                Browse all
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
-            </a>
-        </header>
-
-        <table class="w-full" data-registry-table>
-            <thead>
-                <tr class="border-b border-ink-line/40 bg-ink-sunken/30">
-                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-7 pr-4 py-3">IMM ID</th>
-                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3">Type</th>
-                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-6 py-3">Reasoning</th>
-                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3">Publisher</th>
-                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3">Blocks</th>
-                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3">Value protected</th>
-                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-7 py-3">Last block</th>
-                </tr>
-            </thead>
-            <tbody data-registry-body>
-            {if count($recentAntibodies ?? []) === 0}
-                <tr><td colspan="7" class="px-7 py-8 text-center font-mono text-[11.5px] text-fg-dim">
-                    No antibodies published yet. Rows will appear as the fleet publishes new threats.
-                </td></tr>
-            {/if}
-            {foreach $recentAntibodies ?? [] as $r}
-                {var $typeUpper = strtoupper($r->type)}
-                {var $typeColor = match($typeUpper) {
-                    'ADDRESS'      => 'text-fg-secondary',
-                    'CALL_PATTERN' => 'text-caution-300',
-                    'BYTECODE'     => 'text-immune-300',
-                    'GRAPH'        => 'text-accent-soft',
-                    default        => 'text-threat-300',
-                }}
-                {var $reasoning = trim((string) ($r->redacted_reasoning ?? '')) !== ''
-                    ? trim((string) $r->redacted_reasoning)
-                    : 'no reasoning recorded'}
-                {var $reasoningTrunc = mb_strlen($reasoning) > 70 ? mb_substr($reasoning, 0, 68) . '…' : $reasoning}
-                {var $publisherDisplay = $r->publisher_ens
-                    ?? ('0x' . substr($r->publisher_hex, 0, 6) . '…' . substr($r->publisher_hex, -4))}
-                {var $isHexPub = $r->publisher_ens === null}
-                <tr data-registry-row="{$r->imm_id}" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors group align-middle">
-                    <td class="pl-7 pr-4 py-3 align-middle">
-                        <a href="/antibody/{$r->imm_id}" class="font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">{$r->imm_id}</a>
-                    </td>
-                    <td class="pr-4 py-3 align-middle">
-                        <span class="font-mono text-[10.5px] uppercase tracking-widest2 {$typeColor}">{$typeUpper}</span>
-                    </td>
-                    <td class="pr-6 py-3 max-w-[320px] align-middle">
-                        <span class="text-[12.5px] text-fg-secondary truncate inline-block max-w-full" title="{$reasoning}">{$reasoningTrunc}</span>
-                    </td>
-                    <td class="pr-4 py-3 align-middle">
-                        <span class="{$isHexPub ? 'font-mono text-[11.5px] text-fg-secondary' : 'text-[12.5px] text-fg-secondary'}">{$publisherDisplay}</span>
-                    </td>
-                    <td class="pr-4 py-3 text-right font-mono text-[12px] tabular-nums align-middle">
-                        <span class="text-threat-300">{format('decimal', $r->block_count, 0)}</span>
-                    </td>
-                    <td class="pr-4 py-3 text-right font-mono text-[12px] text-immune-500 tabular-nums align-middle">{format('money', $r->value_protected_usd)}</td>
-                    <td class="pr-7 py-3 text-right font-mono text-[11px] text-fg-tertiary tabular-nums align-middle">
-                        {if $r->last_block_at}{format('timeago', $r->last_block_at)}{else}-{/if}
-                    </td>
-                </tr>
-            {/foreach}
-            </tbody>
-        </table>
-
-    </section>
-
-    {* The agent activity feed used to live here, between the active-registry
-       table and the bottom of the page. It now sits beside the agent list
-       in the grid above, where it gets the prime real estate the propagation
-       map used to occupy. Single source of truth — the JS poller still binds
-       to [data-activity-body] so the live update wiring is unchanged. *}
+    {* The Active-registry table that used to live here was removed:
+       /antibodies (the explorer) covers the same surface in more depth,
+       and the dashboard now leads with live-fleet behavior. The
+       updateRegistry() helper in this page's JS no-ops gracefully when
+       its target tbody is missing, so the activity poll continues to
+       work for the agent list and activity feed only. *}
 
 </section>
 
