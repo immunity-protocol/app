@@ -142,11 +142,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 <table class="w-full">
                     <thead class="sticky top-0 bg-ink-sunken/90 backdrop-blur">
                         <tr class="border-b border-ink-line/40">
-                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 sm:pl-7 pr-4 py-3 w-20">When</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 sm:pl-7 pr-4 py-3 w-28">When</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-28">Agent</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-24">Type</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-5 sm:pr-7 py-3">Action</th>
-                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-5 sm:pr-7 py-3 w-24">Antibody</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-5 sm:pr-7 py-3 w-36">Antibody</th>
                         </tr>
                     </thead>
                     <tbody data-activity-body>
@@ -171,15 +171,15 @@ window.addEventListener('DOMContentLoaded', () => {
                             default => 'bg-accent-soft',
                         }}
                         <tr data-activity-row="{$a->id}" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle">
-                            <td class="pl-5 sm:pl-7 pr-4 py-2 align-middle font-mono text-[10.5px] text-fg-dim tabular-nums" data-activity-when="{$a->occurred_at}">{format('timeago', $a->occurred_at)}</td>
-                            <td class="pr-4 py-2 align-middle font-mono text-[11px] text-fg-secondary truncate">{$a->display_name}</td>
-                            <td class="pr-4 py-2 align-middle">
+                            <td class="pl-5 sm:pl-7 pr-4 py-2 align-top font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap" data-activity-when="{$a->occurred_at}">{format('timeago', $a->occurred_at)}</td>
+                            <td class="pr-4 py-2 align-top font-mono text-[11px] text-fg-secondary truncate">{$a->display_name}</td>
+                            <td class="pr-4 py-2 align-top">
                                 <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {$statusTone}">
                                     <span class="inline-flex h-1.5 w-1.5 rounded-full {$statusDot}"></span>{$a->action_type}
                                 </span>
                             </td>
-                            <td class="pr-5 sm:pr-7 py-2 align-middle text-[12px] text-fg-secondary truncate max-w-[420px]" title="{$a->action_summary}">{$a->action_summary}</td>
-                            <td class="pr-5 sm:pr-7 py-2 align-middle text-right font-mono text-[10.5px]">
+                            <td class="pr-5 sm:pr-7 py-2 align-top text-[12px] text-fg-secondary leading-snug whitespace-normal break-words">{$a->action_summary}</td>
+                            <td class="pr-5 sm:pr-7 py-2 align-top text-right font-mono text-[10.5px] whitespace-nowrap">
                                 {if $a->antibody_imm_id}
                                     <a href="/antibody/{$a->antibody_imm_id}" class="text-fg-secondary hover:text-accent transition-colors">{$a->antibody_imm_id}</a>
                                 {else}
@@ -544,21 +544,20 @@ window.addEventListener('DOMContentLoaded', () => {
     const tone = STATUS_TONE[status] || 'text-accent-soft';
     const dot = STATUS_DOT[status] || 'bg-accent-soft';
     const summary = String(a.action_summary || '');
-    const summaryTrunc = summary.length > 120 ? summary.slice(0, 118) + '…' : summary;
     const antibody = a.antibody_imm_id
-      ? '<a href="/antibody/' + escapeAttr(a.antibody_imm_id) + '" class="text-fg-secondary hover:text-accent transition-colors">' + escapeHtml(a.antibody_imm_id) + '</a>'
+      ? '<a href="/antibody/' + escapeAttr(a.antibody_imm_id) + '" class="text-fg-secondary hover:text-accent transition-colors whitespace-nowrap">' + escapeHtml(a.antibody_imm_id) + '</a>'
       : '<span class="text-fg-dim">-</span>';
     return (
-      '<tr data-activity-row="' + a.id + '" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle">' +
-        '<td class="pl-7 pr-4 py-2 align-middle font-mono text-[10.5px] text-fg-dim tabular-nums" data-activity-when="' + escapeAttr(a.occurred_at) + '">' + timeAgo(a.occurred_at) + '</td>' +
-        '<td class="pr-4 py-2 align-middle font-mono text-[11px] text-fg-secondary truncate">' + escapeHtml(a.display_name || a.agent_id) + '</td>' +
-        '<td class="pr-4 py-2 align-middle">' +
+      '<tr data-activity-row="' + a.id + '" class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top">' +
+        '<td class="pl-7 pr-4 py-2 align-top font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap" data-activity-when="' + escapeAttr(a.occurred_at) + '">' + timeAgo(a.occurred_at) + '</td>' +
+        '<td class="pr-4 py-2 align-top font-mono text-[11px] text-fg-secondary truncate">' + escapeHtml(a.display_name || a.agent_id) + '</td>' +
+        '<td class="pr-4 py-2 align-top">' +
           '<span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 ' + tone + '">' +
             '<span class="inline-flex h-1.5 w-1.5 rounded-full ' + dot + '"></span>' + escapeHtml(a.action_type || '') +
           '</span>' +
         '</td>' +
-        '<td class="pr-7 py-2 align-middle text-[12px] text-fg-secondary truncate max-w-[640px]" title="' + escapeAttr(summary) + '">' + escapeHtml(summaryTrunc) + '</td>' +
-        '<td class="pr-7 py-2 align-middle text-right font-mono text-[10.5px]">' + antibody + '</td>' +
+        '<td class="pr-7 py-2 align-top text-[12px] text-fg-secondary leading-snug whitespace-normal break-words">' + escapeHtml(summary) + '</td>' +
+        '<td class="pr-7 py-2 align-top text-right font-mono text-[10.5px] whitespace-nowrap">' + antibody + '</td>' +
       '</tr>'
     );
   }
