@@ -289,7 +289,13 @@
 // echo so the card itself shows the latest status without taking screen space.
 (function () {
   const POLL_MS = 1500;
-  const POLL_TIMEOUT_MS = 90000;
+  // Agent ambient tick is 15-90s jittered + Claude shim verifier can add
+  // a few seconds for novel-threat checks. 90s was tight enough that a
+  // single long tick + a Claude call timed out the UI even though the
+  // command eventually completed. 240s gives the worst case (90s tick +
+  // 90s next tick + Claude latency) breathing room without making "real
+  // failure" too slow to surface.
+  const POLL_TIMEOUT_MS = 240000;
   const modal = document.querySelector('[data-pg-modal]');
   const modalCardEl   = modal ? modal.querySelector('[data-pg-modal-card]')   : null;
   const modalTitleEl  = modal ? modal.querySelector('[data-pg-modal-title]')  : null;
@@ -375,8 +381,8 @@
       setEcho(echoPanel, `${data.result_status} · cmd #${data.id} → ${data.agent_id}`);
       await new Promise((res) => setTimeout(res, POLL_MS));
     }
-    modalSet(`<p class="font-mono text-[11px] text-caution-500">timeout - agent did not pick up the command in 90s</p>`, 'status');
-    setEcho(echoPanel, 'timeout (90s)', 'error');
+    modalSet(`<p class="font-mono text-[11px] text-caution-500">timeout - agent did not pick up the command in ${POLL_TIMEOUT_MS / 1000}s</p>`, 'status');
+    setEcho(echoPanel, `timeout (${POLL_TIMEOUT_MS / 1000}s)`, 'error');
   }
 
   function bind(card) {
