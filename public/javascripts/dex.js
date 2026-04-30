@@ -417,15 +417,24 @@ async function reportBlockedSwap(txHash) {
         });
         if (!r.ok) return;
         const data = await r.json();
-        if (data?.ingested) {
-            const result = el('[data-result]');
-            if (result) {
-                result.insertAdjacentHTML(
-                    'beforeend',
-                    `<div class="mt-2 pt-2 border-t border-current opacity-70 text-[11px]">Recorded $${Number(data.valueProtectedUsd).toLocaleString('en-US', { maximumFractionDigits: 2 })} as value protected.</div>`,
-                );
-            }
-        }
+        if (!data?.ingested) return;
+        // Replace the generic "transaction execution reverted" banner with
+        // the friendly hook error name the backend extracted from chain.
+        // ethers v6 doesn't surface custom-error data on a status=0 receipt,
+        // so client-side decodeRevert lands on a generic shortMessage even
+        // though the server can re-probe the historical state and recover
+        // the real selector via DexBlockIngestor::probeRevertData().
+        const result = el('[data-result]');
+        if (!result) return;
+        const friendly = {
+            TokenBlocked:  'Immunity hook blocked the swap: token is on the registry',
+            SenderBlocked: 'Immunity hook blocked the swap: sender is on the registry',
+            OriginBlocked: 'Immunity hook blocked the swap: tx origin is on the registry',
+        }[data.errorName] ?? `Swap reverted: ${data.errorName ?? 'unknown'}`;
+        const explorerLink = `<a href="${cfg.blockExplorerUrl}/tx/${txHash}" target="_blank" rel="noopener" class="underline underline-offset-4">View on Etherscan</a>`;
+        const explanation = '<br><span class="opacity-80">This is the hook doing its job. Toggle to the unprotected pool to compare.</span>';
+        const valueLine = `<div class="mt-2 pt-2 border-t border-current opacity-70 text-[11px]">Recorded $${Number(data.valueProtectedUsd).toLocaleString('en-US', { maximumFractionDigits: 2 })} as value protected. ${explorerLink}.</div>`;
+        setResult('error', `${friendly}.${explanation}${valueLine}`);
     } catch {
         // silent — UX shouldn't suffer if telemetry POST flakes.
     }
