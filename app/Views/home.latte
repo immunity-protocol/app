@@ -192,62 +192,66 @@ window.addEventListener('DOMContentLoaded', () => {
 </section>
 
 {* ============================================ 02 · HOW IT WORKS ===== *}
-<section class="relative bg-cream-base text-parch-primary">
-    <div class="absolute inset-0 dot-bg-light opacity-60 pointer-events-none" aria-hidden="true"></div>
+{* Section 04 (Architecture / "three layers") was merged in here so the layer
+   story is told through the flow, not as a separate inventory. Each step now
+   carries an explicit layer label (Detection / Verification / Trust / Speed). *}
+<section class="relative bg-ink-elevated/40 border-y border-ink-line/60">
+    <div class="absolute inset-0 dot-bg opacity-30 pointer-events-none" aria-hidden="true"></div>
 
     <div class="relative max-w-[1400px] mx-auto px-7 py-24">
 
         <div class="flex items-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-parch-tertiary tabular-nums">02</span>
-            <span class="font-mono text-[10.5px] text-parch-dim">·</span>
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-parch-tertiary">How it works</span>
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">02</span>
+            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">How it works</span>
         </div>
-        <h2 class="font-display text-[40px] font-light tracking-tighter leading-[1.05] mb-4 max-w-[720px]">
-            From threat to immunity in 30 seconds.
+        <h2 class="font-display text-[40px] font-light tracking-tighter text-fg-primary leading-[1.05] mb-4 max-w-[720px]">
+            Four steps. Four layers. One protocol.
         </h2>
-        <p class="text-parch-secondary text-[15.5px] leading-[1.65] max-w-[640px] mb-14">
-            One protocol, four steps, and the network is more resilient than it was a minute ago. No human in the loop.
+        <p class="text-fg-secondary text-[15.5px] leading-[1.65] max-w-[680px] mb-14">
+            Most checks resolve locally in microseconds. Only the 1% that's actually new round-trips to the TEE. When something blocks, every agent on the network knows about it within a second. No human in the loop.
         </p>
 
         {var $steps = [
-          ['n' => '01', 'title' => 'Agent encounters a threat',
-           'body' => 'An AI agent receives a suspicious tx, scraped content, or counterparty message and calls check() before acting.',
-           'icon' => 'cell-alert'],
-          ['n' => '02', 'title' => 'Detection runs in a TEE',
-           'body' => 'Encrypted context goes to a 0G Compute enclave running qwen-2.5-7b. Verdict comes back signed with attestation.',
-           'icon' => 'enclave'],
-          ['n' => '03', 'title' => 'Antibody is minted and propagated',
-           'body' => 'The publisher locks 1 USDC for 72h. The antibody hits 0G Chain for settlement and gossips across the AXL mesh.',
-           'icon' => 'radiate'],
-          ['n' => '04', 'title' => 'Every other agent is now immune',
-           'body' => 'Local caches update in under a second. The same attack is blocked everywhere — by SDK on agents, by hook on Uniswap pools.',
-           'icon' => 'mesh'],
+          ['n' => '01', 'layer' => 'Detection',    'title' => 'Agent calls check() before acting',
+           'body' => 'An AI agent passes any tx, scraped content, or counterparty message to immunity.check(). The Tier-1 cache resolves 99% of calls in under a millisecond — most of the time the network already knows.',
+           'icon' => 'shield-check'],
+          ['n' => '02', 'layer' => 'Verification', 'title' => 'Novel threats round-trip a TEE',
+           'body' => 'Cache miss + on-chain registry miss only — the slice that is actually new. Encrypted context goes to a 0G Compute enclave running qwen-2.5-7b. Verdict comes back signed with attestation.',
+           'icon' => 'lock-square'],
+          ['n' => '03', 'layer' => 'Trust',        'title' => 'Antibody mints on chain',
+           'body' => 'If the verdict says block, the SDK auto-publishes. The publisher locks 1 USDC for 72h on the on-chain Registry. Match rewards split 80/20 publisher / treasury — skin in the game by design.',
+           'icon' => 'database'],
+          ['n' => '04', 'layer' => 'Speed',        'title' => 'Every other agent is now immune',
+           'body' => 'The new antibody fans out across the AXL gossip mesh. Local caches update in well under a second. The same attack is blocked everywhere — by SDK on agents, by hook on Uniswap pools.',
+           'icon' => 'broadcast'],
         ]}
 
-        <div class="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-cream-line">
+        <div class="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-ink-line/60">
             {foreach $steps as $i => $s}
-                <article class="relative bg-cream-base hover:bg-cream-elevated transition-colors p-7 group">
+                <article class="relative bg-ink-base/80 hover:bg-ink-elevated/60 transition-colors p-7 group">
 
-                    {* Icon *}
-                    <div class="mb-6">
-                        {if $s['icon'] === 'cell-alert'}
-                            <svg width="36" height="36" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" class="text-parch-primary" aria-hidden="true"><circle cx="20" cy="24" r="11"/><circle cx="20" cy="24" r="3" fill="currentColor"/><path d="M36 12v10M36 28v0.5" stroke-linecap="round" stroke-width="2"/></svg>
-                        {elseif $s['icon'] === 'enclave'}
-                            <svg width="36" height="36" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" class="text-parch-primary" aria-hidden="true"><rect x="8" y="20" width="32" height="20" rx="2"/><path d="M14 20v-6a10 10 0 0 1 20 0v6"/><circle cx="24" cy="30" r="2.5"/></svg>
-                        {elseif $s['icon'] === 'radiate'}
-                            <svg width="36" height="36" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" class="text-parch-primary" aria-hidden="true"><circle cx="24" cy="24" r="3" fill="currentColor"/><circle cx="24" cy="24" r="9" opacity="0.65"/><circle cx="24" cy="24" r="15" opacity="0.35"/><circle cx="24" cy="24" r="21" opacity="0.18"/></svg>
+                    {* Tabler icon (24-viewbox, 1.4 stroke, currentColor). *}
+                    <div class="mb-6 text-fg-primary">
+                        {if $s['icon'] === 'shield-check'}
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06"/><path d="M15 19l2 2l4 -4"/></svg>
+                        {elseif $s['icon'] === 'lock-square'}
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12c0 -3.771 0 -5.657 1.172 -6.828c1.171 -1.172 3.057 -1.172 6.828 -1.172h2c3.771 0 5.657 0 6.828 1.172c1.172 1.171 1.172 3.057 1.172 6.828v0c0 3.771 0 5.657 -1.172 6.828c-1.171 1.172 -3.057 1.172 -6.828 1.172h-2c-3.771 0 -5.657 0 -6.828 -1.172c-1.172 -1.171 -1.172 -3.057 -1.172 -6.828v0z"/><path d="M9.5 11v-2.5a2.5 2.5 0 1 1 5 0v2.5"/><path d="M9 11h6v3a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2v-3z"/></svg>
+                        {elseif $s['icon'] === 'database'}
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 6c0 1.657 3.582 3 8 3s8 -1.343 8 -3s-3.582 -3 -8 -3s-8 1.343 -8 3"/><path d="M4 6v6c0 1.657 3.582 3 8 3s8 -1.343 8 -3v-6"/><path d="M4 12v6c0 1.657 3.582 3 8 3s8 -1.343 8 -3v-6"/></svg>
                         {else}
-                            <svg width="36" height="36" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" class="text-parch-primary" aria-hidden="true"><circle cx="24" cy="10" r="3"/><circle cx="10" cy="32" r="3"/><circle cx="38" cy="32" r="3"/><circle cx="17" cy="38" r="3"/><circle cx="31" cy="38" r="3"/><path d="M24 13l-12 17M24 13l12 17M12 33l5 4M36 33l-5 4M14 32h22"/></svg>
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.83 14.83a4 4 0 1 0 -5.66 0"/><path d="M12 12l0 9"/><path d="M16 16l4 -2"/><path d="M8 16l-4 -2"/><circle cx="12" cy="11" r="1"/></svg>
                         {/if}
                     </div>
 
-                    <div class="font-mono text-[10px] uppercase tracking-widest2 text-parch-tertiary mb-2 tabular-nums">Step {$s['n']}</div>
-                    <h3 class="font-display text-[19px] tracking-tighter text-parch-primary mb-3 leading-tight">{$s['title']}</h3>
-                    <p class="text-parch-secondary text-[13.5px] leading-[1.65]">{$s['body']}</p>
+                    <div class="font-mono text-[10px] uppercase tracking-widest2 text-accent-soft mb-2 tabular-nums">Layer · {$s['layer']}</div>
+                    <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-3 tabular-nums">Step {$s['n']}</div>
+                    <h3 class="font-display text-[19px] tracking-tighter text-fg-primary mb-3 leading-tight">{$s['title']}</h3>
+                    <p class="text-fg-secondary text-[13.5px] leading-[1.65]">{$s['body']}</p>
 
                     {* Connector arrow on desktop, between steps *}
                     {if $i < 3}
-                        <span class="hidden lg:flex absolute right-[-12px] top-12 w-6 h-6 items-center justify-center bg-cream-base text-parch-dim z-10" aria-hidden="true">
+                        <span class="hidden lg:flex absolute right-[-12px] top-12 w-6 h-6 items-center justify-center bg-ink-elevated/40 text-fg-dim z-10" aria-hidden="true">
                             <svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1 5h12m0 0L9 1m4 4L9 9"/></svg>
                         </span>
                     {/if}
@@ -321,47 +325,18 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
-{* ============================================ 04 · ARCHITECTURE ===== *}
-<section class="relative bg-ink-elevated/30 border-y border-ink-line/60">
-    <div class="relative max-w-[1400px] mx-auto px-7 py-24">
+{* Section 04 (Architecture / "three layers") was merged into 02. The layer
+   story is told inline through each step now. Subsequent section numbers
+   shift down by one (was 05–09, now 04–08). *}
 
-        <div class="flex items-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">04</span>
-            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Architecture</span>
-        </div>
-        <h2 class="font-display text-[34px] font-light tracking-tighter text-fg-primary leading-[1.05] mb-12 max-w-[720px]">
-            Three layers, one protocol.
-        </h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-[1080px]">
-            <div>
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Speed layer</div>
-                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Gossip in seconds</h3>
-                <p class="text-fg-secondary text-[14px] leading-[1.65]">Antibodies fan out across the AXL mesh through signed pub/sub topics. Every agent's local cache updates in well under one second.</p>
-            </div>
-            <div>
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Trust layer</div>
-                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Staked on chain</h3>
-                <p class="text-fg-secondary text-[14px] leading-[1.65]">Each publisher locks 1 USDC for 72 hours. Match rewards split 70 / 20 / 10. False positives are challengeable. Skin in the game by design.</p>
-            </div>
-            <div>
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Verification layer</div>
-                <h3 class="font-display text-[20px] tracking-tighter text-fg-primary mb-2">Sealed evidence</h3>
-                <p class="text-fg-secondary text-[14px] leading-[1.65]">Detection runs in a 0G Compute TEE. Verdicts carry attestation hashes. The original context is encrypted to the enclave key and never shown.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-{* ============================================ 05 · FOR DEVELOPERS ===== *}
+{* ============================================ 04 · FOR DEVELOPERS ===== *}
 <section class="relative bg-ink-base">
     <div class="absolute inset-0 dot-bg opacity-50 pointer-events-none" aria-hidden="true"></div>
 
     <div class="relative max-w-[1400px] mx-auto px-7 py-24">
 
         <div class="flex items-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">05</span>
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">04</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">For developers</span>
         </div>
@@ -504,7 +479,7 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
-{* ============================================ 06 · ANTIBODY TYPES ===== *}
+{* ============================================ 05 · ANTIBODY TYPES ===== *}
 {var $abTypes = [
   ['name' => 'ADDRESS',      'tone' => 'text-fg-secondary',
    'desc' => 'Blacklisted wallets and contracts',
@@ -527,7 +502,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <div class="relative max-w-[1400px] mx-auto px-7 py-24">
 
         <div class="flex items-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">06</span>
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">05</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Antibody types</span>
         </div>
@@ -574,16 +549,16 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </aside>
 
-{* ============================================ 07 · TWO-LAYER PROTECTION ===== *}
+{* ============================================ 06 · TWO-LAYER PROTECTION ===== *}
 <section class="relative bg-cream-base text-parch-primary">
     <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(180deg, rgba(245,241,232,0) 0%, rgba(216,208,189,0.25) 100%);" aria-hidden="true"></div>
 
     <div class="relative max-w-[1400px] mx-auto px-7 py-24">
 
         <div class="flex items-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-parch-tertiary tabular-nums">07</span>
-            <span class="font-mono text-[10.5px] text-parch-dim">·</span>
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-parch-tertiary">Two-layer protection</span>
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">06</span>
+            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Two-layer protection</span>
         </div>
         <h2 class="font-display text-[40px] font-light tracking-tighter leading-[1.05] mb-4 max-w-[720px]">
             Defends from both sides.
@@ -690,7 +665,7 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
-{* ============================================ 08 · BUILT ON ===== *}
+{* ============================================ 07 · BUILT ON ===== *}
 {var $sponsors = [
   ['name' => 'Gensyn AXL',   'role' => 'Speed layer',
    'desc' => 'Peer-to-peer antibody gossip via custom pub/sub.'],
@@ -710,7 +685,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <div class="relative max-w-[1400px] mx-auto px-7 py-24">
 
         <div class="flex items-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">08</span>
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">07</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Built on</span>
         </div>
@@ -744,14 +719,14 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
-{* ============================================ 09 · PUBLIC FEED ===== *}
+{* ============================================ 08 · PUBLIC FEED ===== *}
 <section class="relative bg-ink-elevated/30 border-t border-accent/30">
     <div class="absolute inset-0 dot-bg opacity-40 pointer-events-none" aria-hidden="true"></div>
 
     <div class="relative max-w-[820px] mx-auto px-7 py-24 text-center">
 
         <div class="flex items-center justify-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">09</span>
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">08</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Public feed</span>
         </div>
