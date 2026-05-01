@@ -259,6 +259,41 @@ window.addEventListener('DOMContentLoaded', () => {
             {/foreach}
         </div>
 
+        {* Partners sub-block. Used to be a standalone "Built on" section
+           but the partner story belongs with the architecture story —
+           merging keeps the narrative tight. Three columns at desktop;
+           stacks on mobile. Logos served from /assets/images/sponsors/. *}
+        {var $partners = [
+          ['name' => 'Gensyn AXL', 'role' => 'Speed layer',
+           'desc' => 'Peer-to-peer antibody gossip via custom pub/sub.',
+           'logo' => '/assets/images/sponsors/gensyn.jpg'],
+          ['name' => '0G Labs',    'role' => 'Trust · Verification · Detection layers',
+           'desc' => 'On-chain antibody Registry on 0G Chain. Sealed evidence on 0G Storage. Verifiable TEE inference on 0G Compute.',
+           'logo' => '/assets/images/sponsors/0g.svg'],
+          ['name' => 'Uniswap v4', 'role' => 'Protection layer',
+           'desc' => 'Pool-level hooks for collective LP defense.',
+           'logo' => '/assets/images/sponsors/uniswap.png'],
+        ]}
+        <div class="mt-20 pt-10 border-t border-ink-line/50">
+            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-7">
+                Partners <span class="text-fg-dim">· prizes at ETHGlobal Open Agents 2026</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-y-8 md:gap-x-10">
+                {foreach $partners as $p}
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center h-12">
+                            <img src="{$p['logo']}" alt="{$p['name']} logo" loading="lazy" class="max-h-10 w-auto object-contain"/>
+                        </div>
+                        <div>
+                            <div class="font-display text-[18px] tracking-tighter text-fg-primary leading-tight">{$p['name']}</div>
+                            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-accent-soft mt-1">{$p['role']}</div>
+                        </div>
+                        <p class="text-fg-secondary text-[13px] leading-[1.65]">{$p['desc']}</p>
+                    </div>
+                {/foreach}
+            </div>
+        </div>
+
     </div>
 </section>
 
@@ -686,64 +721,18 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
-{* ============================================ 07 · BUILT ON ===== *}
-{* Consolidated three 0G products under one row to avoid 60% of the wall
-   being the same brand mark. Logos sit in /public/assets/images/sponsors/. *}
-{var $sponsors = [
-  ['name' => 'Gensyn AXL',  'role' => 'Speed layer',
-   'desc' => 'Peer-to-peer antibody gossip via custom pub/sub.',
-   'logo' => '/assets/images/sponsors/gensyn.jpg'],
-  ['name' => '0G Labs',     'role' => 'Trust · Verification · Detection layers',
-   'desc' => 'On-chain antibody Registry on 0G Chain. Sealed evidence bundles on 0G Storage. Verifiable TEE inference on 0G Compute.',
-   'logo' => '/assets/images/sponsors/0g.svg'],
-  ['name' => 'Uniswap v4',  'role' => 'Protection layer',
-   'desc' => 'Pool-level hooks for collective LP defense.',
-   'logo' => '/assets/images/sponsors/uniswap.png'],
-]}
+{* Section 07 (Built on) was merged into section 02 — partner logos now
+   live alongside the four-step "How it works" so the architecture and the
+   partner story share one frame. Subsequent section renumbered 08 → 07. *}
 
-<section class="relative bg-ink-base">
-    <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(180deg, rgba(14,14,13,1) 0%, rgba(28,28,26,0.6) 100%);" aria-hidden="true"></div>
-
-    <div class="relative max-w-[1400px] mx-auto px-7 py-24">
-
-        <div class="flex items-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">07</span>
-            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Built on</span>
-        </div>
-        <h2 class="font-display text-[34px] font-light tracking-tighter text-fg-primary leading-[1.05] mb-4 max-w-[720px]">
-            What runs underneath.
-        </h2>
-        <p class="text-fg-secondary text-[14.5px] leading-[1.65] max-w-[640px] mb-12">
-            Each partner handles one job. Together they make the protocol fast, trustworthy, and verifiable end-to-end.
-        </p>
-
-        <div class="border-t border-ink-line/50">
-            {foreach $sponsors as $s}
-                <div class="grid grid-cols-[64px_1fr_1.6fr] md:grid-cols-[120px_1fr_1.6fr] items-center gap-6 py-6 border-b border-ink-line/40 hover:bg-ink-elevated/30 transition-colors">
-                    <div class="flex items-center justify-start h-12 md:h-14">
-                        <img src="{$s['logo']}" alt="{$s['name']} logo" loading="lazy" class="max-h-10 md:max-h-12 w-auto object-contain"/>
-                    </div>
-                    <div>
-                        <div class="font-display text-[18px] tracking-tighter text-fg-primary leading-tight">{$s['name']}</div>
-                        <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-accent-soft mt-1">{$s['role']}</div>
-                    </div>
-                    <p class="text-fg-secondary text-[13.5px] leading-[1.65]">{$s['desc']}</p>
-                </div>
-            {/foreach}
-        </div>
-
-    </div>
-</section>
-
-{* ============================================ 08 · PUBLIC FEED ===== *}
+{* ============================================ 07 · PUBLIC FEED ===== *}
 <section class="relative bg-ink-elevated/30 border-t border-accent/30">
     <div class="absolute inset-0 dot-bg opacity-40 pointer-events-none" aria-hidden="true"></div>
 
     <div class="relative max-w-[820px] mx-auto px-7 py-24 text-center">
 
         <div class="flex items-center justify-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">08</span>
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">07</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Public feed</span>
         </div>
