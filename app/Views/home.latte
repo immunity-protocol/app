@@ -261,34 +261,35 @@ window.addEventListener('DOMContentLoaded', () => {
 
         {* Partners sub-block. Used to be a standalone "Built on" section
            but the partner story belongs with the architecture story —
-           merging keeps the narrative tight. Three columns at desktop;
-           stacks on mobile. Logos served from /assets/images/sponsors/. *}
+           merging keeps the narrative tight. Stacked rows: logo + name +
+           role on the left, description on the right. Logos served from
+           /assets/images/sponsors/. *}
         {var $partners = [
-          ['name' => 'Gensyn AXL', 'role' => 'Speed layer',
-           'desc' => 'Peer-to-peer antibody gossip via custom pub/sub.',
-           'logo' => '/assets/images/sponsors/gensyn.jpg'],
           ['name' => '0G Labs',    'role' => 'Trust · Verification · Detection layers',
            'desc' => 'On-chain antibody Registry on 0G Chain. Sealed evidence on 0G Storage. Verifiable TEE inference on 0G Compute.',
            'logo' => '/assets/images/sponsors/0g.svg'],
+          ['name' => 'Gensyn AXL', 'role' => 'Speed layer',
+           'desc' => 'Peer-to-peer antibody gossip via custom pub/sub.',
+           'logo' => '/assets/images/sponsors/gensyn.jpg'],
           ['name' => 'Uniswap v4', 'role' => 'Protection layer',
            'desc' => 'Pool-level hooks for collective LP defense.',
            'logo' => '/assets/images/sponsors/uniswap.png'],
         ]}
         <div class="mt-20 pt-10 border-t border-ink-line/50">
             <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-7">
-                Partners <span class="text-fg-dim">· prizes at ETHGlobal Open Agents 2026</span>
+                Partners <span class="text-fg-dim">· ETHGlobal Open Agents 2026</span>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-y-8 md:gap-x-10">
+            <div class="border-t border-ink-line/40">
                 {foreach $partners as $p}
-                    <div class="flex flex-col gap-3">
-                        <div class="flex items-center h-12">
-                            <img src="{$p['logo']}" alt="{$p['name']} logo" loading="lazy" class="max-h-10 w-auto object-contain"/>
+                    <div class="grid grid-cols-[64px_1fr] md:grid-cols-[120px_1fr_1.6fr] items-center gap-6 py-6 border-b border-ink-line/40">
+                        <div class="flex items-center h-12 md:h-14">
+                            <img src="{$p['logo']}" alt="{$p['name']} logo" loading="lazy" class="max-h-10 md:max-h-12 w-auto object-contain"/>
                         </div>
                         <div>
                             <div class="font-display text-[18px] tracking-tighter text-fg-primary leading-tight">{$p['name']}</div>
                             <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-accent-soft mt-1">{$p['role']}</div>
                         </div>
-                        <p class="text-fg-secondary text-[13px] leading-[1.65]">{$p['desc']}</p>
+                        <p class="col-span-2 md:col-span-1 text-fg-secondary text-[13.5px] leading-[1.65]">{$p['desc']}</p>
                     </div>
                 {/foreach}
             </div>
