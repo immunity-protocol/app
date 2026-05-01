@@ -434,46 +434,66 @@ window.addEventListener('DOMContentLoaded', () => {
 
         </div>
 
-        {* Cost ladder: every tier the SDK can take through immunity.check()
-           and the publish step. Numbers come from real Galileo receipts —
-           Tier-1 is off-chain so $0 by construction; Tier-2 settlement is
-           ~49k gas on Registry.check(); TEE verify adds the 0G Compute fee
-           per qwen-2.5-7b call; address publish is ~248k gas. Mainnet
-           pricing follows the same gas economics. *}
+        {* Cost ladder. Five components, summed in the header total.
+           Protocol fee = 0.002 USDC per settled check (Registry.sol; treasury
+           keeps 100% on no-match, 20% on match). Settlement gas = ~49k on 0G
+           per real receipts. TEE compute = $0.00015/qwen-2.5-7b call (only on
+           novel checks). Publish gas = ~248k for ADDRESS antibodies. Cache
+           hits are off-chain so cost zero. Worst case sums all four on-chain
+           components for a novel check that auto-mints. *}
         <div class="mt-16 pt-10 border-t border-ink-line/60">
             <div class="flex items-baseline justify-between gap-4 mb-7">
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Costs on 0G mainnet</div>
                 <div class="font-mono text-[10.5px] text-fg-dim hidden sm:block">measured on Galileo · 4 gwei</div>
             </div>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-y-10 lg:gap-0">
-                <div class="lg:px-6 lg:first:pl-0 lg:border-r lg:border-ink-line/60">
-                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Cache hit (Tier-1)</div>
-                    <div class="font-display text-[40px] font-light tracking-tighter text-immune-500 leading-none tabular-nums">~$0</div>
-                    <div class="font-mono text-[10.5px] text-fg-tertiary mt-3 leading-[1.55]">99% of agent checks<br><span class="text-fg-dim">off-chain, axl-pubsub</span></div>
+            {* Headline: typical case + worst case so the eye lands on the magnitude first. *}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 sm:gap-x-10 mb-10 pb-10 border-b border-ink-line/60">
+                <div>
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Typical agent check (cache hit)</div>
+                    <div class="font-display text-[44px] font-light tracking-tighter text-immune-500 leading-none tabular-nums">~$0</div>
                 </div>
-
-                <div class="lg:px-6 lg:border-r lg:border-ink-line/60">
-                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Settled check</div>
-                    <div class="font-display text-[40px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">~$0.0001</div>
-                    <div class="font-mono text-[10.5px] text-fg-tertiary mt-3 leading-[1.55]">Registry.check() settlement<br><span class="text-fg-dim">~49k gas on 0G</span></div>
-                </div>
-
-                <div class="lg:px-6 lg:border-r lg:border-ink-line/60">
-                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">TEE verify (novel)</div>
-                    <div class="font-display text-[40px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">~$0.00025</div>
-                    <div class="font-mono text-[10.5px] text-fg-tertiary mt-3 leading-[1.55]">settlement + 0G Compute<br><span class="text-fg-dim">+$0.00015 per qwen-2.5-7b call</span></div>
-                </div>
-
-                <div class="lg:px-6 lg:last:pr-0">
-                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Publish antibody</div>
-                    <div class="font-display text-[40px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">~$0.0005</div>
-                    <div class="font-mono text-[10.5px] text-fg-tertiary mt-3 leading-[1.55]">ADDRESS antibody<br><span class="text-fg-dim">~248k gas + 1 USDC stake (refundable)</span></div>
+                <div>
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Worst case (novel + auto-publish)</div>
+                    <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">~$0.00285</div>
+                    <div class="font-mono text-[10.5px] text-fg-dim mt-2">protocol fee + gas + TEE + publish</div>
                 </div>
             </div>
 
-            <p class="font-mono text-[11px] text-fg-dim mt-7 leading-[1.6] max-w-[720px]">
-                Mainnet pricing follows the same gas economics; multiply by your live gas price. The 1 USDC publisher stake is locked 72h, refunded on expiry, or rolled into rewards on a match.
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-y-10 lg:gap-0">
+                <div class="lg:px-5 lg:first:pl-0 lg:border-r lg:border-ink-line/60">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Cache hit</div>
+                    <div class="font-display text-[32px] font-light tracking-tighter text-immune-500 leading-none tabular-nums">~$0</div>
+                    <div class="font-mono text-[10.5px] text-fg-tertiary mt-3 leading-[1.55]">99% of checks<br><span class="text-fg-dim">off-chain, axl-pubsub</span></div>
+                </div>
+
+                <div class="lg:px-5 lg:border-r lg:border-ink-line/60">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Protocol fee</div>
+                    <div class="font-display text-[32px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">$0.002</div>
+                    <div class="font-mono text-[10.5px] text-fg-tertiary mt-3 leading-[1.55]">USDC, per settled check<br><span class="text-fg-dim">treasury fee</span></div>
+                </div>
+
+                <div class="lg:px-5 lg:border-r lg:border-ink-line/60">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Settlement gas</div>
+                    <div class="font-display text-[32px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">~$0.0001</div>
+                    <div class="font-mono text-[10.5px] text-fg-tertiary mt-3 leading-[1.55]">Registry.check()<br><span class="text-fg-dim">~49k gas on 0G</span></div>
+                </div>
+
+                <div class="lg:px-5 lg:border-r lg:border-ink-line/60">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">TEE compute</div>
+                    <div class="font-display text-[32px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">+$0.00015</div>
+                    <div class="font-mono text-[10.5px] text-fg-tertiary mt-3 leading-[1.55]">novel checks only<br><span class="text-fg-dim">qwen-2.5-7b on 0G Compute</span></div>
+                </div>
+
+                <div class="lg:px-5 lg:last:pr-0">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Publish gas</div>
+                    <div class="font-display text-[32px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">~$0.0005</div>
+                    <div class="font-mono text-[10.5px] text-fg-tertiary mt-3 leading-[1.55]">auto-mint only<br><span class="text-fg-dim">~248k gas + 1 USDC stake</span></div>
+                </div>
+            </div>
+
+            <p class="font-mono text-[11px] text-fg-dim mt-7 leading-[1.6] max-w-[760px]">
+                Mainnet pricing follows the same gas economics; multiply by your live gas price. The 1 USDC publisher stake is locked 72h, refunded on expiry, or rolled into rewards on a match. On every settled check the treasury keeps 100% of the protocol fee on no-match, or 20% on match (publisher takes 80%).
             </p>
         </div>
     </div>
