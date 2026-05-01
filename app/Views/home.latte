@@ -687,17 +687,18 @@ window.addEventListener('DOMContentLoaded', () => {
 </section>
 
 {* ============================================ 07 · BUILT ON ===== *}
+{* Consolidated three 0G products under one row to avoid 60% of the wall
+   being the same brand mark. Logos sit in /public/assets/images/sponsors/. *}
 {var $sponsors = [
-  ['name' => 'Gensyn AXL',   'role' => 'Speed layer',
-   'desc' => 'Peer-to-peer antibody gossip via custom pub/sub.'],
-  ['name' => '0G Chain',     'role' => 'Trust layer',
-   'desc' => 'On-chain antibody registry, stake, and settlement.'],
-  ['name' => '0G Storage',   'role' => 'Verification layer',
-   'desc' => 'Sealed evidence bundles and public envelopes.'],
-  ['name' => '0G Compute',   'role' => 'Detection layer',
-   'desc' => 'Verifiable TEE inference for semantic threats.'],
-  ['name' => 'Uniswap v4',   'role' => 'Protection layer',
-   'desc' => 'Pool-level hooks for collective LP defense.'],
+  ['name' => 'Gensyn AXL',  'role' => 'Speed layer',
+   'desc' => 'Peer-to-peer antibody gossip via custom pub/sub.',
+   'logo' => '/assets/images/sponsors/gensyn.png'],
+  ['name' => '0G Labs',     'role' => 'Trust · Verification · Detection layers',
+   'desc' => 'On-chain antibody Registry on 0G Chain. Sealed evidence bundles on 0G Storage. Verifiable TEE inference on 0G Compute.',
+   'logo' => '/assets/images/sponsors/0g.svg'],
+  ['name' => 'Uniswap v4',  'role' => 'Protection layer',
+   'desc' => 'Pool-level hooks for collective LP defense.',
+   'logo' => '/assets/images/sponsors/uniswap.png'],
 ]}
 
 <section class="relative bg-ink-base">
@@ -714,15 +715,14 @@ window.addEventListener('DOMContentLoaded', () => {
             What runs underneath.
         </h2>
         <p class="text-fg-secondary text-[14.5px] leading-[1.65] max-w-[640px] mb-12">
-            Each sponsor handles one job. Together they make the protocol fast, trustworthy, and verifiable end-to-end.
+            Each partner handles one job. Together they make the protocol fast, trustworthy, and verifiable end-to-end.
         </p>
 
         <div class="border-t border-ink-line/50">
             {foreach $sponsors as $s}
                 <div class="grid grid-cols-[64px_1fr_1.6fr] md:grid-cols-[120px_1fr_1.6fr] items-center gap-6 py-6 border-b border-ink-line/40 hover:bg-ink-elevated/30 transition-colors">
-                    {* Placeholder mark *}
-                    <div class="flex items-center justify-center h-12 w-12 md:h-14 md:w-14 border border-ink-line/60 rounded-sm bg-ink-elevated/40 font-mono text-[10px] tracking-widest2 text-fg-dim uppercase select-none">
-                        {$s['name']|substr(0, 2)}
+                    <div class="flex items-center justify-start h-12 md:h-14">
+                        <img src="{$s['logo']}" alt="{$s['name']} logo" loading="lazy" class="max-h-10 md:max-h-12 w-auto object-contain"/>
                     </div>
                     <div>
                         <div class="font-display text-[18px] tracking-tighter text-fg-primary leading-tight">{$s['name']}</div>
@@ -732,10 +732,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 </div>
             {/foreach}
         </div>
-
-        <p class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim mt-6">
-            Sponsor logos pending. Placeholder marks shown above.
-        </p>
 
     </div>
 </section>
