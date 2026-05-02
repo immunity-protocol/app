@@ -43,41 +43,36 @@
                 </div>
             </div>
 
-            {* Column 2: Product *}
+            {* Column 2: Demo *}
+            <nav aria-label="Demo" class="hidden md:block">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Demo</div>
+                <ul class="space-y-2.5 text-[13px]">
+                    <li><a href="/dashboard" class="text-fg-secondary hover:text-fg-primary transition-colors">Dashboard</a></li>
+                    <li><a href="/dex" class="text-fg-secondary hover:text-fg-primary transition-colors">DEX</a></li>
+                    <li><a href="/playground" class="text-fg-secondary hover:text-fg-primary transition-colors">Playground</a></li>
+                    <li><a href="/fleet-activities" class="text-fg-secondary hover:text-fg-primary transition-colors">Fleet activity</a></li>
+                </ul>
+            </nav>
+
+            {* Column 3: Product *}
             <nav aria-label="Product" class="hidden md:block">
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Product</div>
                 <ul class="space-y-2.5 text-[13px]">
                     <li><a href="/antibodies" class="text-fg-secondary hover:text-fg-primary transition-colors">Antibodies</a></li>
-                    <li><a href="/dashboard" class="text-fg-secondary hover:text-fg-primary transition-colors">Dashboard</a></li>
-                    <li><a href="/dex" class="text-fg-secondary hover:text-fg-primary transition-colors">DEX demo</a></li>
-                    <li><a href="https://docs.immunity.xyz/sdk" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">SDK</a></li>
-                    <li><a href="https://docs.immunity.xyz/hook" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Hook</a></li>
-                    <li><a href="/feeds" class="text-fg-secondary hover:text-fg-primary transition-colors">Feeds</a></li>
+                    <li><a href="/publishers" class="text-fg-secondary hover:text-fg-primary transition-colors">Publisher leaderboard</a></li>
+                    <li><a href="/antibodies?q=&status%5B%5D=challenged&range=all&sev_min=&sev_max=&publisher=&per_page=30&page=1" class="text-fg-secondary hover:text-fg-primary transition-colors">Recent challenges</a></li>
                 </ul>
             </nav>
 
-            {* Column 3: Documentation *}
+            {* Column 4: Documentation *}
             <nav aria-label="Documentation" class="hidden md:block">
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Documentation</div>
                 <ul class="space-y-2.5 text-[13px]">
-                    <li><a href="https://docs.immunity.xyz/quickstart" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Quickstart</a></li>
-                    <li><a href="https://docs.immunity.xyz/concepts" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Concepts</a></li>
-                    <li><a href="https://docs.immunity.xyz/tokenomics" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Tokenomics</a></li>
-                    <li><a href="https://docs.immunity.xyz/antibody-types" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Antibody types</a></li>
-                    <li><a href="https://docs.immunity.xyz/spec" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Protocol spec</a></li>
-                    <li><a href="https://docs.immunity.xyz/api" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">API reference</a></li>
-                </ul>
-            </nav>
-
-            {* Column 4: Network *}
-            <nav aria-label="Network" class="hidden md:block">
-                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Network</div>
-                <ul class="space-y-2.5 text-[13px]">
-                    <li><a href="https://status.immunity.xyz" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Status page</a></li>
-                    <li><a href="https://docs.immunity.xyz/genesis" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Genesis seed sources</a></li>
-                    <li><a href="/publishers" class="text-fg-secondary hover:text-fg-primary transition-colors">Publisher leaderboard</a></li>
-                    <li><a href="/antibodies?status=challenged" class="text-fg-secondary hover:text-fg-primary transition-colors">Recent challenges</a></li>
-                    <li><a href="/dashboard" class="text-fg-secondary hover:text-fg-primary transition-colors">Block events</a></li>
+                    <li><a href="https://docs.immunity-protocol.com/getting-started/quickstart" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Quickstart</a></li>
+                    <li><a href="https://docs.immunity-protocol.com/getting-started/concepts-in-two-minutes" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Concepts in two minutes</a></li>
+                    <li><a href="https://docs.immunity-protocol.com/concepts/antibodies" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Antibodies</a></li>
+                    <li><a href="https://docs.immunity-protocol.com/concepts/settlement-and-tokenomics" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Settlement &amp; tokenomics</a></li>
+                    <li><a href="https://docs.immunity-protocol.com/network/attack-types-we-catch" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Attack types we catch</a></li>
                 </ul>
             </nav>
 
@@ -85,17 +80,15 @@
             <nav aria-label="Project" class="hidden md:block">
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Project</div>
                 <ul class="space-y-2.5 text-[13px]">
-                    <li><a href="https://docs.immunity.xyz/manifesto" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">About / manifesto</a></li>
-                    <li><a href="https://github.com/ophelios-studio" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">GitHub org</a></li>
-                    <li><a href="https://github.com/ophelios-studio/immunity-app/blob/main/LICENSE" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">License (MIT)</a></li>
-                    <li><a href="#built-on" class="text-fg-secondary hover:text-fg-primary transition-colors">Sponsor stack</a></li>
-                    <li><a href="https://ethglobal.com/showcase/immunity" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Hackathon submission</a></li>
+                    <li><a href="https://ophelios.com" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Ophelios</a></li>
+                    <li><a href="https://github.com/immunity-protocol" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">GitHub org</a></li>
+                    <li><a href="https://github.com/immunity-protocol/sdk/blob/main/LICENSE" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">License (MIT)</a></li>
+                    <li><a href="https://ethglobal.com/showcase/immunity-urob5" rel="noopener" class="text-fg-secondary hover:text-fg-primary transition-colors">Hackathon submission</a></li>
                 </ul>
             </nav>
         </div>
 
-        {* Bottom strip. On mobile each fact stacks on its own centered line.
-           On desktop they collapse into a 3-column flex with inline dots. *}
+        {* Bottom strip: copyright on the left, hackathon credit on the right. *}
         <div class="flex flex-col items-center text-center gap-2 md:flex-row md:items-center md:justify-between md:text-left md:gap-3 pt-6 text-[11.5px] text-fg-tertiary font-mono uppercase tracking-widest2">
 
             <div class="flex flex-col items-center md:flex-row md:items-center gap-2 md:gap-2 text-fg-dim">
@@ -109,16 +102,11 @@
                 <span>MIT licensed</span>
             </div>
 
-            <span class="inline-flex items-center gap-2">
+            <a href="https://ethglobal.com/showcase/immunity-urob5" rel="noopener"
+               class="inline-flex items-center gap-2 text-fg-tertiary hover:text-accent transition-colors md:text-right">
                 <span class="inline-flex h-1 w-1 rounded-full bg-accent" aria-hidden="true"></span>
-                <span class="text-fg-tertiary">Built for ETHGlobal Open Agents 2026</span>
-            </span>
-
-            <span class="text-fg-dim inline-flex items-center gap-3">
-                <span>v0.1.0</span>
-                <span class="inline-block h-3 w-px bg-ink-line" aria-hidden="true"></span>
-                <span class="normal-case tracking-normal text-[11px]">main</span>
-            </span>
+                <span>Built for ETHGlobal Open Agents 2026</span>
+            </a>
         </div>
 
     </div>
