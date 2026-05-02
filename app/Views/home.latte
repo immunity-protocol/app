@@ -287,7 +287,107 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 </section>
 
-{* ============================================ 03 · TOP ANTIBODIES ===== *}
+{* ============================================ 03 · TOKENOMICS ===== *}
+<section class="relative bg-ink-sunken border-y border-ink-line/60">
+    <div class="absolute inset-0 grid-bg opacity-15 pointer-events-none" aria-hidden="true"></div>
+
+    <div class="relative max-w-[1400px] mx-auto px-7 py-24">
+
+        <div class="flex items-center gap-3 mb-3">
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">03</span>
+            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Tokenomics</span>
+        </div>
+        <h2 class="font-display text-[40px] font-light tracking-tighter text-fg-primary leading-[1.05] mb-4 max-w-[860px]">
+            Cents on each call. <span class="text-accent italic font-light">Real USDC</span> on each save.
+        </h2>
+        <p class="text-fg-secondary text-[15.5px] leading-[1.65] max-w-[700px] mb-14">
+            Operators pay micro-fees per gated transaction. Publishers earn 80% of those fees on every match their antibody scores. Treasury keeps the registry running. Settled on-chain on 0G Galileo, no off-chain accounting.
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-6 md:gap-8 mb-12">
+
+            {* Operator costs *}
+            <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/30 p-7 md:p-8">
+                <div class="flex items-center gap-2.5 mb-6">
+                    <span class="inline-flex h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Operator costs</span>
+                </div>
+                <h3 class="font-display text-[24px] font-light tracking-tighter text-fg-primary leading-tight mb-6">Pay-as-you-call. No tiers.</h3>
+
+                <dl class="space-y-5">
+                    <div>
+                        <dt class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Per check()</dt>
+                        <dd class="flex items-baseline gap-2.5">
+                            <span class="font-mono text-[26px] tabular-nums text-fg-primary">$0.002</span>
+                            <span class="font-mono text-[11px] text-fg-tertiary">USDC</span>
+                        </dd>
+                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Flat fee on every <code class="font-mono text-[12px] text-fg-primary">immunity.check()</code> call. Tier-1 cache hits resolve locally before this fee applies.</p>
+                    </div>
+                    <div class="pt-4 border-t border-ink-line/40">
+                        <dt class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Publication fee</dt>
+                        <dd class="flex items-baseline gap-2.5">
+                            <span class="font-mono text-[26px] tabular-nums text-fg-primary">$0.0005</span>
+                            <span class="font-mono text-[11px] text-fg-tertiary">USDC, one-time</span>
+                        </dd>
+                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">When a TEE-verified novel threat mints a new antibody. Funds the on-chain registry write.</p>
+                    </div>
+                </dl>
+
+                <p class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim mt-7 pt-5 border-t border-ink-line/40">
+                    No subscription. No minimum. No volume discount tiers.
+                </p>
+            </div>
+
+            {* Publisher rewards *}
+            <div class="border border-immune-500/30 rounded-sm bg-immune-500/5 p-7 md:p-8">
+                <div class="flex items-center gap-2.5 mb-6">
+                    <span class="inline-flex h-2 w-2 rounded-full bg-immune-500" aria-hidden="true"></span>
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-immune-500">Publisher rewards</span>
+                </div>
+                <h3 class="font-display text-[24px] font-light tracking-tighter text-fg-primary leading-tight mb-6">The bigger the hit-rate, the bigger the payout.</h3>
+
+                <dl class="space-y-5">
+                    <div>
+                        <dt class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Match revenue</dt>
+                        <dd class="flex items-baseline gap-2.5">
+                            <span class="font-mono text-[26px] tabular-nums text-immune-500">80%</span>
+                            <span class="font-mono text-[11px] text-fg-tertiary">of every check fee that hits</span>
+                        </dd>
+                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Paid in USDC, on chain, by the Registry contract directly to the publisher's address. No claim step, no off-chain settlement.</p>
+                    </div>
+                    <div class="pt-4 border-t border-immune-500/20">
+                        <dt class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Treasury share</dt>
+                        <dd class="flex items-baseline gap-2.5">
+                            <span class="font-mono text-[20px] tabular-nums text-fg-secondary">20%</span>
+                            <span class="font-mono text-[11px] text-fg-tertiary">to network upkeep</span>
+                        </dd>
+                    </div>
+                    <div class="pt-4 border-t border-immune-500/20">
+                        <dt class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Publisher stake</dt>
+                        <dd class="flex items-baseline gap-2.5">
+                            <span class="font-mono text-[20px] tabular-nums text-fg-primary">1 USDC</span>
+                            <span class="font-mono text-[11px] text-fg-tertiary">locked 72h, slashable</span>
+                        </dd>
+                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Skin in the game. Bad publishes get challenged and slashed; quiet legitimate ones unlock and reclaim the stake.</p>
+                    </div>
+                </dl>
+
+                <p class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim mt-7 pt-5 border-t border-immune-500/20">
+                    Real money. <span class="text-immune-500">{$earningsLabel}</span> distributed so far.
+                </p>
+            </div>
+
+        </div>
+
+        <p class="text-fg-secondary text-[14px] sm:text-[15px] leading-[1.7] max-w-[820px]">
+            Operators pay cents to skip every retry of a known threat. Publishers earn USDC every time their pattern saves someone else from a loss. Treasury keeps the Registry funded. Every fee, reward, and stake settles on-chain on 0G Galileo, fully auditable, no off-chain accounting.
+        </p>
+
+    </div>
+</section>
+
+{* ============================================ 04 · TOP ANTIBODIES ===== *}
 {*
  * Top antibodies by cache-hit count, passed by HomeController::index() via
  * EntryService::findTopByCacheHits(10). Each row is a stdClass with the
@@ -300,7 +400,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="flex flex-wrap items-end justify-between gap-6 mb-8">
             <div>
                 <div class="flex items-center gap-3 mb-3">
-                    <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">03</span>
+                    <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">04</span>
                     <span class="font-mono text-[10.5px] text-fg-dim">·</span>
                     <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Top antibodies</span>
                     <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
@@ -354,14 +454,14 @@ window.addEventListener('DOMContentLoaded', () => {
    story is told inline through each step now. Subsequent section numbers
    shift down by one (was 05–09, now 04–08). *}
 
-{* ============================================ 04 · FOR DEVELOPERS ===== *}
+{* ============================================ 05 · FOR DEVELOPERS ===== *}
 <section class="relative bg-ink-elevated/40 border-y border-ink-line/60">
     <div class="absolute inset-0 dot-bg opacity-70 pointer-events-none" aria-hidden="true"></div>
 
     <div class="relative max-w-[1400px] mx-auto px-7 py-24">
 
         <div class="flex items-center gap-3 mb-3">
-            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">04</span>
+            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">05</span>
             <span class="font-mono text-[10.5px] text-fg-dim">·</span>
             <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">For developers</span>
         </div>
@@ -459,36 +559,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
         </div>
 
-        {* Pricing. Two numbers an integrator actually cares about: the fixed
-           per-check fee (every settled check) and the one-time publication
-           fee charged when their agent's TEE-verified novel threat auto-mints
-           a new antibody. The closer line frames the protocol cost as
-           insurance against a drained wallet. *}
-        <div class="mt-16 pt-10 border-t border-ink-line/60">
-            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-7">Pricing</div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-8 sm:gap-x-10">
-                <div>
-                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Per check</div>
-                    <div class="font-display text-[56px] font-light tracking-tighter text-immune-500 leading-none tabular-nums">$0.002</div>
-                    <div class="text-fg-secondary text-[13.5px] leading-[1.6] mt-4 max-w-[420px]">
-                        Flat USDC fee, paid by your agent every time it calls <code class="font-mono text-[12.5px] text-fg-primary">immunity.check()</code>.
-                    </div>
-                </div>
-
-                <div>
-                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Publication fee on new detection</div>
-                    <div class="font-display text-[56px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">$0.0005</div>
-                    <div class="text-fg-secondary text-[13.5px] leading-[1.6] mt-4 max-w-[420px]">
-                        One-time, only when a TEE-verified novel threat mints a brand-new antibody on chain.
-                    </div>
-                </div>
-            </div>
-
-            <p class="text-fg-secondary text-[14px] leading-[1.65] mt-10 max-w-[680px]">
-                Cheap insurance. <span class="text-fg-primary">$0.002</span> to know whether the address your agent is about to approve is on a sanctions list, a drainer registry, or a fresh kit address spotted minutes ago. Cheaper than the gas it would cost to revoke a single bad approval — and orders of magnitude cheaper than the wallet you're protecting.
-            </p>
-        </div>
     </div>
 </section>
 
