@@ -130,7 +130,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 1 - Test an address.
+     * Card 8 - Test an address.
      * Picks a random online trader, enqueues a `check_only` command targeting
      * the supplied address. Caller polls /commands/{id} for the result.
      */
@@ -197,36 +197,10 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 3 - Send a malicious payload. Picks a random online trader and
-     * runs `check_only` with the supplied text in the conversation context.
-     * SemanticMatcher catches known patterns; the TEE evaluates novel ones.
-     */
-    #[Post('/playground/check-payload')]
-    public function checkPayload(Request $request): Response
-    {
-        $body = $request->body();
-        $payloadText = trim((string) $body->get('payload_text', ''));
-        if ($payloadText === '') {
-            return Response::json(['error' => 'payload_text is required'], 400);
-        }
-        $this->heartbeats ??= new HeartbeatBroker();
-        $agentId = $this->heartbeats->pickRandomOnline('trader');
-        if ($agentId === null) {
-            return Response::json(['error' => 'no online traders'], 503);
-        }
-        $this->commands ??= new CommandBroker();
-        $commandId = $this->commands->enqueue($agentId, 'check_only', [
-            'payload_text' => $payloadText,
-            'amount_usd'   => 100,
-        ]);
-        return Response::json(['command_id' => $commandId, 'agent_id' => $agentId], 202);
-    }
-
-    /**
-     * Card 9 - Inject a prompt at a specific trader. Targets a chosen
-     * online trader (vs Card 3's random pick) and runs `inject_prompt`,
-     * which evaluates the payload as ctx.conversation. Lets a judge demo
-     * SDK 0.5 SEMANTIC auto-mint by typing a novel injection phrase.
+     * Card 1 - Inject a prompt at a specific trader. Targets a chosen
+     * online trader and runs `inject_prompt`, which evaluates the payload
+     * as ctx.conversation. Lets a judge demo SDK 0.5 SEMANTIC auto-mint by
+     * typing a novel injection phrase.
      */
     #[Post('/playground/inject-prompt')]
     public function injectPrompt(Request $request): Response
@@ -263,7 +237,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 4 - Trigger an attack. Operator picks the wolf, target address,
+     * Card 3 - Trigger an attack. Operator picks the wolf, target address,
      * amount, and method. The wolf agent runs an `attack` command which
      * builds the synthesised tx and calls check().
      */
@@ -298,7 +272,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 5 helper - list recent ADDRESS antibodies for the dropdown.
+     * Card 4 helper - list recent ADDRESS antibodies for the dropdown.
      */
     #[Get('/playground/recent-address-antibodies')]
     public function recentAddressAntibodies(): Response
@@ -309,7 +283,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 5 - Cache replay. Looks up the antibody's target address and fires
+     * Card 4 - Cache replay. Looks up the antibody's target address and fires
      * an `attack` against it from a random wolf. The AddressMatcher hits in
      * microseconds so the result panel emphasises `source: cache`.
      */
@@ -338,7 +312,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 6 (cross-chain mirror status). Returns the antibody summary plus
+     * Card 5 (cross-chain mirror status). Returns the antibody summary plus
      * per-chain mirror rows. No queue: pure read.
      */
     #[Get('/playground/mirror-status')]
@@ -380,7 +354,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 7 helper: top publishers (for the dropdown).
+     * Card 6 helper: top publishers (for the dropdown).
      */
     #[Get('/playground/top-publishers')]
     public function topPublishers(): Response
@@ -391,7 +365,7 @@ final class PlaygroundController extends Controller
     }
 
     /**
-     * Card 7 (publisher earnings). Aggregate stats for the picked publisher.
+     * Card 6 (publisher earnings). Aggregate stats for the picked publisher.
      */
     #[Get('/playground/publisher-earnings')]
     public function publisherEarnings(Request $request): Response

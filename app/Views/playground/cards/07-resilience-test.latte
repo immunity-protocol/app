@@ -1,11 +1,11 @@
-{* Card 08 (admin-tier). Resilience test: kill N random trader containers. *}
+{* Card 07 (admin-tier). Resilience test: kill N random trader containers. *}
 {var $isAdmin = $isAdmin ?? false}
 
 <article class="bg-ink-base p-6 flex flex-col {if !$isAdmin}opacity-60{/if}"
          {if $isAdmin}data-pg-card data-pg-endpoint="/api/v1/playground/admin/resilience-test"{/if}>
     <header class="mb-4">
         <div class="flex items-center gap-2 mb-1">
-            <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary tabular-nums">Card 08</span>
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary tabular-nums">Card 07</span>
             <span class="font-mono text-[10px] uppercase tracking-widest2 text-threat-300">admin only</span>
         </div>
         <h3 class="font-display text-[20px] tracking-tighter text-fg-primary leading-tight">Resilience test</h3>
