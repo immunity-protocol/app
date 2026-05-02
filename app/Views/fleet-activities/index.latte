@@ -1,0 +1,140 @@
+{layout ../layouts/main.latte}
+
+{block title}Fleet activities / Immunity network{/block}
+
+{block content}
+
+{*
+ * Full archive of agent activity. The /dashboard panel shows the latest
+ * 50 in real time; this page is the deep history with pagination. No
+ * filters or search by design, just paginated rows ordered newest first.
+ *}
+
+<section class="max-w-[1400px] mx-auto px-5 sm:px-7 pt-20 sm:pt-14 pb-10">
+
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-8 sm:mb-10 gap-6 md:gap-8">
+        <div class="min-w-0">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Demo</span>
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+            </div>
+            <h1 class="font-display text-[42px] sm:text-[60px] font-light tracking-tightest text-fg-primary leading-[1.0]">
+                Fleet activities
+            </h1>
+            <p class="text-fg-secondary text-[14px] sm:text-[15px] mt-4 max-w-[640px] leading-[1.6]">
+                Every observable thing the demo fleet has done this session: gated transactions, scraped social feed posts, blocked attacks, minted antibodies, escalation outcomes. Newest first.
+            </p>
+        </div>
+        <div class="md:text-right md:shrink-0">
+            <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Total rows</div>
+            <div class="font-mono text-[12.5px] text-fg-secondary leading-[1.6]">
+                <div><span class="text-fg-primary tabular-nums">{$total}</span> activities</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hr-fade mb-8"></div>
+
+    {* ----------- TABLE ----------- *}
+    <div class="overflow-x-auto -mr-7 pr-7 lg:mr-0 lg:pr-0 border border-ink-line/60 rounded-sm bg-ink-elevated/20">
+        <table class="w-full">
+            <thead class="bg-ink-sunken/60">
+                <tr class="border-b border-ink-line/40">
+                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 sm:pl-7 pr-4 py-3 w-32">When</th>
+                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-32">Agent</th>
+                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-28">Type</th>
+                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-5 sm:pr-7 py-3">Action</th>
+                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-5 sm:pr-7 py-3 w-36">Antibody</th>
+                </tr>
+            </thead>
+            <tbody>
+            {if count($activity) === 0}
+                <tr>
+                    <td colspan="5" class="px-7 py-12 text-center font-mono text-[12px] text-fg-dim">
+                        No activity yet. Rows will appear once the fleet starts ticking.
+                    </td>
+                </tr>
+            {/if}
+            {foreach $activity as $a}
+                {var $statusTone = match((string) $a->status) {
+                    'allow' => 'text-immune-500',
+                    'block' => 'text-threat-300',
+                    'novel' => 'text-caution-300',
+                    'error' => 'text-threat-300',
+                    default => 'text-accent-soft',
+                }}
+                {var $statusDot = match((string) $a->status) {
+                    'allow' => 'bg-immune-500',
+                    'block' => 'bg-threat-300',
+                    'novel' => 'bg-caution-300',
+                    'error' => 'bg-threat-300',
+                    default => 'bg-accent-soft',
+                }}
+                <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle">
+                    <td class="pl-5 sm:pl-7 pr-4 py-2 align-top font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap">{format('timeago', $a->occurred_at)}</td>
+                    <td class="pr-4 py-2 align-top font-mono text-[11px] text-fg-secondary truncate">{$a->display_name}</td>
+                    <td class="pr-4 py-2 align-top">
+                        <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {$statusTone}">
+                            <span class="inline-flex h-1.5 w-1.5 rounded-full {$statusDot}"></span>{$a->action_type}
+                        </span>
+                    </td>
+                    <td class="pr-5 sm:pr-7 py-2 align-top text-[12px] text-fg-secondary leading-snug whitespace-normal break-words">{$a->action_summary}</td>
+                    <td class="pr-5 sm:pr-7 py-2 align-top text-right font-mono text-[10.5px] whitespace-nowrap">
+                        {if $a->antibody_imm_id}
+                            <a href="/antibody/{$a->antibody_imm_id}" class="text-fg-secondary hover:text-accent transition-colors">{$a->antibody_imm_id}</a>
+                        {else}
+                            <span class="text-fg-dim">-</span>
+                        {/if}
+                    </td>
+                </tr>
+            {/foreach}
+            </tbody>
+        </table>
+    </div>
+
+    {* ----------- PAGINATION ----------- *}
+    {if $total > $pagination->perPage}
+    <div class="flex items-center justify-between mt-8 pt-5 border-t border-ink-line/60 gap-6 flex-wrap">
+
+        <div class="font-mono text-[11px] uppercase tracking-widest2 text-fg-tertiary">
+            Showing <span class="text-fg-secondary tabular-nums">{$pagination->showingFrom}</span> to <span class="text-fg-secondary tabular-nums">{$pagination->showingTo}</span> of <span class="text-fg-secondary tabular-nums">{$pagination->total}</span>
+        </div>
+
+        <nav class="flex items-center gap-1" aria-label="Pagination">
+            {if $pagination->hasPrev}
+                <a href="?page={$pagination->prevPage}" class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary px-3 py-1.5 rounded-sm hover:bg-ink-elevated/60 transition-colors" aria-label="Previous page">
+                    <span aria-hidden="true">&larr;</span> Prev
+                </a>
+            {else}
+                <span class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim px-3 py-1.5 rounded-sm cursor-not-allowed" aria-label="Previous page" aria-disabled="true">
+                    <span aria-hidden="true">&larr;</span> Prev
+                </span>
+            {/if}
+
+            {foreach $pagination->pageLinks as $pl}
+                {if $pl === '...'}
+                    <span class="font-mono text-[12px] text-fg-dim px-1 select-none">...</span>
+                {elseif $pl === $pagination->page}
+                    <span class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm bg-accent/10 text-accent border border-accent/30" aria-current="page">{$pl}</span>
+                {else}
+                    <a href="?page={$pl}" class="font-mono text-[12px] tabular-nums w-9 h-8 inline-flex items-center justify-center rounded-sm text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">{$pl}</a>
+                {/if}
+            {/foreach}
+
+            {if $pagination->hasNext}
+                <a href="?page={$pagination->nextPage}" class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary hover:text-fg-primary px-3 py-1.5 rounded-sm hover:bg-ink-elevated/60 transition-colors" aria-label="Next page">
+                    Next <span aria-hidden="true">&rarr;</span>
+                </a>
+            {else}
+                <span class="font-mono text-[11px] uppercase tracking-widest2 text-fg-dim px-3 py-1.5 rounded-sm cursor-not-allowed" aria-label="Next page" aria-disabled="true">
+                    Next <span aria-hidden="true">&rarr;</span>
+                </span>
+            {/if}
+        </nav>
+
+    </div>
+    {/if}
+
+</section>
+
+{/block}

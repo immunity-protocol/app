@@ -52,6 +52,33 @@ class AgentActivityBroker extends Broker
     }
 
     /**
+     * Paginated history slice for the /fleet-activities listing page.
+     * Same column projection as findSince(), ordered newest first.
+     *
+     * @return \stdClass[]
+     */
+    public function findPage(int $offset, int $limit): array
+    {
+        return $this->select(
+            "SELECT id, agent_id, role, display_name, action_type,
+                    action_summary, status, antibody_imm_id, tx_hash,
+                    target, family, occurred_at
+               FROM demo.agent_activity
+           ORDER BY id DESC
+              LIMIT ? OFFSET ?",
+            [$limit, $offset]
+        );
+    }
+
+    /**
+     * Total row count for pagination metadata.
+     */
+    public function countAll(): int
+    {
+        return $this->selectInt("SELECT count(*) FROM demo.agent_activity");
+    }
+
+    /**
      * Trim rows older than the given window so the table stays bounded
      * during long-running demos. Idempotent and best-effort; intended to be
      * called from a periodic job, not on every request.

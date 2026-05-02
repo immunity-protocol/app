@@ -21,11 +21,12 @@ final class SitemapController extends Controller
         $today = gmdate('Y-m-d');
 
         $coreUrls = [
-            ['loc' => "{$base}/",            'changefreq' => 'daily',  'priority' => '1.0'],
-            ['loc' => "{$base}/antibodies",  'changefreq' => 'hourly', 'priority' => '0.9'],
-            ['loc' => "{$base}/dashboard",   'changefreq' => 'hourly', 'priority' => '0.8'],
-            ['loc' => "{$base}/dex",         'changefreq' => 'weekly', 'priority' => '0.7'],
-            ['loc' => "{$base}/feeds",       'changefreq' => 'monthly','priority' => '0.5'],
+            ['loc' => "{$base}/",                  'changefreq' => 'daily',  'priority' => '1.0'],
+            ['loc' => "{$base}/antibodies",        'changefreq' => 'hourly', 'priority' => '0.9'],
+            ['loc' => "{$base}/dashboard",         'changefreq' => 'hourly', 'priority' => '0.8'],
+            ['loc' => "{$base}/fleet-activities",  'changefreq' => 'hourly', 'priority' => '0.6'],
+            ['loc' => "{$base}/dex",               'changefreq' => 'weekly', 'priority' => '0.7'],
+            ['loc' => "{$base}/feeds",             'changefreq' => 'monthly','priority' => '0.5'],
         ];
 
         $urls = '';
