@@ -14,10 +14,33 @@
         <div class="hidden md:flex items-center gap-1 text-[13px] tracking-wide">
             <a href="/antibodies" class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Antibodies</a>
             <a href="/publishers" class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Publishers</a>
-            <a href="/dashboard"  class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Dashboard</a>
-            <a href="/dex"        class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">DEX</a>
-            <a href="/feeds"      class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Feeds</a>
-            <a href="https://docs.immunity.xyz" rel="noopener" class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Docs</a>
+
+            {* Demo dropdown: Dashboard, DEX, Playground, Fleet activities *}
+            <div class="relative" data-demo-menu>
+                <button id="nav-demo-trigger"
+                        type="button"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        aria-controls="nav-demo-panel"
+                        class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors inline-flex items-center gap-1.5">
+                    Demo
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M6 9l6 6l6 -6"/>
+                    </svg>
+                </button>
+                <div id="nav-demo-panel"
+                     class="hidden absolute top-full right-0 mt-1 w-56 bg-ink-base/95 backdrop-blur border border-ink-line/60 rounded-sm shadow-xl overflow-hidden"
+                     role="menu"
+                     aria-labelledby="nav-demo-trigger">
+                    <a href="/dashboard"         role="menuitem" class="block px-4 py-2.5 text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">Dashboard</a>
+                    <a href="/dex"               role="menuitem" class="block px-4 py-2.5 text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">DEX</a>
+                    <a href="/playground"        role="menuitem" class="block px-4 py-2.5 text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">Playground</a>
+                    <a href="/fleet-activities"  role="menuitem" class="block px-4 py-2.5 text-fg-secondary hover:bg-ink-elevated/60 hover:text-fg-primary transition-colors">Fleet activities</a>
+                </div>
+            </div>
+
+            <a href="https://docs.immunity-protocol.com" rel="noopener" class="px-3 py-1.5 text-fg-secondary hover:text-fg-primary transition-colors">Docs</a>
         </div>
 
         {var $valueProtected = (float) (\App\Models\Network\Services\StatService::current()['value_protected_usd'] ?? 0)}
@@ -80,10 +103,14 @@
         <div class="max-w-[1400px] mx-auto px-5 py-4 flex flex-col gap-1 text-[15px]">
             <a href="/antibodies" class="px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors">Antibodies</a>
             <a href="/publishers" class="px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors">Publishers</a>
-            <a href="/dashboard"  class="px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors">Dashboard</a>
-            <a href="/dex"        class="px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors">DEX</a>
-            <a href="/feeds"      class="px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors">Feeds</a>
-            <a href="https://docs.immunity.xyz" rel="noopener" class="px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors flex items-center justify-between gap-2">
+
+            <h4 class="px-3 pt-3 pb-1 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Demo</h4>
+            <a href="/dashboard"        class="px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors">Dashboard</a>
+            <a href="/dex"              class="px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors">DEX</a>
+            <a href="/playground"       class="px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors">Playground</a>
+            <a href="/fleet-activities" class="px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors">Fleet activities</a>
+
+            <a href="https://docs.immunity-protocol.com" rel="noopener" class="mt-3 px-3 py-3 text-fg-primary hover:bg-ink-elevated/50 rounded-sm transition-colors flex items-center justify-between gap-2">
                 <span>Docs</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -163,6 +190,36 @@
   window.addEventListener('resize', () => {
     if (window.innerWidth >= 768 && burger.getAttribute('aria-expanded') === 'true') {
       setOpen(false);
+    }
+  });
+})();
+
+// Demo dropdown (desktop). Click trigger to toggle, click outside or Escape to close.
+(function () {
+  const trigger = document.getElementById('nav-demo-trigger');
+  const panel = document.getElementById('nav-demo-panel');
+  if (!trigger || !panel) return;
+
+  function setOpen(open) {
+    trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    panel.classList.toggle('hidden', !open);
+  }
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setOpen(trigger.getAttribute('aria-expanded') !== 'true');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (trigger.getAttribute('aria-expanded') !== 'true') return;
+    if (e.target.closest('[data-demo-menu]')) return;
+    setOpen(false);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && trigger.getAttribute('aria-expanded') === 'true') {
+      setOpen(false);
+      trigger.focus();
     }
   });
 })();
