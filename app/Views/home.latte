@@ -25,6 +25,42 @@ window.addEventListener('DOMContentLoaded', () => {
 
 {block content}
 
+{* Tile data shared by the hero stat bar (below) and any later sections.
+   Server-rendered from the latest network.stat snapshot; the dashboard
+   handles live polling. Trade: ~60s stale for fewer ajax requests. *}
+{var $antibodies = (int) ($tiles['antibodies_active'] ?? 0)}
+{var $publishersTotal = (int) ($tiles['publishers_total'] ?? 0)}
+{var $earningsTotal = (float) ($tiles['publisher_earnings_total_usdc'] ?? 0)}
+{var $llmSaved = (int) ($tiles['llm_calls_saved'] ?? 0)}
+{var $valueProtected = (float) ($tiles['value_protected_usd'] ?? 0)}
+{var $antibodiesPublished1h = (int) ($tiles['antibodies_published_1h'] ?? 0)}
+{var $valueProtected1h = (float) ($tiles['value_protected_1h'] ?? 0)}
+
+{var $valueProtectedLabel = $valueProtected >= 1_000_000
+    ? '$' . rtrim(rtrim(number_format($valueProtected / 1_000_000, 1), '0'), '.') . 'M'
+    : ($valueProtected >= 1_000
+        ? '$' . round($valueProtected / 1_000) . 'K'
+        : '$' . number_format($valueProtected, 0))}
+
+{var $valueProtected1hLabel = $valueProtected1h >= 1_000_000
+    ? '$' . rtrim(rtrim(number_format($valueProtected1h / 1_000_000, 1), '0'), '.') . 'M'
+    : ($valueProtected1h >= 1_000
+        ? '$' . round($valueProtected1h / 1_000) . 'K'
+        : '$' . number_format($valueProtected1h, 0))}
+
+{var $earningsLabel = $earningsTotal >= 1
+    ? '$' . number_format($earningsTotal, 2)
+    : '$' . rtrim(rtrim(number_format($earningsTotal, 4), '0'), '.')}
+
+{* 0G Compute pricing for qwen-2.5-7b-instruct: ~$0.00015 per call.
+   Cumulative since registry deploy. Keep in sync with home.latte JS. *}
+{var $computeSavedUsd = $llmSaved * 0.00015}
+{var $computeSavedLabel = $computeSavedUsd <= 0
+    ? '≈ $0'
+    : ($computeSavedUsd < 0.01 ? '≈ <$0.01'
+        : ($computeSavedUsd < 1 ? '≈ $' . number_format($computeSavedUsd, 2)
+            : '≈ $' . number_format($computeSavedUsd, 0)))}
+
 {* ============================================================ HERO ===== *}
 <section class="relative overflow-hidden bg-ink-base">
 
@@ -92,7 +128,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         {* CTAs *}
         <div class="flex flex-wrap items-center gap-3">
-            <a href="https://docs.immunity.xyz" rel="noopener" class="group inline-flex items-center gap-2 px-5 py-3 text-[13px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
+            <a href="https://docs.immunity-protocol.com" rel="noopener" class="group inline-flex items-center gap-2 px-5 py-3 text-[13px] tracking-wide bg-fg-primary text-ink-base hover:bg-accent transition-colors rounded-sm">
                 Read the protocol
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="opacity-60 group-hover:translate-x-0.5 transition-transform" aria-hidden="true"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </a>
@@ -102,92 +138,45 @@ window.addEventListener('DOMContentLoaded', () => {
             </a>
         </div>
 
-    </div>
-</section>
+        {* Network status tiles, embedded in the hero. Translucent panel
+           lets the ambient background show through while keeping numbers
+           legible. Same data shape as the previous standalone section 01. *}
+        <div class="mt-12 sm:mt-14 border border-ink-line/40 bg-black/40 backdrop-blur-sm rounded-sm">
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-y-8 md:gap-0 px-5 sm:px-7 py-6 sm:py-7">
 
-{* ============================================ 01 · NETWORK STATUS ===== *}
-<section class="relative bg-ink-sunken border-b border-ink-line/60">
-    <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none" aria-hidden="true"></div>
+                <div class="md:px-7 md:first:pl-0 md:border-r md:border-ink-line/60 md:last:border-r-0 md:last:pr-0">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2.5">Antibodies active</div>
+                    <div class="font-display text-[34px] sm:text-[40px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{format('decimal', $antibodies, 0)}</div>
+                    <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-2.5">+{format('decimal', $antibodiesPublished1h, 0)} <span class="text-fg-tertiary">in 1h</span></div>
+                </div>
 
-    <div class="relative max-w-[1400px] mx-auto px-7 py-12">
+                <a href="/publishers" class="md:px-7 md:border-r md:border-ink-line/60 group block hover:bg-ink-elevated/20 -mx-5 sm:mx-0 px-5 sm:px-0 md:px-7 py-3 md:py-0 transition-colors" title="See all network contributors">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2.5 group-hover:text-fg-secondary transition-colors">Network contributors</div>
+                    <div class="font-display text-[34px] sm:text-[40px] font-light tracking-tighter text-fg-primary leading-none tabular-nums group-hover:text-accent transition-colors">{format('decimal', $publishersTotal, 0)}</div>
+                    <div class="font-mono text-[10.5px] text-immune-500 mt-2.5 inline-flex items-center gap-1.5">
+                        <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8M6 2v8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>{$earningsLabel}</span>
+                        <span class="text-fg-tertiary">distributed</span>
+                    </div>
+                </a>
 
-        {* Tiles render server-side from the latest network.stat snapshot.
-           Landing-page is intentionally static - the dashboard is where the
-           live polling lives. Trade: slightly stale (60s snapshot cadence)
-           for fewer ajax requests and a calmer first paint. *}
-        {var $antibodies = (int) ($tiles['antibodies_active'] ?? 0)}
-        {var $publishersTotal = (int) ($tiles['publishers_total'] ?? 0)}
-        {var $earningsTotal = (float) ($tiles['publisher_earnings_total_usdc'] ?? 0)}
-        {var $llmSaved = (int) ($tiles['llm_calls_saved'] ?? 0)}
-        {var $valueProtected = (float) ($tiles['value_protected_usd'] ?? 0)}
-        {var $antibodiesPublished1h = (int) ($tiles['antibodies_published_1h'] ?? 0)}
-        {var $valueProtected1h = (float) ($tiles['value_protected_1h'] ?? 0)}
+                <div class="md:px-7 md:border-r md:border-ink-line/60">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2.5">LLM calls saved</div>
+                    <div class="font-display text-[34px] sm:text-[40px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{format('decimal', $llmSaved, 0)}</div>
+                    <div class="font-mono text-[10.5px] text-fg-tertiary mt-2.5">
+                        <span class="text-immune-500">{$computeSavedLabel}</span> in compute
+                    </div>
+                </div>
 
-        {* Compact label, mirrors partials/nav.latte so the landing-page tile
-           and the header pill agree at any magnitude. *}
-        {var $valueProtectedLabel = $valueProtected >= 1_000_000
-            ? '$' . rtrim(rtrim(number_format($valueProtected / 1_000_000, 1), '0'), '.') . 'M'
-            : ($valueProtected >= 1_000
-                ? '$' . round($valueProtected / 1_000) . 'K'
-                : '$' . number_format($valueProtected, 0))}
+                <div class="md:px-7 md:last:pr-0">
+                    <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2.5">Value protected</div>
+                    <div class="font-display text-[34px] sm:text-[40px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{$valueProtectedLabel}</div>
+                    <div class="font-mono text-[10.5px] text-immune-500 tabular-nums mt-2.5">+{$valueProtected1hLabel} <span class="text-fg-tertiary">in 1h</span></div>
+                </div>
 
-        {var $valueProtected1hLabel = $valueProtected1h >= 1_000_000
-            ? '$' . rtrim(rtrim(number_format($valueProtected1h / 1_000_000, 1), '0'), '.') . 'M'
-            : ($valueProtected1h >= 1_000
-                ? '$' . round($valueProtected1h / 1_000) . 'K'
-                : '$' . number_format($valueProtected1h, 0))}
-
-        {var $earningsLabel = $earningsTotal >= 1
-            ? '$' . number_format($earningsTotal, 2)
-            : '$' . rtrim(rtrim(number_format($earningsTotal, 4), '0'), '.')}
-        {* 0G Compute pricing for qwen-2.5-7b-instruct: ~$0.00015 per call.
-           Cumulative since registry deploy. Keep in sync with home.latte JS. *}
-        {var $computeSavedUsd = $llmSaved * 0.00015}
-        {var $computeSavedLabel = $computeSavedUsd <= 0
-            ? '≈ $0'
-            : ($computeSavedUsd < 0.01 ? '≈ <$0.01'
-                : ($computeSavedUsd < 1 ? '≈ $' . number_format($computeSavedUsd, 2)
-                    : '≈ $' . number_format($computeSavedUsd, 0)))}
-
-        <div class="flex items-center gap-3 mb-7">
-            <span class="font-mono text-[10.5px] text-fg-tertiary tabular-nums">01</span>
-            <span class="font-mono text-[10.5px] text-fg-dim">·</span>
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Network status</span>
+            </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-y-10 md:gap-0">
-
-            <div class="md:px-7 md:first:pl-0 md:border-r md:border-ink-line/60 md:last:border-r-0 md:last:pr-0">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Antibodies active</div>
-                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{format('decimal', $antibodies, 0)}</div>
-                <div class="font-mono text-[11px] text-immune-500 tabular-nums mt-3">+{format('decimal', $antibodiesPublished1h, 0)} <span class="text-fg-tertiary">in 1h</span></div>
-            </div>
-
-            <a href="/publishers" class="md:px-7 md:border-r md:border-ink-line/60 group block hover:bg-ink-elevated/20 -mx-5 sm:mx-0 px-5 sm:px-0 md:px-7 py-5 md:py-0 transition-colors" title="See all network contributors">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3 group-hover:text-fg-secondary transition-colors">Network contributors</div>
-                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums group-hover:text-accent transition-colors">{format('decimal', $publishersTotal, 0)}</div>
-                <div class="font-mono text-[11px] text-immune-500 mt-3 inline-flex items-center gap-1.5">
-                    <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8M6 2v8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span>{$earningsLabel}</span>
-                    <span class="text-fg-tertiary">distributed</span>
-                </div>
-            </a>
-
-            <div class="md:px-7 md:border-r md:border-ink-line/60">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">LLM calls saved</div>
-                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{format('decimal', $llmSaved, 0)}</div>
-                <div class="font-mono text-[11px] text-fg-tertiary mt-3">
-                    <span class="text-immune-500">{$computeSavedLabel}</span> in compute
-                </div>
-            </div>
-
-            <div class="md:px-7 md:last:pr-0">
-                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-3">Value protected</div>
-                <div class="font-display text-[44px] font-light tracking-tighter text-fg-primary leading-none tabular-nums">{$valueProtectedLabel}</div>
-                <div class="font-mono text-[11px] text-immune-500 tabular-nums mt-3">+{$valueProtected1hLabel} <span class="text-fg-tertiary">in 1h</span></div>
-            </div>
-
-        </div>
     </div>
 </section>
 
