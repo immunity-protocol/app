@@ -125,3 +125,44 @@ CREATE TABLE antibody.publisher
 
 CREATE INDEX publisher_last_active_at_idx       ON antibody.publisher (last_active_at DESC);
 CREATE INDEX publisher_antibodies_published_idx ON antibody.publisher (antibodies_published DESC);
+
+-- ##################################################################################################################
+-- CHALLENGE (one open/resolved dispute per antibody — Phase 2)
+-- ##################################################################################################################
+-- Keyed by keccak_id (not an FK: a challenge log may be observed before the
+-- antibody's Published log during backfill). Layer-1 is the CRE jury vote;
+-- Layer-2 is the escalated VerifierPool ruling.
+CREATE TABLE antibody.challenge
+(
+    id              bigserial PRIMARY KEY,
+    keccak_id       bytea NOT NULL UNIQUE,
+    challenger      bytea,
+    bond            numeric(20, 6),
+    status          varchar(20) NOT NULL DEFAULT 'LAYER1_PENDING'
+                    CHECK (status IN ('NONE', 'LAYER1_PENDING', 'LAYER2_ESCALATED', 'RESOLVED')),
+    evidence_cid    bytea,
+    invalid_votes   smallint NOT NULL DEFAULT 0,
+    valid_votes     smallint NOT NULL DEFAULT 0,
+    is_invalid      boolean,
+    winner_payout   numeric(20, 6),
+    juror_fee       numeric(20, 6),
+    treasury_amount numeric(20, 6),
+    opened_at       timestamptz NOT NULL DEFAULT now(),
+    escalated_at    timestamptz,
+    resolved_at     timestamptz
+);
+
+CREATE INDEX challenge_status_idx    ON antibody.challenge (status);
+CREATE INDEX challenge_opened_at_idx ON antibody.challenge (opened_at DESC);
+
+-- ##################################################################################################################
+-- PROTECTED_TARGET (addresses the protocol protects — Phase 2)
+-- ##################################################################################################################
+CREATE TABLE antibody.protected_target
+(
+    address     bytea PRIMARY KEY,
+    protected   boolean NOT NULL DEFAULT true,
+    updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX protected_target_protected_idx ON antibody.protected_target (protected);
