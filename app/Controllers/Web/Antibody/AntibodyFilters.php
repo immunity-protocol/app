@@ -15,7 +15,7 @@ use Zephyrus\Http\Request;
 final readonly class AntibodyFilters
 {
     public const ALLOWED_TYPES   = ['address', 'call_pattern', 'bytecode', 'graph', 'semantic'];
-    public const ALLOWED_STATUS  = ['active', 'challenged', 'expired', 'slashed'];
+    public const ALLOWED_STATUS  = ['probation', 'active', 'challenged', 'expired', 'slashed'];
     public const ALLOWED_VERDICT = ['malicious', 'suspicious'];
     public const ALLOWED_RANGES  = ['24h', '7d', '30d', '90d', 'all'];
     public const ALLOWED_PER_PAGE = [30, 60, 100, 200];
