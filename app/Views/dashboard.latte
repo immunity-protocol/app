@@ -316,7 +316,12 @@
   }
   function timeAgo(iso) {
     if (!iso) return '-';
-    const then = Date.parse(iso.replace(' ', 'T'));
+    // Postgres hands back "2026-06-13 17:45:41.544255+00": space separator,
+    // microseconds, and a colon-less "+00" offset that Date.parse rejects.
+    // Normalise to RFC3339 ("…T17:45:41+00:00") before parsing.
+    let s = String(iso).replace(' ', 'T').replace(/\.\d+/, '');
+    s = s.replace(/([+-]\d\d)$/, '$1:00').replace(/([+-]\d\d)(\d\d)$/, '$1:$2');
+    const then = Date.parse(s);
     if (!Number.isFinite(then)) return '-';
     const sec = Math.max(0, Math.floor((Date.now() - then) / 1000));
     if (sec < 60)        return sec + 's ago';
