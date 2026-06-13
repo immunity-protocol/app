@@ -18,7 +18,7 @@ use RuntimeException;
  *   registrar  0x35F65a08a11f44F73622f51ade1911BC28036faF  (Base Sepolia, 84532)
  *   ABI        isRegistered(address account) view returns (bool)   [exact]
  */
-final class PublisherRegistry
+final class PublisherRegistry implements RegistrationGate
 {
     /** Live PublisherRegistrar on Base Sepolia. */
     public const string DEFAULT_REGISTRAR = '0x35F65a08a11f44F73622f51ade1911BC28036faF';

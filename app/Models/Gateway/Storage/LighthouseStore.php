@@ -15,7 +15,7 @@ use RuntimeException;
  *
  * Holds ONLY the Lighthouse API key (a fly secret). Never decrypts, never signs.
  */
-final class LighthouseStore
+final class LighthouseStore implements EvidenceStore
 {
     private LighthouseService $service;
 
