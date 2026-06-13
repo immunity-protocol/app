@@ -5,9 +5,11 @@ declare(strict_types=1);
 /**
  * Long-running indexer process.
  *
- * Reads on-chain events from the Galileo Registry contract, hydrates 0G
- * Storage envelopes, runs periodic maintenance jobs, and keeps Postgres
- * in sync with the deployed contract.
+ * Reads on-chain events from the Base Sepolia Immunity contract suite (Registry,
+ * Reputation, PublisherRegistrar, ChallengeManager, CREVerdictReceiver,
+ * ProtectedSet, L2Registry) over a single cursor, hydrates antibody evidence
+ * from Lighthouse/IPFS, runs periodic maintenance jobs, and keeps Postgres in
+ * sync. The per-chain Mirror pollers (A3 relayer track) run alongside unchanged.
  *
  * Usage (Docker):
  *     docker compose run --rm indexer
@@ -26,29 +28,27 @@ use App\Models\Indexer\Brokers\HydrationQueueBroker;
 use App\Models\Indexer\Brokers\StateBroker;
 use App\Models\Indexer\Brokers\TokenPriceCacheBroker;
 use App\Models\Indexer\Pricing\MoralisPriceService;
+use App\Models\Indexer\Chain\BaseChainAbi;
 use App\Models\Indexer\Chain\EventDecoder;
 use App\Models\Indexer\Chain\JsonRpcClient;
 use App\Models\Indexer\Chain\MirrorAbi;
-use App\Models\Indexer\Chain\RegistryAbi;
-use App\Models\Indexer\Console\Cadence;
-use App\Models\Indexer\Console\Supervisor;
 use App\Models\Indexer\Handlers\AntibodyMatchedHandler;
 use App\Models\Indexer\Handlers\AntibodyMirroredHandler;
 use App\Models\Indexer\Handlers\AntibodyPublishedHandler;
 use App\Models\Indexer\Handlers\AntibodySlashedHandler;
 use App\Models\Indexer\Handlers\AntibodyUnmirroredHandler;
 use App\Models\Indexer\Handlers\AuditEventHandler;
+use App\Models\Indexer\Handlers\BondLedgerHandler;
 use App\Models\Indexer\Handlers\CheckSettledHandler;
-use App\Models\Indexer\Handlers\MirrorEnqueueHandler;
-use App\Models\Indexer\Handlers\StakeReleasedHandler;
-use App\Models\Indexer\Handlers\StakeSweptHandler;
-use App\Models\Mirror\Brokers\PendingJobsBroker;
-use App\Models\Mirror\MirrorEnvelopeBuffer;
-use App\Models\Indexer\Storage\NodeBridge;
+use App\Models\Indexer\Handlers\ExpiredHandler;
+use App\Models\Indexer\Handlers\MaturedHandler;
+use App\Models\Indexer\Handlers\PublisherIdentityHandler;
+use App\Models\Indexer\Handlers\ReputationHandler;
+use App\Models\Indexer\Handlers\SeededHandler;
+use App\Models\Indexer\Storage\LighthouseFetcher;
 use App\Models\Indexer\Workers\BackfillBootstrap;
 use App\Models\Indexer\Workers\EnsResolutionWorker;
 use App\Models\Indexer\Workers\EventPoller;
-use App\Models\Indexer\Workers\ExpirySweep;
 use App\Models\Indexer\Workers\HydrationWorker;
 use App\Models\Indexer\Workers\PricingRetryWorker;
 use App\Models\Indexer\Workers\StatRefresher;
@@ -57,6 +57,8 @@ use Dotenv\Dotenv;
 use Ens\EnsService;
 use Moralis\MoralisService;
 use Zephyrus\Core\Config\Configuration;
+use App\Models\Indexer\Console\Cadence;
+use App\Models\Indexer\Console\Supervisor;
 
 Dotenv::createImmutable(ROOT_DIR)->safeLoad();
 Db::applyDatabaseUrl();
@@ -69,28 +71,25 @@ if ($config->database === null) {
 
 $db = Db::fromConfig($config->database);
 
-$network           = NetworkConfig::galileo();
-$pollIntervalMs    = (int) (getenv('INDEXER_POLL_INTERVAL_MS') ?: 15000);
-$hydrationConc     = (int) (getenv('INDEXER_HYDRATION_CONCURRENCY') ?: 5);
-$backfillChunk     = (int) (getenv('INDEXER_BACKFILL_CHUNK') ?: 5000);
-$confirmations     = (int) (getenv('INDEXER_CONFIRMATIONS') ?: 2);
-$deployBlock       = (int) (getenv('OG_REGISTRY_DEPLOY_BLOCK') ?: RegistryAbi::DEPLOY_BLOCK_DEFAULT);
+$network        = NetworkConfig::baseSepolia();
+$pollIntervalMs = (int) (getenv('INDEXER_POLL_INTERVAL_MS') ?: 15000);
+$hydrationConc  = (int) (getenv('INDEXER_HYDRATION_CONCURRENCY') ?: 5);
+$backfillChunk  = (int) (getenv('INDEXER_BACKFILL_CHUNK') ?: 5000);
+$confirmations  = (int) (getenv('INDEXER_CONFIRMATIONS') ?: 2);
 
 $rpc = new JsonRpcClient($network->rpcUrl);
-$abi = new RegistryAbi();
-$decoder = new EventDecoder($abi);
+$baseAbi = BaseChainAbi::fromContracts($network->contracts());
+$decoder = new EventDecoder($baseAbi);
 
 $stateBroker = new StateBroker($db);
 $queueBroker = new HydrationQueueBroker($db);
 $contractEventBroker = new ContractEventBroker($db);
 $statBroker = new StatBroker($db);
 
-// Moralis is optional. The price service is now always constructed so the
-// `INDEXER_PRICE_OVERRIDES` env-var path works on its own — needed in demo
-// environments where we use mock tokens (e.g. MOCK_USDC pinned to $1 via
-// override) and never want to hit Moralis. Without a key, only overrides
-// resolve; non-overridden tokens come back null and the retry worker picks
-// them up if a later override matches.
+// Moralis is optional. The price service is always constructed so the
+// INDEXER_PRICE_OVERRIDES env-var path works on its own (mock tokens pinned
+// to $1). Without a key, only overrides resolve; non-overridden tokens come
+// back null and the retry worker picks them up if a later override matches.
 $moralisApiKey  = getenv('MORALIS_API_KEY') ?: '';
 $priceCacheBroker = new TokenPriceCacheBroker($db);
 $pricingService = new MoralisPriceService(
@@ -101,66 +100,72 @@ if ($moralisApiKey === '') {
     fwrite(STDERR, "indexer: MORALIS_API_KEY not set; pricing in overrides-only mode\n");
 }
 
-// Mirror enqueue plumbing: AntibodyPublished stashes the full envelope, the
-// matching auxiliary event drains the buffer and writes a job per chain.
-$mirrorNetworks    = MirrorNetworkRegistry::default();
-$pendingJobsBroker = new PendingJobsBroker($db);
-$envelopeBuffer    = new MirrorEnvelopeBuffer();
-$mirrorEnqueue     = new MirrorEnqueueHandler($pendingJobsBroker, $mirrorNetworks, $envelopeBuffer);
+// ---------------------------------------------------------------------------
+// Base Sepolia handlers (Phase 1: antibody lifecycle + reputation + identity).
+// ---------------------------------------------------------------------------
+$publishedHandler = new AntibodyPublishedHandler($db, $queueBroker);
+$seededHandler    = new SeededHandler($db);
+$maturedHandler   = new MaturedHandler($db);
+$expiredHandler   = new ExpiredHandler($db);
+$slashedHandler   = new AntibodySlashedHandler($db);
+$checkedHandler   = new CheckSettledHandler($db, $network, $pricingService);
+$matchedHandler   = new AntibodyMatchedHandler($db, $network, $pricingService);
+$bondLedger       = new BondLedgerHandler($db);
+$reputation       = new ReputationHandler($db);
+$identity         = new PublisherIdentityHandler($db);
+$audit            = new AuditEventHandler($contractEventBroker);
 
-$publishedHandler   = new AntibodyPublishedHandler($db, $queueBroker, $envelopeBuffer);
-$checkSettledHandler = new CheckSettledHandler($db, $network, $pricingService);
-$matchedHandler     = new AntibodyMatchedHandler($db, $network, $pricingService);
-$stakeReleasedH     = new StakeReleasedHandler($db);
-$stakeSweptH        = new StakeSweptHandler($db);
-$slashedH           = new AntibodySlashedHandler($db, $pendingJobsBroker, $mirrorNetworks);
-$auditH             = new AuditEventHandler($contractEventBroker);
+$baseHandlers = [
+    'Registry.Published'      => fn (array $d) => $publishedHandler->handle($d),
+    'Registry.Seeded'         => fn (array $d) => $seededHandler->handle($d),
+    'Registry.Matured'        => fn (array $d) => $maturedHandler->handle($d),
+    'Registry.Expired'        => fn (array $d) => $expiredHandler->handle($d),
+    'Registry.Retired'        => fn (array $d) => $expiredHandler->handle($d),
+    'Registry.Slashed'        => fn (array $d) => $slashedHandler->handle($d),
+    'Registry.Checked'        => fn (array $d) => $checkedHandler->handle($d),
+    'Registry.Matched'        => fn (array $d) => $matchedHandler->handle($d),
+    'Registry.BondLocked'     => fn (array $d) => $bondLedger->handleBondLocked($d),
+    'Registry.BondReleased'   => fn (array $d) => $bondLedger->handleBondReleased($d),
+    'Registry.FeesEscrowed'   => fn (array $d) => $bondLedger->handleFeesEscrowed($d),
+    'Registry.FeesReleased'   => fn (array $d) => $bondLedger->handleFeesReleased($d),
+    'Registry.FeesClawedBack' => fn (array $d) => $bondLedger->handleFeesClawedBack($d),
 
-$registryHandlers = [
-    'AntibodyPublished' => fn (array $d) => $publishedHandler->handle($d),
-    'CheckSettled'      => fn (array $d) => $checkSettledHandler->handle($d),
-    'AntibodyMatched'   => fn (array $d) => $matchedHandler->handle($d),
-    'StakeReleased'     => fn (array $d) => $stakeReleasedH->handle($d),
-    'StakeSwept'        => fn (array $d) => $stakeSweptH->handle($d),
-    'AntibodySlashed'   => fn (array $d) => $slashedH->handle($d),
+    'Reputation.Matured'        => fn (array $d) => $reputation->handleMatured($d),
+    'Reputation.ChallengeWon'   => fn (array $d) => $reputation->handleChallengeWon($d),
+    'Reputation.Slashed'        => fn (array $d) => $reputation->handleSlashed($d),
+    'Reputation.GenesisGranted' => fn (array $d) => $reputation->handleGenesisGranted($d),
+
+    'PublisherRegistrar.Registered'       => fn (array $d) => $identity->handleRegistered($d),
+    'PublisherRegistrar.Deregistered'     => fn (array $d) => $identity->handleDeregistered($d),
+    'PublisherRegistrar.ReputationSynced' => fn (array $d) => $identity->handleReputationSynced($d),
 ];
-// Audit-only events (no mirror dispatch).
-foreach ([
-    'Deposited', 'Withdrew', 'TreasuryWithdrawn', 'Seeded',
-    'OwnershipTransferred',
-] as $auditName) {
-    $registryHandlers[$auditName] = fn (array $d) => $auditH->handle($d);
-}
-// Auxiliary events: write to the audit log, then drain the envelope buffer to
-// enqueue mirror jobs. Both branches must run.
-foreach ([
-    'AddressBlocked', 'CallPatternBlocked', 'BytecodeBlocked',
-    'GraphTaintAdded', 'SemanticPatternAdded',
-] as $auxName) {
-    $registryHandlers[$auxName] = function (array $d) use ($auditH, $mirrorEnqueue): bool {
-        $auditH->handle($d);
-        return $mirrorEnqueue->handle($d);
-    };
+// Operator/treasury balance movements: audit log only (KPI, optional).
+foreach (['Registry.Deposited', 'Registry.Withdrew', 'Registry.TreasuryWithdrawn'] as $auditKey) {
+    $baseHandlers[$auditKey] = fn (array $d) => $audit->handle($d);
 }
 
-$ogPoller = new EventPoller(
+$basePoller = new EventPoller(
     rpc: $rpc,
     decoder: $decoder,
     state: $stateBroker,
     chainId: $network->chainId,
-    contractAddress: $network->registryAddress,
-    handlers: $registryHandlers,
+    addresses: $baseAbi->addresses(),
+    handlers: $baseHandlers,
     confirmations: $confirmations,
     chunkSize: $backfillChunk,
 );
-$ogPollerEntry = [
-    'poller'      => $ogPoller,
+$basePollerEntry = [
+    'poller'      => $basePoller,
     'intervalSec' => max(1, (int) round($pollIntervalMs / 1000)),
 ];
+$baseBootstrap = new BackfillBootstrap($stateBroker, $network->chainId, $network->deployBlock);
 
-// One poller + bootstrap per Mirror chain. Each Mirror exposes the same event
-// surface (AntibodyMirrored / AntibodyUnmirrored / etc), so we share MirrorAbi
-// across chains and just rebind the per-chain handlers.
+// ---------------------------------------------------------------------------
+// Mirror pollers (A3 relayer track) — unchanged; one poller + bootstrap per
+// configured Mirror chain. Each Mirror exposes the same event surface, so we
+// share MirrorAbi and rebind per-chain handlers.
+// ---------------------------------------------------------------------------
+$mirrorNetworks = MirrorNetworkRegistry::default();
 $mirrorAbi      = new MirrorAbi();
 $mirrorDecoder  = new EventDecoder($mirrorAbi);
 $mirrorPollers  = [];
@@ -170,29 +175,27 @@ foreach ($mirrorNetworks->all() as $chain) {
         fwrite(STDERR, "indexer: skipping chain {$chain->chainId} ({$chain->name}): no RPC URL configured\n");
         continue;
     }
-    $mirrorRpc      = new JsonRpcClient($chain->rpcUrl);
-    $mirroredH      = new AntibodyMirroredHandler($db, $chain->chainId, $chain->name);
-    $unmirroredH    = new AntibodyUnmirroredHandler($db, $chain->chainId);
+    $mirrorRpc   = new JsonRpcClient($chain->rpcUrl);
+    $mirroredH   = new AntibodyMirroredHandler($db, $chain->chainId, $chain->name);
+    $unmirroredH = new AntibodyUnmirroredHandler($db, $chain->chainId);
     $mirrorHandlers = [
         'AntibodyMirrored'   => fn (array $d) => $mirroredH->handle($d),
         'AntibodyUnmirrored' => fn (array $d) => $unmirroredH->handle($d),
     ];
     foreach (['AddressBlocked', 'CallPatternBlocked', 'BytecodeBlocked', 'GraphTaintAdded',
               'SemanticPatternAdded', 'AdminTransferred', 'RelayerSet'] as $auxName) {
-        $mirrorHandlers[$auxName] = fn (array $d) => $auditH->handle($d);
+        $mirrorHandlers[$auxName] = fn (array $d) => $audit->handle($d);
     }
     $mirrorPoller = new EventPoller(
         rpc: $mirrorRpc,
         decoder: $mirrorDecoder,
         state: $stateBroker,
         chainId: $chain->chainId,
-        contractAddress: $chain->mirrorAddress,
+        addresses: $chain->mirrorAddress,
         handlers: $mirrorHandlers,
         confirmations: $confirmations,
         chunkSize: $backfillChunk,
     );
-    // Per-chain cadence overrides the supervisor's global tick. Sepolia
-    // mirror events fire at human pace so a once-per-hour poll is plenty.
     $chainIntervalMs = $chain->pollIntervalMs ?? $pollIntervalMs;
     $mirrorPollers[] = [
         'poller'      => $mirrorPoller,
@@ -201,12 +204,10 @@ foreach ($mirrorNetworks->all() as $chain) {
     $mirrorBoots[] = new BackfillBootstrap($stateBroker, $chain->chainId, $chain->deployBlock);
 }
 
-$nodeBridge = new NodeBridge(
-    scriptPath: ROOT_DIR . '/scripts/og-download.mjs',
-    storageIndexerUrl: $network->storageIndexerUrl,
-);
-
-$hydrationWorker = new HydrationWorker($db, $queueBroker, $nodeBridge);
+// Evidence hydration from Lighthouse/IPFS (CIDv0 reconstructed from the
+// on-chain digest).
+$fetcher = new LighthouseFetcher();
+$hydrationWorker = new HydrationWorker($db, $queueBroker, $fetcher);
 
 // ENS is best-effort. Disable if no RPC URL.
 $ensWorker = null;
@@ -221,15 +222,11 @@ if ($network->ensRpcUrl !== '') {
 
 $statRefresher = new StatRefresher($db, $statBroker);
 $cadence = new Cadence();
-$ogBootstrap = new BackfillBootstrap($stateBroker, $network->chainId, $deployBlock);
-
-$pricingRetry = $pricingService === null
-    ? null
-    : new PricingRetryWorker($db, $pricingService);
+$pricingRetry = new PricingRetryWorker($db, $pricingService);
 
 $supervisor = new Supervisor(
-    bootstraps: array_merge([$ogBootstrap], $mirrorBoots),
-    pollers: array_merge([$ogPollerEntry], $mirrorPollers),
+    bootstraps: array_merge([$baseBootstrap], $mirrorBoots),
+    pollers: array_merge([$basePollerEntry], $mirrorPollers),
     hydration: $hydrationWorker,
     ens: $ensWorker,
     statRefresher: $statRefresher,
