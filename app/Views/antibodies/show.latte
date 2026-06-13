@@ -576,12 +576,19 @@
              * Sync state is derived from how many of the configured chains
              * have a mirror row. `none` keeps the panel honest pre-relayer.
              *}
+            {* The relayer only mirrors antibodies that have earned enforcement
+             * authority (corroboration ≥ K or seeded). An advisory antibody
+             * stays on its home chain — it is NOT mirror-eligible until it
+             * matures, so the cross-chain hook never enforces an unproven flag. *}
+            {var $mirrorEligible = $isHardBlock}
             {var $mirroredCount = count($ab['mirrors'])}
-            {var $syncBadge = $mirroredCount === 0
-                ? ['Not yet mirrored', 'text-fg-tertiary']
-                : ($mirroredCount >= $mirrorChainsTotal
-                    ? ['All chains synced', 'text-immune-500']
-                    : ['Partial: ' . $mirroredCount . ' of ' . $mirrorChainsTotal . ' chains', 'text-caution-500'])}
+            {var $syncBadge = !$mirrorEligible
+                ? ['Not mirror-eligible', 'text-fg-dim']
+                : ($mirroredCount === 0
+                    ? ['Eligible — pending mirror', 'text-caution-500']
+                    : ($mirroredCount >= $mirrorChainsTotal
+                        ? ['All chains synced', 'text-immune-500']
+                        : ['Partial: ' . $mirroredCount . ' of ' . $mirrorChainsTotal . ' chains', 'text-caution-500']))}
             <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
 
                 <header class="px-7 py-4 border-b border-ink-line/40 flex items-center gap-3">
@@ -594,6 +601,22 @@
                     </span>
                 </header>
 
+                {if !$mirrorEligible}
+                <div class="px-7 py-6">
+                    <div class="flex items-center gap-2.5 mb-2">
+                        <span class="inline-flex h-2 w-2 rounded-full bg-caution-500" aria-hidden="true"></span>
+                        <span class="font-mono text-[11px] uppercase tracking-widest2 text-caution-500">Not eligible to mirror</span>
+                    </div>
+                    <p class="text-[13px] text-fg-secondary leading-[1.6] max-w-[60ch]">
+                        This antibody is <span class="text-caution-500">advisory</span> — it stays on its home chain. The
+                        relayer only propagates antibodies that have earned enforcement authority, so the cross-chain
+                        Uniswap hook never blocks on an unproven flag. It becomes mirror-eligible once it matures to
+                        hard-block:
+                        <span class="text-fg-primary">{$entry->corroboration_count} of {$corroborationK}</span>
+                        independent publishers corroborating so far.
+                    </p>
+                </div>
+                {else}
                 <table class="w-full">
                     <thead>
                         <tr class="border-b border-ink-line/40 bg-ink-sunken/30">
@@ -635,6 +658,7 @@
                 <footer class="px-7 py-3.5 border-t border-ink-line/40 font-mono text-[10.5px] text-fg-tertiary">
                     <span>{$mirroredCount} of {$mirrorChainsTotal} chains mirrored</span>
                 </footer>
+                {/if}
 
             </section>
         </div>
