@@ -106,6 +106,18 @@ CREATE TABLE antibody.publisher
     total_staked_usdc          numeric(20, 6) NOT NULL DEFAULT 0,
     successful_challenges_won  integer NOT NULL DEFAULT 0,
     challenges_lost            integer NOT NULL DEFAULT 0,
+    -- Reputation mirror (canonical score lives in the on-chain Reputation
+    -- contract; these columns are display-only, driven by Reputation events).
+    score                      numeric(20, 6) NOT NULL DEFAULT 0,
+    matured_count              bigint NOT NULL DEFAULT 0,
+    challenges_won             bigint NOT NULL DEFAULT 0,
+    slashed_count              bigint NOT NULL DEFAULT 0,
+    genesis_granted            numeric(20, 6) NOT NULL DEFAULT 0,
+    -- Identity (PublisherRegistrar): ENS node + locked registration bond.
+    ens_node                   bytea,
+    registration_bond          numeric(20, 6),
+    registered_at              timestamptz,
+    deregistered               boolean NOT NULL DEFAULT false,
     first_seen_at              timestamptz NOT NULL DEFAULT now(),
     last_active_at             timestamptz NOT NULL DEFAULT now(),
     last_ens_resolved_at       timestamptz
