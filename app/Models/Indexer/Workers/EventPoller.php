@@ -19,16 +19,23 @@ use Throwable;
  * If the gap is larger than `chunkSize`, only that chunk is processed this
  * tick; the next tick continues from the new last_processed_block.
  *
- * Generic over the contract: the handler map (`array<string, callable>`)
- * is built per chain by the bootstrap. Same class drives the 0G Registry
- * pollers and the per-chain Mirror pollers.
+ * Generic over the contract set: one eth_getLogs covers a single address
+ * (Mirror chains) or the whole Base contract suite (an address array) on a
+ * single chain cursor. The handler map (`array<string, callable>`) is built
+ * per chain by the bootstrap. With an address-aware decoder, dispatch keys are
+ * "Contract.Event" (e.g. "Registry.Published"); single-contract sources key on
+ * the bare event name.
  */
 class EventPoller
 {
     /** @var array<string, callable(array):bool> */
     private array $dispatch;
 
+    /** @var string[] watched contract addresses (eth_getLogs filter) */
+    private array $addresses;
+
     /**
+     * @param string|string[] $addresses single address or the suite's address set
      * @param array<string, callable(array):bool> $handlers
      */
     public function __construct(
@@ -36,11 +43,12 @@ class EventPoller
         private readonly EventDecoder $decoder,
         private readonly StateBroker $state,
         private readonly int $chainId,
-        private readonly string $contractAddress,
+        string|array $addresses,
         array $handlers,
         private readonly int $confirmations = 2,
         private readonly int $chunkSize = 5000,
     ) {
+        $this->addresses = is_array($addresses) ? array_values($addresses) : [$addresses];
         $this->dispatch = $handlers;
     }
 
@@ -72,7 +80,7 @@ class EventPoller
         $logs = $this->rpc->getLogs([
             'fromBlock' => JsonRpcClient::intToHex($fromBlock),
             'toBlock'   => JsonRpcClient::intToHex($toBlock),
-            'address'   => $this->contractAddress,
+            'address'   => count($this->addresses) === 1 ? $this->addresses[0] : $this->addresses,
         ]);
 
         $handled = 0;
@@ -81,8 +89,10 @@ class EventPoller
             if ($decoded === null) {
                 continue;
             }
+            $contract = $decoded['contract'] ?? null;
             $name = $decoded['event'];
-            $fn = $this->dispatch[$name] ?? null;
+            $key = $contract !== null ? $contract . '.' . $name : $name;
+            $fn = $this->dispatch[$key] ?? null;
             if ($fn === null) {
                 continue;
             }
@@ -94,7 +104,7 @@ class EventPoller
                 // Skip the row but advance the cursor; a transient handler
                 // bug should not block the whole indexer. Real errors land
                 // in stderr where the supervisor surfaces them.
-                fwrite(STDERR, "[EventPoller chain=$this->chainId] handler '$name' failed at block " . $decoded['blockNumber']
+                fwrite(STDERR, "[EventPoller chain=$this->chainId] handler '$key' failed at block " . $decoded['blockNumber']
                     . " logIndex " . $decoded['logIndex'] . ': ' . $e->getMessage() . PHP_EOL);
             }
         }
