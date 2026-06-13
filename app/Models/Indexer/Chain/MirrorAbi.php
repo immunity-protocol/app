@@ -9,7 +9,7 @@ use RuntimeException;
 
 /**
  * Loads the Mirror ABI fixture (events only) and exposes the same lookup
- * surface as RegistryAbi: event-by-name, event-by-topic0.
+ * surface as ContractAbi: event-by-name, event-by-topic0.
  *
  * Used by the Sepolia (and future per-chain) EventPoller instances so the
  * indexer can decode AntibodyMirrored / AntibodyUnmirrored / AddressBlocked
