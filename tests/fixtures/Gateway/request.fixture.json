@@ -1,0 +1,51 @@
+{
+  "privateKey": "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+  "publisher": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+  "withContext": {
+    "payload": {
+      "encryptedContext": "0x04aabbccddeeff00112233",
+      "envelope": {
+        "schema": "immunity/antibody-envelope/v1",
+        "publisher": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "keccakId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "immId": "imm_test_001",
+        "abType": "ADDRESS",
+        "flavor": 0,
+        "createdAt": "2026-06-13T00:00:00.000Z",
+        "reasonSummary": "path a/b — unicode é and quote \" test",
+        "matcher": {
+          "kind": "graph",
+          "chainId": 84532,
+          "taintSetId": "0x2222222222222222222222222222222222222222222222222222222222222222",
+          "size": 7
+        }
+      }
+    },
+    "canonicalJson": "{\"encryptedContext\":\"0x04aabbccddeeff00112233\",\"envelope\":{\"abType\":\"ADDRESS\",\"createdAt\":\"2026-06-13T00:00:00.000Z\",\"flavor\":0,\"immId\":\"imm_test_001\",\"keccakId\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"matcher\":{\"chainId\":84532,\"kind\":\"graph\",\"size\":7,\"taintSetId\":\"0x2222222222222222222222222222222222222222222222222222222222222222\"},\"publisher\":\"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266\",\"reasonSummary\":\"path a/b — unicode é and quote \\\" test\",\"schema\":\"immunity/antibody-envelope/v1\"}}",
+    "payloadHash": "0x00150adf6e80cfc0bf8449bc78ff98ae21db82aafb51c927a9375ad8ad8a5f9a",
+    "signature": "0x03e3871d7d0ba939ae1b8c46e8ff0ea36c5580c3f0696e24a903df1fdbeff1ff4ec9ae776cb394dd63d53a6840f539d3febca9e3d8b09fc089d28f650c2bba231b"
+  },
+  "noContext": {
+    "payload": {
+      "envelope": {
+        "schema": "immunity/antibody-envelope/v1",
+        "publisher": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "keccakId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "immId": "imm_test_001",
+        "abType": "ADDRESS",
+        "flavor": 0,
+        "createdAt": "2026-06-13T00:00:00.000Z",
+        "reasonSummary": "path a/b — unicode é and quote \" test",
+        "matcher": {
+          "kind": "graph",
+          "chainId": 84532,
+          "taintSetId": "0x2222222222222222222222222222222222222222222222222222222222222222",
+          "size": 7
+        }
+      }
+    },
+    "canonicalJson": "{\"envelope\":{\"abType\":\"ADDRESS\",\"createdAt\":\"2026-06-13T00:00:00.000Z\",\"flavor\":0,\"immId\":\"imm_test_001\",\"keccakId\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"matcher\":{\"chainId\":84532,\"kind\":\"graph\",\"size\":7,\"taintSetId\":\"0x2222222222222222222222222222222222222222222222222222222222222222\"},\"publisher\":\"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266\",\"reasonSummary\":\"path a/b — unicode é and quote \\\" test\",\"schema\":\"immunity/antibody-envelope/v1\"}}",
+    "payloadHash": "0x158e13da9a60f9f2ee16e29b3131d9ae1c94ecdb3f89ac5b9761641509fb7960",
+    "signature": "0x538457f8f554fa7930c595555e74a6644bb4387f65613992b7bbcc6d2423a1c6642414f68cd5319bc270c81f0670c1635ab5754f2336c81fee0fbcf285a618e51b"
+  }
+}
