@@ -7,12 +7,13 @@ namespace App\Models\Indexer\Chain;
 use RuntimeException;
 
 /**
- * Decodes Registry event logs (eth_getLogs result items) into typed payloads.
+ * Decodes contract event logs (eth_getLogs result items) into typed payloads.
  *
- * The Registry only emits fixed-size scalar types (uint*, int*, address, bool,
- * bytes32, bytes4, uint8 for enums). No dynamic types (string, bytes, arrays).
- * That keeps the decoder small: every parameter occupies exactly 32 bytes in
- * the data slot or is a topic.
+ * Handles fixed-size scalar types (uint*, int*, address, bool, bytes32, bytes4,
+ * uint8 enums) in topics/data slots, plus non-indexed dynamic `string` and
+ * `bytes` in the data section (head offset + tail length/payload) — needed for
+ * PublisherRegistrar.Registered(label) and L2Registry.TextChanged/SubnodeCreated.
+ * Arrays and indexed dynamic types are not used by the indexed event set.
  */
 class EventDecoder
 {
@@ -74,10 +75,18 @@ class EventDecoder
             $isIndexed = !empty($input['indexed']);
             if ($isIndexed) {
                 $word = self::stripHex((string) ($topics[$indexedTopicIdx++] ?? '0x'));
-            } else {
-                $word = $words[$wordIdx++] ?? str_repeat('0', 64);
+                $args[$name] = self::decodeWord($type, $word);
+                continue;
             }
-            $args[$name] = self::decodeWord($type, $word);
+            // Non-indexed: each param occupies one head word — the value inline
+            // for static types, or a byte-offset into the data tail for dynamic
+            // `string`/`bytes`.
+            $headWord = $words[$wordIdx++] ?? str_repeat('0', 64);
+            if (self::isDynamic($type)) {
+                $args[$name] = self::decodeDynamic($type, $headWord, $words);
+            } else {
+                $args[$name] = self::decodeWord($type, $headWord);
+            }
         }
 
         return [
@@ -138,6 +147,36 @@ class EventDecoder
             return self::hexToDecimalString($word);
         }
         throw new RuntimeException("EventDecoder: unsupported type '$type'");
+    }
+
+    /** True for ABI dynamic types we support in the data tail. */
+    private static function isDynamic(string $type): bool
+    {
+        return $type === 'string' || $type === 'bytes';
+    }
+
+    /**
+     * Decode a non-indexed dynamic `string`/`bytes`. The head word is a byte
+     * offset (from the start of the data tuple) to a tail slot holding the
+     * length followed by the payload words.
+     *
+     * @param string[] $words 64-char hex words of the whole data section
+     */
+    private static function decodeDynamic(string $type, string $headWord, array $words): string
+    {
+        $offsetBytes = self::hexToInt(ltrim($headWord, '0'));
+        $offsetWord = intdiv($offsetBytes, 32);
+        $len = self::hexToInt(ltrim($words[$offsetWord] ?? '', '0'));
+        if ($len === 0) {
+            return $type === 'string' ? '' : '0x';
+        }
+        $dataHex = '';
+        $numWords = intdiv($len + 31, 32);
+        for ($i = 1; $i <= $numWords; $i++) {
+            $dataHex .= $words[$offsetWord + $i] ?? '';
+        }
+        $payload = (string) hex2bin(substr($dataHex, 0, $len * 2));
+        return $type === 'string' ? $payload : '0x' . bin2hex($payload);
     }
 
     private static function stripHex(string $hex): string
