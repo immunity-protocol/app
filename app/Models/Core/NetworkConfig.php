@@ -30,6 +30,7 @@ final class NetworkConfig
         public readonly string $creVerdictReceiverAddress,
         public readonly string $protectedSetAddress,
         public readonly string $l2RegistryAddress,
+        public readonly int $corroborationK = 3,
     ) {
     }
 
@@ -55,6 +56,7 @@ final class NetworkConfig
             creVerdictReceiverAddress: getenv('BASE_CRE_RECEIVER_ADDRESS')        ?: '0x02ED0a8b0e6b98C1C05CE125157566313cEe4834',
             protectedSetAddress:       getenv('BASE_PROTECTED_SET_ADDRESS')       ?: '0x95faC80e27419619A9108C53573bf9A77967397A',
             l2RegistryAddress:         getenv('BASE_L2_REGISTRY_ADDRESS')         ?: '0xded674AAbCe67B2cFe724c8c50c928830468E0cC',
+            corroborationK:            (int) (getenv('BASE_CORROBORATION_K') ?: 3),
         );
     }
 
