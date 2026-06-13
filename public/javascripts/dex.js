@@ -1,9 +1,9 @@
 // /dex page client. Wires a real Uniswap v4 swap UI against the protected
-// and unprotected pools on Sepolia. ethers v6 via ESM CDN; no bundler.
+// and unprotected pools on Base Sepolia. ethers v6 via ESM CDN; no bundler.
 //
 // Pool selection toggles between two PoolKeys: protected (with the Immunity
-// hook) vs unprotected (hooks = 0). The Swap button calls the canonical
-// Sepolia V4 swap router. Hook reverts surface inline with a decoded reason.
+// hook) vs unprotected (hooks = 0). The Swap button calls the Base Sepolia V4
+// swap router (PoolSwapTest). Hook reverts surface inline with a decoded reason.
 
 import { ethers } from 'https://esm.sh/ethers@6.13.4';
 
@@ -109,7 +109,7 @@ async function connect() {
                     params: [{ chainId: '0x' + cfg.chainId.toString(16) }],
                 });
             } catch (err) {
-                setResult('error', `Switch wallet to Sepolia (chain ${cfg.chainId}) and try again.`);
+                setResult('error', `Switch wallet to Base Sepolia (chain ${cfg.chainId}) and try again.`);
                 return;
             }
         }
@@ -371,7 +371,7 @@ async function swap() {
         // Without this, the wallet's pre-flight simulation reverts on the
         // protected pool when a flagged token is in play and the tx never
         // gets broadcast — we want it to broadcast and revert on chain so
-        // (a) the user sees a real Etherscan link, and (b) the backend
+        // (a) the user sees a real Basescan link, and (b) the backend
         // ingestor can verify the on-chain revert and increment the
         // antibody's pool_reverts / value_protected counters.
         const tx = await router.swapExactTokensForTokens(
@@ -387,7 +387,7 @@ async function swap() {
         const receipt = await tx.wait();
         setResult('success',
             `Swap confirmed on the <strong>${state.pool}</strong> pool. ` +
-            `<a href="${cfg.blockExplorerUrl}/tx/${receipt.hash}" target="_blank" rel="noopener" class="underline underline-offset-4">View on Etherscan</a>.`
+            `<a href="${cfg.blockExplorerUrl}/tx/${receipt.hash}" target="_blank" rel="noopener" class="underline underline-offset-4">View on Basescan</a>.`
         );
         await refreshBalances();
     } catch (err) {
@@ -431,7 +431,7 @@ async function reportBlockedSwap(txHash) {
             SenderBlocked: 'Immunity hook blocked the swap: sender is on the registry',
             OriginBlocked: 'Immunity hook blocked the swap: tx origin is on the registry',
         }[data.errorName] ?? `Swap reverted: ${data.errorName ?? 'unknown'}`;
-        const explorerLink = `<a href="${cfg.blockExplorerUrl}/tx/${txHash}" target="_blank" rel="noopener" class="underline underline-offset-4">View on Etherscan</a>`;
+        const explorerLink = `<a href="${cfg.blockExplorerUrl}/tx/${txHash}" target="_blank" rel="noopener" class="underline underline-offset-4">View on Basescan</a>`;
         const explanation = '<br><span class="opacity-80">This is the hook doing its job. Toggle to the unprotected pool to compare.</span>';
         const valueLine = `<div class="mt-2 pt-2 border-t border-current opacity-70 text-[11px]">Recorded $${Number(data.valueProtectedUsd).toLocaleString('en-US', { maximumFractionDigits: 2 })} as value protected. ${explorerLink}.</div>`;
         setResult('error', `${friendly}.${explanation}${valueLine}`);

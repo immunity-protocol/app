@@ -12,15 +12,15 @@ use Throwable;
 use Zephyrus\Data\Database;
 
 /**
- * Verifies a failed Sepolia tx, decodes the Immunity hook revert, and
+ * Verifies a failed Base Sepolia tx, decodes the Immunity hook revert, and
  * persists synthetic event.check_event + event.block_event rows so pool
  * reverts feed the antibody stats and the network value-protected counter.
  *
  * Trust model: anyone can POST any tx hash to the public endpoint, but we
  * only ingest if the on-chain receipt confirms (a) the tx failed, (b) the
- * `to` is the configured Sepolia swap router, and (c) the revert data
- * matches one of our hook's three custom errors. UNIQUE(tx_hash, log_index)
- * guarantees idempotency.
+ * `to` is the configured Base Sepolia swap router, and (c) the revert data
+ * matches one of our hook's three custom errors (identical on the Base
+ * Sepolia hook). UNIQUE(tx_hash, log_index) guarantees idempotency.
  */
 final class DexBlockIngestor
 {
