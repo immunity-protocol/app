@@ -303,7 +303,7 @@ window.addEventListener('DOMContentLoaded', () => {
             Cents on each call. <span class="text-accent italic font-light">Real USDC</span> on each save.
         </h2>
         <p class="text-fg-secondary text-[15.5px] leading-[1.65] max-w-[700px] mb-14">
-            Every check carries a mandatory fee — it pays for the evaluation. On a hit, 80% rewards the publisher whose antibody saved an inference and 20% funds the treasury. On a miss, the full fee goes to the treasury, which pays for the CRE compute. Settled on-chain on Base, no off-chain accounting.
+            Every check carries a flat <span class="text-fg-primary">$0.01</span> fee — it pays for the security evaluation, and it's priced to be profitable on its own. A known threat resolves from the cache instantly and 80% rewards the publisher whose antibody caught it; anything novel is screened by an attested Chainlink CRE verdict — Claude in a TEE — and the fee funds that compute. No subsidy, no tiers. Settled on-chain on Base, no off-chain accounting.
         </p>
 
         <div class="grid md:grid-cols-2 gap-6 md:gap-8 mb-12">
@@ -320,10 +320,10 @@ window.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <dt class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Per check()</dt>
                         <dd class="flex items-baseline gap-2.5">
-                            <span class="font-mono text-[26px] tabular-nums text-fg-primary">$0.002</span>
+                            <span class="font-mono text-[26px] tabular-nums text-fg-primary">$0.01</span>
                             <span class="font-mono text-[11px] text-fg-tertiary">USDC</span>
                         </dd>
-                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Mandatory fee on every <code class="font-mono text-[12px] text-fg-primary">immunity.check()</code> call — it pays for the evaluation. A hit rewards the publisher; a miss funds the CRE compute.</p>
+                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Flat fee on every <code class="font-mono text-[12px] text-fg-primary">immunity.check()</code> — priced to cover an attested Chainlink CRE screen (Claude in a TEE) and still profit. A cached hit rewards the publisher; a novel action funds its CRE verdict.</p>
                     </div>
                     <div class="pt-4 border-t border-ink-line/40">
                         <dt class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Publication fee</dt>
@@ -382,7 +382,7 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <p class="text-fg-secondary text-[14px] sm:text-[15px] leading-[1.7] max-w-[820px]">
-            Operators pay cents to skip every retry of a known threat. Publishers earn USDC every time their pattern saves someone else from a loss. Treasury keeps the Registry funded and pays for CRE compute on misses. Every fee, reward, and stake settles on-chain on Base, fully auditable, no off-chain accounting.
+            Operators pay a cent a check for an attested verdict on every action — known threats resolve instantly from the cache, novel ones get a fresh CRE/Claude screen the fee pays for. Publishers earn USDC every time their antibody catches a threat someone else was about to hit. Treasury keeps the Registry funded and the CRE subscription topped up. Every fee, reward, and stake settles on-chain on Base, fully auditable, no off-chain accounting.
         </p>
 
     </div>
