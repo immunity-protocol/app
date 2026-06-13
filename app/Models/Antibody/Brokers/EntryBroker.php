@@ -331,11 +331,11 @@ class EntryBroker extends Broker
                 [$entryId]
             ) ?? '0'),
             // Pool reverts: subset of blocks_made that came from the
-            // Sepolia hook (chain_id 11155111) — the DEX demo. Counted
+            // Base Sepolia hook (chain_id 84532) — the DEX demo. Counted
             // separately so the antibody detail can split the story.
             'pool_reverts' => (int) $this->selectValue(
                 "SELECT count(*) FROM event.block_event
-                  WHERE entry_id = ? AND chain_id = 11155111",
+                  WHERE entry_id = ? AND chain_id = 84532",
                 [$entryId]
             ),
             // First-check-after-publish latency. Returns null until at least
