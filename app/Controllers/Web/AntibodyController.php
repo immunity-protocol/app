@@ -150,6 +150,21 @@ final class AntibodyController extends Controller
         $isProtected = is_string($target)
             && (new ProtectedTargetService())->isProtected($target);
 
+        // Challenge history across every antibody in this threat's corroboration
+        // set — surfaces whether the threat was ever challenged and how the jury
+        // ruled (upheld / struck), with the bond flow.
+        // keccak_id is a raw bytea on the Entry (like publisher); hex-encode for
+        // the challenge lookup. Guard against an already-hex value just in case.
+        $keccakIds = [];
+        foreach ($corroborationSet as $c) {
+            if (!isset($c->keccak_id) || $c->keccak_id === '') {
+                continue;
+            }
+            $kid = (string) $c->keccak_id;
+            $keccakIds[] = strlen($kid) === 32 ? bin2hex($kid) : $kid;
+        }
+        $challenges = (new \App\Models\Antibody\Brokers\ChallengeBroker())->findByKeccakIds($keccakIds);
+
         return $this->render('antibodies/show', [
             'id'                => $threat !== null ? $threat->threat_id : $headline->imm_id,
             'threat'            => $threat,
@@ -162,6 +177,7 @@ final class AntibodyController extends Controller
             'corroborationSet'  => $corroborationSet,
             'corroborationK'    => NetworkConfig::baseSepolia()->corroborationK,
             'isProtected'       => $isProtected,
+            'challenges'        => $challenges,
         ]);
     }
 }

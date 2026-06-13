@@ -571,6 +571,63 @@
 
             </section>
 
+            {* ----------- CHALLENGE HISTORY PANEL ----------- *}
+            {*
+             * The challenge game made visible. Present only when this threat's
+             * corroboration set has been challenged. Outcome: UPHELD (jury ruled
+             * the antibody a real threat, challenger forfeits bond — enforcement
+             * continues) vs STRUCK (ruled a false positive, publisher slashed).
+             *}
+            {if count($challenges) > 0}
+            <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
+                <header class="px-7 py-4 border-b border-ink-line/40 flex items-center gap-3">
+                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Challenge history</span>
+                </header>
+                <div class="divide-y divide-ink-line/30">
+                    {foreach $challenges as $ch}
+                        {var $outTone = match($ch['outcome']) {
+                            'upheld' => ['Upheld', 'text-immune-500', 'bg-immune-500/10', 'border-immune-500/30'],
+                            'struck' => ['Struck (false positive)', 'text-threat-300', 'bg-threat-500/10', 'border-threat-500/30'],
+                            default  => ['Pending jury', 'text-caution-500', 'bg-caution-500/10', 'border-caution-500/30'],
+                        }}
+                        <div class="px-7 py-5">
+                            <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border font-mono text-[10px] uppercase tracking-widest2 {$outTone[1]} {$outTone[2]} {$outTone[3]}">
+                                    {$outTone[0]}
+                                </span>
+                                <span class="font-mono text-[10.5px] text-fg-dim">
+                                    {if $ch['outcome'] === 'upheld'}challenger forfeited bond — antibody keeps enforcing{elseif $ch['outcome'] === 'struck'}publisher slashed — matcher cleared{else}challenge open — matured antibody keeps enforcing{/if}
+                                </span>
+                            </div>
+                            <dl class="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3 text-[12px]">
+                                <div>
+                                    <dt class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-1">Jury verdict</dt>
+                                    <dd class="font-mono text-fg-secondary tabular-nums">{$ch['valid_votes']} valid / {$ch['invalid_votes']} invalid</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-1">Challenger</dt>
+                                    <dd class="font-mono text-fg-secondary truncate">
+                                        {if $ch['challenger']}<a href="/publisher/{$ch['challenger']}" class="hover:text-accent transition-colors" title="{$ch['challenger']}">{substr($ch['challenger'], 0, 6)}…{substr($ch['challenger'], -4)}</a>{else}—{/if}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-1">Bond</dt>
+                                    <dd class="font-mono text-fg-secondary tabular-nums">{if $ch['bond'] !== null}{$ch['bond']|number:2} USDC{else}—{/if}</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-1">Payout</dt>
+                                    <dd class="font-mono text-fg-secondary tabular-nums">{if $ch['winner_payout'] !== null}{$ch['winner_payout']|number:2} USDC{else}—{/if}</dd>
+                                </div>
+                            </dl>
+                            <div class="font-mono text-[10px] text-fg-dim mt-3">
+                                Opened {format('timeago', $ch['opened_at'])}{if $ch['resolved_at']} · resolved {format('timeago', $ch['resolved_at'])}{/if}
+                            </div>
+                        </div>
+                    {/foreach}
+                </div>
+            </section>
+            {/if}
+
             {* ----------- MIRROR STATUS PANEL ----------- *}
             {*
              * Sync state is derived from how many of the configured chains
