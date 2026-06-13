@@ -22,11 +22,38 @@ class Publisher extends Entity
     public string $first_seen_at;
     public string $last_active_at;
 
+    // On-chain reputation mirror (Base Reputation + PublisherRegistrar events).
+    // Display-only; the canonical score lives on the Reputation contract.
+    public string $score = '0';
+    public int $matured_count = 0;
+    public int $challenges_won = 0;
+    public int $slashed_count = 0;
+    public string $genesis_granted = '0';
+    public ?string $ens_node = null;
+    public ?string $registration_bond = null;
+    public ?string $registered_at = null;
+    public bool $deregistered = false;
+
+    /**
+     * Coarse reputation tier from the score, mirroring the protocol's bands.
+     * Genesis publishers start at 100; matured/won antibodies push higher.
+     */
+    public function reputationTier(): string
+    {
+        $score = (float) $this->score;
+        return match (true) {
+            $score >= 200 => 'trusted',
+            $score >= 100 => 'established',
+            $score > 0    => 'emerging',
+            default       => 'unranked',
+        };
+    }
+
     /**
      * @return list<string>
      */
     protected static function byteaProperties(): array
     {
-        return ['address'];
+        return ['address', 'ens_node'];
     }
 }
