@@ -9,16 +9,18 @@ use App\Models\Indexer\Pricing\MoralisPriceService;
 use Zephyrus\Data\Database;
 
 /**
- * CheckSettled(indexed address agent, indexed bytes32 antibodyId,
- *              bool wasMatch, uint256 fee, uint64 timestamp)
+ * Registry.Checked(indexed address agent, indexed bytes32 antibodyId,
+ *                  indexed address tokenAddress, bool wasMatch, uint256 fee,
+ *                  uint256 originChainId, uint256 tokenAmount, uint64 timestamp)
  *
- * One row per SDK check() call that is settled on chain. We translate to:
+ * One row per SDK check() call settled on chain. The three telemetry params are
+ * observable facts (A-6) used only for value-at-risk pricing — never truth. We
+ * translate to:
  *   - decision = wasMatch ? 'block' : 'allow'
  *   - cache_hit = (antibodyId != 0x000...)
  *   - matched_entry_id = lookup antibody.entry by keccak_id (NULL if unknown)
  *
- * tx_kind / tee_used / value_at_risk_usd are NULL for v1 (no SDK telemetry
- * channel yet). chain_id is the Galileo chain id.
+ * tx_kind / tee_used / confidence are NULL (no SDK telemetry channel yet).
  */
 class CheckSettledHandler
 {

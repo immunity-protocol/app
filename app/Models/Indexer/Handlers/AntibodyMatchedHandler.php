@@ -9,16 +9,16 @@ use App\Models\Indexer\Pricing\MoralisPriceService;
 use Zephyrus\Data\Database;
 
 /**
- * AntibodyMatched(indexed bytes32 keccakId, indexed address agent,
- *                 indexed address publisher, address reviewer,
- *                 uint256 publisherReward, uint256 treasuryReward)
+ * Registry.Matched(indexed bytes32 keccakId, indexed address agent,
+ *                  indexed address publisher, address tokenAddress,
+ *                  uint256 tokenAmount, uint256 originChainId,
+ *                  uint256 publisherShare, uint256 treasuryShare, bool escrowed)
  *
  * Inserts an event.block_event row referencing the matched antibody and the
- * preceding CheckSettled in the same transaction; bumps publisher aggregates.
- *
- * value_protected_usd is set to 0 in v1 (no SDK telemetry channel yet).
- * tx_hash_attempt is NULL (the matched tx is the one carrying this event,
- * not a downstream attempt).
+ * preceding Checked in the same tx; bumps publisher aggregates. While the
+ * antibody is on PROBATION the publisher share is escrowed (held on the entry
+ * via FeesEscrowed), so it counts toward the block but NOT yet toward earnings;
+ * once matured (escrowed=false) the share pays directly and is booked.
  */
 class AntibodyMatchedHandler
 {
@@ -38,7 +38,8 @@ class AntibodyMatchedHandler
         $keccakIdHex = strtolower(self::stripHex((string) $a['keccakId']));
         $agentHex = strtolower(self::stripHex((string) $a['agent']));
         $publisherHex = strtolower(self::stripHex((string) $a['publisher']));
-        $publisherReward = self::weiToUsdc((string) $a['publisherReward']);
+        $publisherReward = self::weiToUsdc((string) $a['publisherShare']);
+        $escrowed = !empty($a['escrowed']);
         $txHashHex = strtolower(self::stripHex((string) $decoded['txHash']));
 
         $entryRow = $this->db->query(
@@ -132,6 +133,10 @@ class AntibodyMatchedHandler
         $inserted = $row->fetch(\PDO::FETCH_ASSOC) !== false;
 
         if ($inserted) {
+            // Escrowed (probation) shares are held on the entry until maturation
+            // and booked to earnings then via FeesReleased; only direct
+            // (post-maturation) shares count toward earnings now.
+            $earnedNow = $escrowed ? '0' : $publisherReward;
             $this->db->query(
                 "INSERT INTO antibody.publisher (address, successful_blocks, total_earned_usdc, last_active_at)
                  VALUES (?, 1, ?, now())
@@ -139,7 +144,7 @@ class AntibodyMatchedHandler
                     successful_blocks = antibody.publisher.successful_blocks + 1,
                     total_earned_usdc = antibody.publisher.total_earned_usdc + EXCLUDED.total_earned_usdc,
                     last_active_at    = GREATEST(antibody.publisher.last_active_at, EXCLUDED.last_active_at)",
-                ['\\x' . $publisherHex, $publisherReward]
+                ['\\x' . $publisherHex, $earnedNow]
             );
 
             $this->db->query(
