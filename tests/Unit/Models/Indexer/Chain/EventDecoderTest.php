@@ -4,163 +4,175 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\Indexer\Chain;
 
+use App\Models\Indexer\Chain\BaseChainAbi;
+use App\Models\Indexer\Chain\ContractAbi;
 use App\Models\Indexer\Chain\EventDecoder;
-use App\Models\Indexer\Chain\RegistryAbi;
 use Tests\TestCase;
 
 final class EventDecoderTest extends TestCase
 {
-    /** Address used as a stable test fixture; not a "real" config value. */
-    private const REGISTRY_ADDRESS_FIXTURE = '0x45Ee45Ca358b3fc9B1b245a8f1c1C3128caC8e48';
+    // Stable fixture addresses, one per contract (not real config values).
+    private const REGISTRY    = '0x1111111111111111111111111111111111111111';
+    private const REPUTATION  = '0x2222222222222222222222222222222222222222';
+    private const REGISTRAR   = '0x3333333333333333333333333333333333333333';
+    private const CHALLENGE   = '0x4444444444444444444444444444444444444444';
 
-    private RegistryAbi $abi;
+    private BaseChainAbi $abi;
     private EventDecoder $decoder;
 
     protected function setUp(): void
     {
-        $this->abi = new RegistryAbi();
+        $this->abi = BaseChainAbi::fromContracts([
+            'Registry'           => [self::REGISTRY,   'ImmunityRegistry.json'],
+            'Reputation'         => [self::REPUTATION, 'Reputation.json'],
+            'PublisherRegistrar' => [self::REGISTRAR,  'PublisherRegistrar.json'],
+            'ChallengeManager'   => [self::CHALLENGE,  'ChallengeManager.json'],
+        ]);
         $this->decoder = new EventDecoder($this->abi);
     }
 
-    public function testTopicForKnownEventIsStable(): void
+    private static function topicFor(ContractAbi $c, string $event): string
     {
-        // keccak256("AntibodyPublished(bytes32,uint32,address,uint8,uint8,uint8,uint8,uint8,address,bytes32,bytes32,bytes32,bytes32,bytes32,uint256,uint64,uint64,uint64,bool)")
-        $expected = '0x8006f18d06959fa3d8e542b17bbfc9dad375f9784fc3c8e7b70282b3d2ffb4e9';
-        $event = $this->abi->eventByName('AntibodyPublished');
-        self::assertNotNull($event);
-        self::assertSame($expected, RegistryAbi::topicForEvent($event));
+        return ContractAbi::topicForEvent($c->eventByName($event));
     }
 
-    public function testTopic0ToEventLookup(): void
+    private static function word(int|string $value): string
     {
-        $found = $this->abi->eventByTopic('0x8006f18d06959fa3d8e542b17bbfc9dad375f9784fc3c8e7b70282b3d2ffb4e9');
-        self::assertNotNull($found);
-        self::assertSame('AntibodyPublished', $found['name']);
+        $hex = is_int($value) ? dechex($value) : $value;
+        return str_pad($hex, 64, '0', STR_PAD_LEFT);
     }
 
-    public function testUnknownTopicYieldsNull(): void
+    private static function addrTopic(string $address): string
     {
+        return '0x' . str_pad(substr($address, 2), 64, '0', STR_PAD_LEFT);
+    }
+
+    public function testTopicLookupIsStableRoundTrip(): void
+    {
+        $registry = $this->abi->contractAt(self::REGISTRY);
+        $topic = self::topicFor($registry, 'Published');
+        self::assertSame('Published', $registry->eventByTopic($topic)['name']);
+    }
+
+    public function testLogFromUnwatchedAddressYieldsNull(): void
+    {
+        $registry = $this->abi->contractAt(self::REGISTRY);
         $log = [
-            'topics' => ['0x' . str_repeat('a', 64)],
-            'data'   => '0x',
-            'blockNumber'    => '0x10',
+            'topics'          => [self::topicFor($registry, 'Retired')],
+            'data'            => '0x',
+            'blockNumber'     => '0x1',
             'transactionHash' => '0x' . str_repeat('1', 64),
-            'logIndex'       => '0x0',
-            'address'        => '0x0',
+            'logIndex'        => '0x0',
+            'address'         => '0x9999999999999999999999999999999999999999',
         ];
         self::assertNull($this->decoder->decode($log));
     }
 
-    public function testDecodeAntibodySlashed(): void
+    public function testDecodeRegistrySlashed(): void
     {
-        // AntibodySlashed(indexed bytes32 keccakId, indexed address publisher, uint256 stakeAmount)
-        $event = $this->abi->eventByName('AntibodySlashed');
-        $topic0 = RegistryAbi::topicForEvent($event);
-
-        $keccakId = '0x' . str_repeat('ab', 32);
-        $publisherTopic = '0x' . str_pad(str_repeat('0', 0) . 'b30af804fd19565e6bcbfdced944fdf654e585d9', 64, '0', STR_PAD_LEFT);
-        $stake = 12345678;
-        $stakeWord = str_pad(dechex($stake), 64, '0', STR_PAD_LEFT);
+        $registry = $this->abi->contractAt(self::REGISTRY);
+        $keccak = '0x' . str_repeat('ab', 32);
+        $publisher = '0xb30af804fd19565e6bcbfdced944fdf654e585d9';
+        $challenger = '0xc11376d56e2ab8dbbd3b2fb36a2a0b2e62ecf600';
 
         $log = [
             'topics' => [
-                $topic0,
-                $keccakId,
-                $publisherTopic,
+                self::topicFor($registry, 'Slashed'),
+                $keccak,
+                self::addrTopic($publisher),
+                self::addrTopic($challenger),
             ],
-            'data'   => '0x' . $stakeWord,
-            'blockNumber'    => '0x' . dechex(29900000),
+            'data'            => '0x' . self::word(12345678) . self::word(500),
+            'blockNumber'     => '0x' . dechex(42781200),
             'transactionHash' => '0x' . str_repeat('1', 64),
-            'logIndex'       => '0x5',
-            'address'        => self::REGISTRY_ADDRESS_FIXTURE,
+            'logIndex'        => '0x5',
+            'address'         => self::REGISTRY,
         ];
         $decoded = $this->decoder->decode($log);
-        self::assertNotNull($decoded);
-        self::assertSame('AntibodySlashed', $decoded['event']);
-        self::assertSame($keccakId, $decoded['args']['keccakId']);
-        self::assertSame('0xb30af804fd19565e6bcbfdced944fdf654e585d9', $decoded['args']['publisher']);
-        self::assertSame((string) $stake, $decoded['args']['stakeAmount']);
-        self::assertSame(29900000, $decoded['blockNumber']);
+        self::assertSame('Registry', $decoded['contract']);
+        self::assertSame('Slashed', $decoded['event']);
+        self::assertSame($keccak, $decoded['args']['keccakId']);
+        self::assertSame($publisher, $decoded['args']['publisher']);
+        self::assertSame($challenger, $decoded['args']['challenger']);
+        self::assertSame('12345678', $decoded['args']['bondForfeited']);
+        self::assertSame('500', $decoded['args']['escrowClawedBack']);
+        self::assertSame(42781200, $decoded['blockNumber']);
         self::assertSame(5, $decoded['logIndex']);
     }
 
-    public function testDecodeCheckSettledMixedIndexed(): void
+    /** Same event name on two contracts must resolve to the right ABI by address. */
+    public function testSameNameDifferentContractDisambiguatedByAddress(): void
     {
-        // CheckSettled(indexed address agent, indexed bytes32 antibodyId,
-        //              indexed address tokenAddress, bool wasMatch, uint256 fee,
-        //              uint256 originChainId, uint256 tokenAmount, uint64 timestamp)
-        $event = $this->abi->eventByName('CheckSettled');
-        $topic0 = RegistryAbi::topicForEvent($event);
+        $registry = $this->abi->contractAt(self::REGISTRY);
+        $reputation = $this->abi->contractAt(self::REPUTATION);
+        $keccak = '0x' . str_repeat('cd', 32);
+        $publisher = '0xb30af804fd19565e6bcbfdced944fdf654e585d9';
 
-        $agent = '0xc11376d56e2ab8dbbd3b2fb36a2a0b2e62ecf600';
-        $agentTopic = '0x' . str_pad(substr($agent, 2), 64, '0', STR_PAD_LEFT);
-        $antibodyId = '0x' . str_repeat('cd', 32);
-        $tokenAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
-        $tokenTopic = '0x' . str_pad(substr($tokenAddress, 2), 64, '0', STR_PAD_LEFT);
-
-        $wasMatch = 1;
-        $fee = 200;
-        $originChainId = 1;
-        $tokenAmount = 1_500_000_000;
-        $ts = 1745000000;
-
-        $data =
-            str_pad(dechex($wasMatch), 64, '0', STR_PAD_LEFT)
-          . str_pad(dechex($fee), 64, '0', STR_PAD_LEFT)
-          . str_pad(dechex($originChainId), 64, '0', STR_PAD_LEFT)
-          . str_pad(dechex($tokenAmount), 64, '0', STR_PAD_LEFT)
-          . str_pad(dechex($ts), 64, '0', STR_PAD_LEFT);
-
-        $log = [
-            'topics' => [$topic0, $agentTopic, $antibodyId, $tokenTopic],
-            'data'   => '0x' . $data,
-            'blockNumber'    => '0x1',
-            'transactionHash' => '0x' . str_repeat('2', 64),
-            'logIndex'       => '0x0',
-            'address'        => self::REGISTRY_ADDRESS_FIXTURE,
+        // Registry.Matured(keccakId, publisher, releasedFees, maturedAt)
+        $regLog = [
+            'topics'          => [self::topicFor($registry, 'Matured'), $keccak, self::addrTopic($publisher)],
+            'data'            => '0x' . self::word(900) . self::word(1745000000),
+            'blockNumber'     => '0x1', 'transactionHash' => '0x' . str_repeat('1', 64),
+            'logIndex'        => '0x0', 'address' => self::REGISTRY,
         ];
-        $decoded = $this->decoder->decode($log);
-        self::assertNotNull($decoded);
-        self::assertSame('CheckSettled', $decoded['event']);
-        self::assertSame($agent, $decoded['args']['agent']);
-        self::assertSame($antibodyId, $decoded['args']['antibodyId']);
-        self::assertSame($tokenAddress, $decoded['args']['tokenAddress']);
-        self::assertTrue($decoded['args']['wasMatch']);
-        self::assertSame((string) $fee, $decoded['args']['fee']);
-        self::assertSame((string) $originChainId, $decoded['args']['originChainId']);
-        self::assertSame((string) $tokenAmount, $decoded['args']['tokenAmount']);
-        self::assertSame((string) $ts, $decoded['args']['timestamp']);
+        $reg = $this->decoder->decode($regLog);
+        self::assertSame('Registry', $reg['contract']);
+        self::assertSame('900', $reg['args']['releasedFees']);
+
+        // Reputation.Matured(publisher, newScore)
+        $repLog = [
+            'topics'          => [self::topicFor($reputation, 'Matured'), self::addrTopic($publisher)],
+            'data'            => '0x' . self::word(125),
+            'blockNumber'     => '0x1', 'transactionHash' => '0x' . str_repeat('2', 64),
+            'logIndex'        => '0x1', 'address' => self::REPUTATION,
+        ];
+        $rep = $this->decoder->decode($repLog);
+        self::assertSame('Reputation', $rep['contract']);
+        self::assertSame('125', $rep['args']['newScore']);
     }
 
-    public function testDecodeStakeSweptUnsignedScalar(): void
+    public function testDecodeRegisteredDynamicString(): void
     {
-        // StakeSwept(indexed address sweeper, uint256 numReleased, uint256 bountyPaid)
-        $event = $this->abi->eventByName('StakeSwept');
-        $topic0 = RegistryAbi::topicForEvent($event);
+        $registrar = $this->abi->contractAt(self::REGISTRAR);
+        $publisher = '0xb30af804fd19565e6bcbfdced944fdf654e585d9';
+        $node = '0x' . str_repeat('11', 32);
+        $label = 'genesis';
 
-        $sweeper = '0x1111111111111111111111111111111111111111';
-        $sweeperTopic = '0x' . str_pad(substr($sweeper, 2), 64, '0', STR_PAD_LEFT);
-        $numReleased = 7;
-        $bounty = 50000;
-
-        $data =
-            str_pad(dechex($numReleased), 64, '0', STR_PAD_LEFT)
-          . str_pad(dechex($bounty), 64, '0', STR_PAD_LEFT);
+        // data tuple: [label offset = 0x40][bond] [label len][label bytes]
+        $data = self::word(0x40) . self::word(2_000_000)
+              . self::word(strlen($label)) . str_pad(bin2hex($label), 64, '0', STR_PAD_RIGHT);
 
         $log = [
-            'topics' => [$topic0, $sweeperTopic],
-            'data'   => '0x' . $data,
-            'blockNumber'    => '0x2',
-            'transactionHash' => '0x' . str_repeat('3', 64),
-            'logIndex'       => '0x1',
-            'address'        => self::REGISTRY_ADDRESS_FIXTURE,
+            'topics'          => [self::topicFor($registrar, 'Registered'), self::addrTopic($publisher), $node],
+            'data'            => '0x' . $data,
+            'blockNumber'     => '0x1', 'transactionHash' => '0x' . str_repeat('3', 64),
+            'logIndex'        => '0x0', 'address' => self::REGISTRAR,
         ];
         $decoded = $this->decoder->decode($log);
-        self::assertNotNull($decoded);
-        self::assertSame('StakeSwept', $decoded['event']);
-        self::assertSame($sweeper, $decoded['args']['sweeper']);
-        self::assertSame((string) $numReleased, $decoded['args']['numReleased']);
-        self::assertSame((string) $bounty, $decoded['args']['bountyPaid']);
+        self::assertSame('PublisherRegistrar', $decoded['contract']);
+        self::assertSame('Registered', $decoded['event']);
+        self::assertSame($publisher, $decoded['args']['publisher']);
+        self::assertSame($node, $decoded['args']['node']);
+        self::assertSame('genesis', $decoded['args']['label']);
+        self::assertSame('2000000', $decoded['args']['bond']);
+    }
+
+    /** TreasuryWithdrawn has an identical signature on Registry and ChallengeManager. */
+    public function testIdenticalSignatureCollisionResolvedByAddress(): void
+    {
+        $registry = $this->abi->contractAt(self::REGISTRY);
+        $challenge = $this->abi->contractAt(self::CHALLENGE);
+        self::assertSame(self::topicFor($registry, 'TreasuryWithdrawn'), self::topicFor($challenge, 'TreasuryWithdrawn'));
+
+        $to = '0xb30af804fd19565e6bcbfdced944fdf654e585d9';
+        $mk = fn (string $addr) => [
+            'topics'          => [self::topicFor($registry, 'TreasuryWithdrawn'), self::addrTopic($to)],
+            'data'            => '0x' . self::word(42),
+            'blockNumber'     => '0x1', 'transactionHash' => '0x' . str_repeat('4', 64),
+            'logIndex'        => '0x0', 'address' => $addr,
+        ];
+        self::assertSame('Registry', $this->decoder->decode($mk(self::REGISTRY))['contract']);
+        self::assertSame('ChallengeManager', $this->decoder->decode($mk(self::CHALLENGE))['contract']);
     }
 
     public function testDecodeWordHandlesLargeUint256AsString(): void
