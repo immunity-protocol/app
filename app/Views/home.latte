@@ -52,7 +52,7 @@ window.addEventListener('DOMContentLoaded', () => {
     ? '$' . number_format($earningsTotal, 2)
     : '$' . rtrim(rtrim(number_format($earningsTotal, 4), '0'), '.')}
 
-{* 0G Compute pricing for qwen-2.5-7b-instruct: ~$0.00015 per call.
+{* Chainlink CRE TEE inference cost: ~$0.00015 per call.
    Cumulative since registry deploy. Keep in sync with home.latte JS. *}
 {var $computeSavedUsd = $llmSaved * 0.00015}
 {var $computeSavedLabel = $computeSavedUsd <= 0
@@ -107,7 +107,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         {* Lede *}
         <p class="text-fg-secondary text-[15px] sm:text-[18px] leading-[1.6] max-w-[620px] mb-8 sm:mb-10">
-            Antibodies are signed by their publisher, staked on chain, and addressable by a stable CVE-style identifier. Cheap matches resolve locally in microseconds. Novel threats verify in a 0G Compute TEE. The network is the immune system.
+            Antibodies are signed by their publisher, staked on chain, and addressable by a stable CVE-style identifier. Cheap matches resolve locally in microseconds. Novel threats verify in a Chainlink CRE TEE, triggered on-chain and attested by the DON. The network is the immune system.
         </p>
 
         {* Install command block, the centerpiece *}
@@ -199,21 +199,21 @@ window.addEventListener('DOMContentLoaded', () => {
             Four steps. Four layers. One protocol.
         </h2>
         <p class="text-fg-secondary text-[15.5px] leading-[1.65] max-w-[680px] mb-14">
-            Most checks resolve locally in microseconds. Only the 1% that's actually new round-trips to the TEE. When something blocks, every agent on the network knows about it within a second. No human in the loop.
+            Every action is screened. A hit resolves locally in microseconds; only the slice that's genuinely new triggers a Chainlink CRE TEE on-chain. Propagation is instant — enforcement is trust-gated, so a lone flag can't censor anyone. No human in the loop.
         </p>
 
         {var $steps = [
           ['n' => '01', 'layer' => 'Detection',    'title' => 'Agent calls check() before acting',
-           'body' => 'An AI agent passes any tx, scraped content, or counterparty message to immunity.check(). The Tier-1 cache resolves 99% of calls in under a millisecond — most of the time the network already knows.',
+           'body' => 'An AI agent passes any tx, scraped content, or counterparty message to immunity.check(). The fee is mandatory — it pays for the evaluation. On a hit, the network already knows: the LLM is skipped, the answer is instant, and the fee rewards the publisher.',
            'icon' => 'shield-check'],
-          ['n' => '02', 'layer' => 'Verification', 'title' => 'Novel threats round-trip a TEE',
-           'body' => 'Cache miss + on-chain registry miss only — the slice that is actually new. Encrypted context goes to a 0G Compute enclave running qwen-2.5-7b. Verdict comes back signed with attestation.',
+          ['n' => '02', 'layer' => 'Verification', 'title' => 'Novel threats trigger Chainlink CRE',
+           'body' => 'A miss is the slice that is actually new. An on-chain verification request triggers Chainlink CRE; encrypted context goes to the TEE enclave; a DON-signed verdict is written back on-chain. A confirmed threat seeds a new antibody — a future cache hit for everyone.',
            'icon' => 'lock-square'],
-          ['n' => '03', 'layer' => 'Trust',        'title' => 'Antibody mints on chain',
-           'body' => 'If the verdict says block, the SDK auto-publishes. The publisher locks 1 USDC for 72h on the on-chain Registry. Match rewards split 80/20 publisher / treasury — skin in the game by design.',
+          ['n' => '03', 'layer' => 'Trust',        'title' => 'Propagation is instant, enforcement is gated',
+           'body' => 'The antibody is visible network-wide the moment it is published. But a lone or low-reputation flag stays advisory — it warns, never hard-blocks. A hard block needs K independent reputable publishers corroborating the same target, so a $1 actor can\'t censor the Uniswap router.',
            'icon' => 'database'],
-          ['n' => '04', 'layer' => 'Speed',        'title' => 'Every other agent is now immune',
-           'body' => 'The new antibody fans out across the AXL gossip mesh. Local caches update in well under a second. The same attack is blocked everywhere — by SDK on agents, by hook on Uniswap pools.',
+          ['n' => '04', 'layer' => 'Speed',        'title' => 'The network self-cleans for profit',
+           'body' => 'On-chain events propagate the antibody; local caches and the indexer update; the same attack is blocked everywhere — by SDK on agents, by the Uniswap hook on pools. Anyone can challenge a false antibody with a bond; the CRE jury rules and the loser is slashed.',
            'icon' => 'broadcast'],
         ]}
 
@@ -255,19 +255,19 @@ window.addEventListener('DOMContentLoaded', () => {
            role on the left, description on the right. Logos served from
            /assets/images/sponsors/. *}
         {var $partners = [
-          ['name' => '0G Labs',    'role' => 'Trust · Verification · Detection layers',
-           'desc' => 'On-chain antibody Registry on 0G Chain. Sealed evidence on 0G Storage. Verifiable TEE inference on 0G Compute.',
-           'logo' => '/assets/images/sponsors/0g.svg'],
-          ['name' => 'Gensyn AXL', 'role' => 'Speed layer',
-           'desc' => 'Peer-to-peer antibody gossip via custom pub/sub.',
-           'logo' => '/assets/images/sponsors/gensyn.jpg'],
-          ['name' => 'Uniswap v4', 'role' => 'Protection layer',
-           'desc' => 'Pool-level hooks for collective LP defense.',
+          ['name' => 'Chainlink CRE', 'role' => 'Verification layer',
+           'desc' => 'Novel checks and the challenge jury trigger CRE on-chain; the TEE returns a DON-signed, attested verdict written back on chain.',
+           'logo' => '/assets/images/sponsors/chainlink.svg'],
+          ['name' => 'ENS',           'role' => 'Identity layer',
+           'desc' => 'Publishers are *.immunity.eth subnames via Durin L2 on Base — protocol-owned, so a slashed publisher can\'t transfer the name to escape its history. Reputation mirrors into ENS text records.',
+           'logo' => '/assets/images/sponsors/ens.svg'],
+          ['name' => 'Uniswap v4',    'role' => 'Protection layer',
+           'desc' => 'An on-chain hook reverts swaps from antibody-flagged addresses while keeping canonical routers un-blockable. A real on-chain consumer of the registry.',
            'logo' => '/assets/images/sponsors/uniswap.png'],
         ]}
         <div class="mt-20 pt-10 border-t border-ink-line/50">
             <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-7">
-                Partners <span class="text-fg-dim">· ETHGlobal Open Agents 2026</span>
+                Partners <span class="text-fg-dim">· ETHGlobal New York 2026</span>
             </div>
             <div class="border-t border-ink-line/40">
                 {foreach $partners as $p}
@@ -303,7 +303,7 @@ window.addEventListener('DOMContentLoaded', () => {
             Cents on each call. <span class="text-accent italic font-light">Real USDC</span> on each save.
         </h2>
         <p class="text-fg-secondary text-[15.5px] leading-[1.65] max-w-[700px] mb-14">
-            Operators pay micro-fees per gated transaction. Publishers earn 80% of those fees on every match their antibody scores. Treasury keeps the registry running. Settled on-chain on 0G Galileo, no off-chain accounting.
+            Every check carries a mandatory fee — it pays for the evaluation. On a hit, 80% rewards the publisher whose antibody saved an inference and 20% funds the treasury. On a miss, the full fee goes to the treasury, which pays for the CRE compute. Settled on-chain on Base, no off-chain accounting.
         </p>
 
         <div class="grid md:grid-cols-2 gap-6 md:gap-8 mb-12">
@@ -323,7 +323,7 @@ window.addEventListener('DOMContentLoaded', () => {
                             <span class="font-mono text-[26px] tabular-nums text-fg-primary">$0.002</span>
                             <span class="font-mono text-[11px] text-fg-tertiary">USDC</span>
                         </dd>
-                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Flat fee on every <code class="font-mono text-[12px] text-fg-primary">immunity.check()</code> call. Tier-1 cache hits resolve locally before this fee applies.</p>
+                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Mandatory fee on every <code class="font-mono text-[12px] text-fg-primary">immunity.check()</code> call — it pays for the evaluation. A hit rewards the publisher; a miss funds the CRE compute.</p>
                     </div>
                     <div class="pt-4 border-t border-ink-line/40">
                         <dt class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Publication fee</dt>
@@ -331,7 +331,7 @@ window.addEventListener('DOMContentLoaded', () => {
                             <span class="font-mono text-[26px] tabular-nums text-fg-primary">$0.0005</span>
                             <span class="font-mono text-[11px] text-fg-tertiary">USDC, one-time</span>
                         </dd>
-                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">When a TEE-verified novel threat mints a new antibody. Funds the on-chain registry write.</p>
+                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">When a CRE-verified novel threat seeds a new antibody. Funds the on-chain registry write.</p>
                     </div>
                 </dl>
 
@@ -355,7 +355,7 @@ window.addEventListener('DOMContentLoaded', () => {
                             <span class="font-mono text-[26px] tabular-nums text-immune-500">80%</span>
                             <span class="font-mono text-[11px] text-fg-tertiary">of every check fee that hits</span>
                         </dd>
-                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Paid in USDC, on chain, by the Registry contract directly to the publisher's address. No claim step, no off-chain settlement.</p>
+                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Reward for the cache entry that saved an inference. Paid in USDC on chain by the Registry contract. While an antibody is on probation the share is escrowed, released on maturation and clawed back on slash.</p>
                     </div>
                     <div class="pt-4 border-t border-immune-500/20">
                         <dt class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-1.5">Treasury share</dt>
@@ -370,7 +370,7 @@ window.addEventListener('DOMContentLoaded', () => {
                             <span class="font-mono text-[20px] tabular-nums text-fg-primary">1 USDC</span>
                             <span class="font-mono text-[11px] text-fg-tertiary">locked 72h, slashable</span>
                         </dd>
-                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Skin in the game. Bad publishes get challenged and slashed; quiet legitimate ones unlock and reclaim the stake.</p>
+                        <p class="text-fg-secondary text-[13px] leading-[1.6] mt-1.5">Skin in the game. A false antibody earns zero: challenged, the CRE jury rules, the stake and escrowed rewards are slashed. Legitimate ones mature, unlock, and reclaim the stake.</p>
                     </div>
                 </dl>
 
@@ -382,7 +382,7 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <p class="text-fg-secondary text-[14px] sm:text-[15px] leading-[1.7] max-w-[820px]">
-            Operators pay cents to skip every retry of a known threat. Publishers earn USDC every time their pattern saves someone else from a loss. Treasury keeps the Registry funded. Every fee, reward, and stake settles on-chain on 0G Galileo, fully auditable, no off-chain accounting.
+            Operators pay cents to skip every retry of a known threat. Publishers earn USDC every time their pattern saves someone else from a loss. Treasury keeps the Registry funded and pays for CRE compute on misses. Every fee, reward, and stake settles on-chain on Base, fully auditable, no off-chain accounting.
         </p>
 
     </div>
@@ -604,23 +604,23 @@ window.addEventListener('DOMContentLoaded', () => {
                 <ul class="space-y-3.5 text-[14px] text-fg-secondary leading-[1.6]">
                     <li class="flex items-start gap-3">
                         <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
-                        Sub-millisecond local cache via <a href="https://github.com/ophelios-studio/axl-pubsub" rel="noopener" class="font-mono text-[12.5px] text-fg-primary hover:text-accent transition-colors underline-offset-4 hover:underline">axl-pubsub</a>
+                        Sub-millisecond local cache; a blocked verdict refuses the action before you sign
                     </li>
                     <li class="flex items-start gap-3">
                         <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
-                        Automatic on-chain settlement on every check
+                        Keyless SDK — holds no secrets, signs nothing on your behalf
                     </li>
                     <li class="flex items-start gap-3">
                         <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
-                        TEE-backed semantic detection for novel threats
+                        CRE TEE semantic detection for novel threats, DON-attested
                     </li>
                     <li class="flex items-start gap-3">
                         <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
-                        Configurable escalation handlers for SUSPICIOUS verdicts
+                        Drop in as an MCP server — <code class="font-mono text-[12.5px] text-fg-primary">immunity.check</code> as a tool any agent calls
                     </li>
                     <li class="flex items-start gap-3">
                         <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
-                        Cross-chain antibody mirroring out of the box
+                        Claude Agent SDK middleware and a Coinbase AgentKit plugin
                     </li>
                     <li class="flex items-start gap-3">
                         <span class="inline-flex mt-2 h-1 w-1 rounded-full bg-immune-500 shrink-0" aria-hidden="true"></span>
