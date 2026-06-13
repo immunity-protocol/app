@@ -27,12 +27,29 @@ final class MoralisPriceService
     /**
      * Token address (lowercase) => static USD price string + decimals. Bypasses
      * Moralis entirely for tokens with no listing (mock testnet tokens, demo
-     * fixtures). Sourced from the `INDEXER_PRICE_OVERRIDES` env var, parsed once
-     * per process. Format: {"0xabc..": "1.000000", ...}; decimals default to 6.
+     * fixtures). Sourced from the `INDEXER_PRICE_OVERRIDES` env var, merged over
+     * the built-in DEFAULT_OVERRIDES, parsed once per process. Format:
+     * {"0xabc..": "1.000000", ...}; decimals default to 6.
      *
      * @var array<string, array{price:string, decimals:int}>|null
      */
     private static ?array $priceOverrides = null;
+
+    /**
+     * Built-in price overrides for the Base Sepolia (84532) demo tokens, which
+     * Moralis cannot price because they are mock ERC20s with no market listing.
+     * These make value-protected resolve WITHOUT a live Moralis key. Keyed by
+     * lowercase token address; `INDEXER_PRICE_OVERRIDES` entries (if any) take
+     * precedence over these defaults.
+     *
+     * @var array<string, array{price:string, decimals:int}>
+     */
+    private const DEFAULT_OVERRIDES = [
+        // MockUSDC (Base Sepolia) — pegged $1, 6 decimals.
+        '0xe697ef7724453f239d8c0eb9295d87c344d9ce60' => ['price' => '1.00', 'decimals' => 6],
+        // WETH (Base Sepolia predeploy) — sane demo price, 18 decimals.
+        '0x4200000000000000000000000000000000000006' => ['price' => '3000.00', 'decimals' => 18],
+    ];
 
     /**
      * Map of evm chain id => [moralis chain identifier, wrapped-native address].
@@ -45,6 +62,7 @@ final class MoralisPriceService
         1        => ['eth',      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'], // WETH
         11155111 => ['sepolia',  '0x7b79995e5f793a07bc00c21412e50ecae098e7f9'], // WETH (Sepolia)
         8453     => ['base',     '0x4200000000000000000000000000000000000006'], // WETH (Base)
+        84532    => ['0x14a34',  '0x4200000000000000000000000000000000000006'], // WETH (Base Sepolia)
         42161    => ['arbitrum', '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'], // WETH (Arbitrum)
         10       => ['optimism', '0x4200000000000000000000000000000000000006'], // WETH (Optimism)
         137      => ['polygon',  '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270'], // WMATIC
@@ -155,18 +173,19 @@ final class MoralisPriceService
     {
         $raw = $_ENV['INDEXER_PRICE_OVERRIDES'] ?? getenv('INDEXER_PRICE_OVERRIDES') ?: '';
         if (!is_string($raw) || $raw === '') {
-            return [];
+            return self::DEFAULT_OVERRIDES;
         }
         try {
             $decoded = json_decode($raw, true, 8, JSON_THROW_ON_ERROR);
         } catch (Throwable) {
-            return [];
+            return self::DEFAULT_OVERRIDES;
         }
         if (!is_array($decoded)) {
-            return [];
+            return self::DEFAULT_OVERRIDES;
         }
 
-        $map = [];
+        // Built-in defaults first; env entries override on address collision.
+        $map = self::DEFAULT_OVERRIDES;
         foreach ($decoded as $address => $entry) {
             if (!is_string($address) || $address === '') {
                 continue;

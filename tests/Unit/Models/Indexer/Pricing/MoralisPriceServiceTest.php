@@ -175,6 +175,37 @@ final class MoralisPriceServiceTest extends BaseTestCase
         self::assertSame(1000.0, (float) $value);
     }
 
+    public function testBaseSepoliaMockUsdcPricesViaDefaultOverrideWithoutMoralis(): void
+    {
+        // Mock testnet token Moralis can't price; the built-in override must
+        // resolve it to $1/token even with no Moralis client.
+        $broker = $this->createMock(TokenPriceCacheBroker::class);
+        $broker->expects(self::never())->method('find');
+
+        $svc = new MoralisPriceService(null, $broker);
+        // 5,000,000,000 base units of MockUSDC (6 decimals) = 5000 USDC * $1.
+        $value = $svc->priceUsd(
+            '0xe697EF7724453F239D8c0EB9295D87C344D9CE60',
+            84532,
+            '5000000000',
+        );
+        self::assertNotNull($value);
+        self::assertSame(5000.0, (float) $value);
+    }
+
+    public function testBaseSepoliaWethPricesViaDefaultOverride(): void
+    {
+        $broker = $this->createMock(TokenPriceCacheBroker::class);
+        $svc = new MoralisPriceService(null, $broker);
+        // 1 WETH (18 decimals) at the $3000 demo price.
+        $value = $svc->priceUsd(
+            '0x4200000000000000000000000000000000000006',
+            84532,
+            '1000000000000000000',
+        );
+        self::assertSame(3000.0, (float) $value);
+    }
+
     public function testHintDecimalsOverrideTokenDecimals(): void
     {
         $moralis = $this->createMock(MoralisService::class);
