@@ -58,13 +58,13 @@
 {*
  * Action panel state. evidence_cid is bytea NOT NULL but a fresh antibody
  * with no uploaded envelope carries 32 zero bytes; treat that as "no
- * envelope". Challenge window is open while stake_lock_until is in the
- * future; once elapsed the action disappears entirely.
+ * envelope". The challenge window is open while the antibody is on PROBATION
+ * (before it matures); once active the action disappears.
  *}
 {var $evidenceCidHex = '0x' . bin2hex($entry->evidence_cid)}
 {var $hasEvidenceCid = bin2hex($entry->evidence_cid) !== str_repeat('0', 64)}
-{var $evidenceUrl = $hasEvidenceCid ? 'https://indexer-storage-testnet-turbo.0g.ai/file?root=' . $evidenceCidHex : null}
-{var $challengeOpen = $entry->stake_lock_until !== null && strtotime($entry->stake_lock_until) > time()}
+{var $evidenceUrl = $hasEvidenceCid ? 'https://gateway.lighthouse.storage/ipfs/' . \App\Models\Core\Cid::digestToCidV0($entry->evidence_cid) : null}
+{var $challengeOpen = $entry->isProbation()}
 {var $ab = [
   'id'             => $entry->imm_id,
   'keccak'         => '0x' . bin2hex($entry->keccak_id),
@@ -75,7 +75,7 @@
   'status'         => strtoupper($entry->status),
   'publisher'      => $entry->publisher_ens ?? substr($publisherAddr, 0, 10) . '..' . substr($publisherAddr, -6),
   'publisher_addr' => $publisherAddr,
-  'stake'          => (float) $entry->stake_amount,
+  'bond'           => (float) $entry->bond_amount,
   'created_at'    => $entry->created_at,
   'mirrored_to'   => array_map(fn ($m) => $m->chain_name, $mirrors),
 

@@ -27,11 +27,15 @@ class Entry extends Entity
     public string $evidence_cid;
     public ?string $embedding_hash = null;
     public ?string $embedding_cid = null;
-    public string $stake_lock_until;
     public ?string $expires_at = null;
+    public ?string $matured_at = null;
     public string $publisher;
     public ?string $publisher_ens = null;
-    public string $stake_amount;
+    public string $bond_amount;
+    public string $escrowed_fees;
+    public int $is_seeded;
+    public int $prominence_tier;
+    public int $corroboration_count;
     public string $attestation;
     public ?string $publish_tx_hash = null;
     public ?string $seed_source = null;
@@ -42,6 +46,11 @@ class Entry extends Entity
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function isProbation(): bool
+    {
+        return $this->status === 'probation';
     }
 
     public function isExpired(): bool

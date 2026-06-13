@@ -148,7 +148,7 @@ class PublisherBroker extends Broker
                     WHERE e.publisher = p.address
                 ), 0),
                 total_staked_usdc = coalesce((
-                    SELECT sum(stake_amount) FROM antibody.entry
+                    SELECT sum(bond_amount) FROM antibody.entry
                     WHERE publisher = p.address
                 ), 0),
                 last_active_at = coalesce((
