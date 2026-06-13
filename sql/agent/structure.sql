@@ -21,3 +21,54 @@ CREATE TABLE agent.heartbeat
 
 CREATE INDEX heartbeat_last_seen_idx ON agent.heartbeat (last_seen DESC);
 CREATE INDEX heartbeat_role_idx      ON agent.heartbeat (agent_role);
+
+-- ##################################################################################################################
+-- FLEET_MEMBER (one row per template-agent in the live fleet; UPSERT on startup and every heartbeat)
+-- The real product fleet (publisher / hunter / corroborator) that runs the public
+-- template agent and reports over HTTP to POST /v1/agents/heartbeat. Distinct from
+-- agent.heartbeat above (network-node liveness) and from the old demo.agent_heartbeat
+-- (AXL demo containers). `wallet` is the agent's Base Sepolia address as 0x text;
+-- null until the SDK binds identity. `ens` is its *.immunity.eth name once registered.
+-- ##################################################################################################################
+CREATE TABLE agent.fleet_member
+(
+    agent_id      varchar(128) PRIMARY KEY,
+    role          varchar(32)  NOT NULL,
+    display_name  varchar(128) NOT NULL,
+    wallet        varchar(42),
+    ens           varchar(255),
+    version       varchar(32)  NOT NULL,
+    first_seen    timestamptz  NOT NULL DEFAULT now(),
+    last_seen     timestamptz  NOT NULL DEFAULT now()
+);
+
+CREATE INDEX fleet_member_last_seen_idx ON agent.fleet_member (last_seen DESC);
+CREATE INDEX fleet_member_role_idx      ON agent.fleet_member (role);
+
+-- ##################################################################################################################
+-- FLEET_ACTIVITY (per-action log; one row per check / publish / corroborate / challenge / scan a fleet agent runs)
+-- Mirrors the demo.agent_activity shape so the activity panel renders it unchanged.
+-- Drives the live feed on /agents. Append-only; bounded by periodic pruning.
+-- ##################################################################################################################
+CREATE TABLE agent.fleet_activity
+(
+    id              bigserial    PRIMARY KEY,
+    agent_id        varchar(128) NOT NULL,
+    role            varchar(32)  NOT NULL,
+    display_name    varchar(128) NOT NULL,
+    -- check | publish | corroborate | challenge | scan | ...
+    action_type     varchar(64)  NOT NULL,
+    action_summary  text         NOT NULL,
+    -- allow | block | novel | error | info
+    status          varchar(16)  NOT NULL,
+    antibody_imm_id varchar(32),
+    tx_hash         varchar(80),
+    target          varchar(80),
+    family          varchar(64),
+    occurred_at     timestamptz  NOT NULL DEFAULT now()
+);
+
+CREATE INDEX fleet_activity_occurred_at_idx ON agent.fleet_activity (occurred_at DESC);
+CREATE INDEX fleet_activity_id_desc_idx     ON agent.fleet_activity (id DESC);
+CREATE INDEX fleet_activity_agent_idx       ON agent.fleet_activity (agent_id, occurred_at DESC);
+CREATE INDEX fleet_activity_status_idx      ON agent.fleet_activity (status);
