@@ -9,10 +9,12 @@ use App\Models\Mirror\Brokers\PendingJobsBroker;
 use Zephyrus\Data\Database;
 
 /**
- * AntibodySlashed(indexed bytes32 keccakId, indexed address publisher,
- *                 uint256 stakeAmount)
+ * Registry.Slashed(indexed bytes32 keccakId, indexed address publisher,
+ *                  indexed address challenger, uint256 bondForfeited,
+ *                  uint256 escrowClawedBack)
  *
- * Mark the antibody as slashed and update the publisher's loss counters.
+ * Mark the antibody as slashed and update the publisher's loss counters. The
+ * escrow clawback rides on the accompanying FeesClawedBack event.
  */
 class AntibodySlashedHandler
 {
@@ -31,7 +33,7 @@ class AntibodySlashedHandler
         $a = $decoded['args'];
         $keccakIdHex = strtolower(self::stripHex((string) $a['keccakId']));
         $publisherHex = strtolower(self::stripHex((string) $a['publisher']));
-        $amountUsdc = self::weiToUsdc((string) $a['stakeAmount']);
+        $amountUsdc = self::weiToUsdc((string) $a['bondForfeited']);
 
         $upd = $this->db->query(
             "UPDATE antibody.entry
@@ -51,6 +53,7 @@ class AntibodySlashedHandler
         $this->db->query(
             "UPDATE antibody.publisher SET
                 challenges_lost   = challenges_lost + 1,
+                slashed_count     = slashed_count + 1,
                 total_staked_usdc = GREATEST(total_staked_usdc - ?::numeric(20, 6), 0),
                 last_active_at    = now()
               WHERE address = ?",
