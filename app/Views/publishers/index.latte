@@ -61,8 +61,6 @@
                 {var $rank = $pagination->showingFrom + $i}
                 {var $hex = bin2hex($r->address)}
                 {var $shortHex = '0x' . substr($hex, 0, 6) . '..' . substr($hex, -4)}
-                {var $isHexPub = $r->ens === null}
-                {var $publisherDisplay = $r->ens ?? $shortHex}
                 {var $earned = (float) $r->total_earned_usdc}
                 {var $earnedDisplay = $earned >= 1
                     ? '$' . number_format($earned, 2)
@@ -71,9 +69,19 @@
                 <tr class="border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
                     <td class="py-3 pr-6 font-mono text-[12px] text-fg-tertiary">#{$rank}</td>
                     <td class="py-3 pr-6">
-                        <a href="/publisher/0x{$hex}"
-                           class="{$isHexPub ? 'font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors' : 'text-[13px] text-fg-primary group-hover:text-accent transition-colors'}"
-                           title="0x{$hex}">{$publisherDisplay}</a>
+                        <a href="/publisher/0x{$hex}" class="flex items-center gap-3" title="0x{$hex}">
+                            <span class="h-8 w-8 rounded-full shrink-0 ring-1 ring-ink-line/50"
+                                  style="background: linear-gradient(135deg, #{substr($hex, 0, 6)}, #{substr($hex, -6)})"
+                                  aria-hidden="true"></span>
+                            <span class="min-w-0 leading-tight">
+                                {if $r->ens !== null}
+                                    <span class="block text-[13px] text-fg-primary group-hover:text-accent transition-colors truncate">{$r->ens}</span>
+                                    <span class="block font-mono text-[10.5px] text-fg-dim truncate">{$shortHex}</span>
+                                {else}
+                                    <span class="block font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">{$shortHex}</span>
+                                {/if}
+                            </span>
+                        </a>
                     </td>
                     <td class="py-3 pr-6 text-right text-fg-primary">{$r->antibodies_published}</td>
                     <td class="py-3 pr-6 text-right text-fg-secondary">{$r->successful_blocks}</td>
