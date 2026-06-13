@@ -100,11 +100,9 @@
 </section>
 
 <section class="max-w-[1400px] mx-auto px-5 sm:px-7 pt-10 pb-16">
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10">
-
-        {* ============== ON-CHAIN EVENT FEED ============== *}
-        <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 flex flex-col">
-            <header class="px-5 sm:px-7 py-4 border-b border-ink-line/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    {* ============== ON-CHAIN EVENT FEED (full-page, single scroll) ============== *}
+    <div>
+            <header class="pb-4 border-b border-ink-line/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
                     <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">On-chain event log</span>
@@ -117,9 +115,9 @@
                 </div>
             </header>
 
-            <div class="flex-1 max-h-[46rem] overflow-y-auto">
+            <div class="mt-1">
                 <table class="w-full">
-                    <thead class="sticky top-0 bg-ink-sunken/90 backdrop-blur z-10">
+                    <thead class="sticky top-0 bg-ink-base/95 backdrop-blur z-10">
                         <tr class="border-b border-ink-line/40">
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 sm:pl-7 pr-4 py-3 w-24">When</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-36">Event</th>
@@ -190,38 +188,7 @@
                     </tbody>
                 </table>
             </div>
-        </section>
-
-        {* ============== RECENT ANTIBODIES ============== *}
-        <aside class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 flex flex-col">
-            <header class="px-5 py-3.5 border-b border-ink-line/40 flex items-center justify-between gap-2 shrink-0">
-                <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary">Recent antibodies</span>
-                <a href="/antibodies" class="font-mono text-[10px] uppercase tracking-widest2 text-accent-soft hover:text-accent transition-colors">All &rarr;</a>
-            </header>
-            <ul class="divide-y divide-ink-line/30 overflow-y-auto max-h-[46rem]">
-            {if count($recentAntibodies ?? []) === 0}
-                <li class="px-5 py-8 text-center font-mono text-[11px] text-fg-dim italic">No antibodies published yet.</li>
-            {/if}
-            {foreach $recentAntibodies ?? [] as $ab}
-                {var $vTone = match ((string) $ab->verdict) {
-                    'malicious'  => 'text-threat-300',
-                    'suspicious' => 'text-caution-300',
-                    default      => 'text-immune-500',
-                }}
-                <li class="px-5 py-3 hover:bg-ink-elevated/40 transition-colors">
-                    <a href="/antibody/{$ab->imm_id}" class="flex items-center justify-between gap-3 group">
-                        <span class="min-w-0">
-                            <span class="font-mono text-[12px] text-fg-primary group-hover:text-accent transition-colors block truncate">{$ab->imm_id}</span>
-                            <span class="font-mono text-[9.5px] uppercase tracking-widest2 {$vTone}">{$ab->type} &middot; {$ab->verdict}</span>
-                        </span>
-                        <span class="font-mono text-[10.5px] text-fg-dim tabular-nums shrink-0 text-right">
-                            {(int) $ab->block_count} blk
-                        </span>
-                    </a>
-                </li>
-            {/foreach}
-            </ul>
-        </aside>
+        </div>
     </div>
 </section>
 
