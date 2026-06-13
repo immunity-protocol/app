@@ -71,7 +71,9 @@ final class SepoliaDexConfig
             // so the hook lets it through; the /dex client + DexBlockIngestor
             // route swaps through it.
             swapRouterAddress:      getenv('BASE_SWAP_ROUTER')       ?: '0xf13D190e9117920c703d79B5F33732e10049b115',
-            quoterAddress:          getenv('BASE_QUOTER')            ?: '0x0000000000000000000000000000000000000000',
+            // Canonical Uniswap v4 Quoter on Ethereum Sepolia — powers the
+            // "To (estimated)" field (read-only quoteExactInputSingle).
+            quoterAddress:          getenv('BASE_QUOTER')            ?: '0x61B3f2011A92d183C7dbaDBdA940a7555Ccf9227',
             tokenA:                 $intA,
             tokenB:                 $intB,
             currency0:              getenv('BASE_DEX_CURRENCY0')     ?: $intB,
