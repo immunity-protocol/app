@@ -11,13 +11,12 @@
  * agent list) get placeholder values until those streams land.
  *}
 {*
- * Friendly chain-id to name. Galileo (16602) is the home chain of the
+ * Friendly chain-id to name. Base Sepolia (84532) is the home chain of the
  * Registry; the rest are mirror destinations the relayer fans out to.
  *}
 {var $chainNames = [
-    16602    => 'galileo-testnet',
-    11155111 => 'sepolia',
     84532    => 'base-sepolia',
+    11155111 => 'sepolia',
     1        => 'ethereum',
     8453     => 'base',
     42161    => 'arbitrum',
@@ -28,9 +27,8 @@
  * (the row will render the hash as plain text).
  *}
 {var $chainExplorerTx = [
-    16602    => 'https://chainscan-galileo.0g.ai/tx/',
-    11155111 => 'https://sepolia.etherscan.io/tx/',
     84532    => 'https://sepolia.basescan.org/tx/',
+    11155111 => 'https://sepolia.etherscan.io/tx/',
     1        => 'https://etherscan.io/tx/',
     8453     => 'https://basescan.org/tx/',
     42161    => 'https://arbiscan.io/tx/',
@@ -46,7 +44,7 @@
   'semantic'     => 'semantic',
   default        => 'unknown',
 }}
-{var $primaryValue = !$hasMatcher ? '(envelope not yet hydrated from 0G Storage)' : match(true) {
+{var $primaryValue = !$hasMatcher ? '(envelope not yet hydrated from Lighthouse)' : match(true) {
   $entry->type === 'address'      => $primaryMatcher->target ?? '',
   $entry->type === 'call_pattern' => trim(($primaryMatcher->target ?? '') . ' ' . ($primaryMatcher->selector ?? '')),
   $entry->type === 'bytecode'     => $primaryMatcher->bytecodeHash ?? '',
@@ -83,7 +81,7 @@
     'primary'   => ['kind' => $primaryKind, 'value' => $primaryValue],
     'secondary' => [],
     'scope'     => array_values(array_unique(array_merge(
-        [(int) ($primaryMatcher->chainId ?? 16602)],
+        [(int) ($primaryMatcher->chainId ?? 84532)],
         array_map(fn ($m) => (int) $m->chain_id, $mirrors),
     ))),
     'exception' => 'none',
@@ -107,7 +105,7 @@
     'propagation_seconds'       => $impact['propagation_seconds'] ?? null,
     'block_events'       => array_map(fn ($b) => [
       'agent'    => $b->agent_id,
-      'method'   => $b->chain_id == 16602 ? 'SDK check()' : 'Uniswap v4 hook',
+      'method'   => $b->chain_id == 84532 ? 'SDK check()' : 'Uniswap v4 hook',
       'chain'    => isset($chainNames[$b->chain_id])
                         ? 'evm:' . $b->chain_id . ' (' . $chainNames[$b->chain_id] . ')'
                         : 'evm:' . $b->chain_id,
@@ -139,10 +137,14 @@
     {var $verdictTone = $ab['verdict'] === 'MALICIOUS' ? 'text-threat-500' : 'text-caution-500'}
     {var $statusBadge = match($ab['status']) {
         'ACTIVE'     => 'bg-immune-500/10 text-immune-500 border-immune-500/30',
+        'PROBATION'  => 'bg-accent/10 text-accent border-accent/30',
         'CHALLENGED' => 'bg-caution-500/10 text-caution-500 border-caution-500/30',
         'EXPIRED'    => 'bg-fg-dim/15 text-fg-tertiary border-ink-line/60',
         'SLASHED'    => 'bg-threat-500/15 text-threat-500 border-threat-500/30',
+        default      => 'bg-fg-dim/10 text-fg-tertiary border-ink-line/60',
     }}
+    {* Enforcement tier — the single SDK rule. Protected targets cap at advisory. *}
+    {var $isHardBlock = \App\Models\Core\EnforcementTier::isHardBlock($entry->corroboration_count, $entry->is_seeded === 1, $corroborationK, $isProtected)}
 
     <header class="mb-14">
 
@@ -153,6 +155,22 @@
                 <span class="inline-flex h-1.5 w-1.5 rounded-full bg-current pulse-soft" aria-hidden="true"></span>
                 {$ab['status']}
             </span>
+            {* Enforcement tier — derived, not status-keyed. *}
+            {if $isHardBlock}
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border font-mono text-[10px] uppercase tracking-widest2 bg-threat-500/10 text-threat-500 border-threat-500/30" title="corroboration ≥ {$corroborationK} or seeded — agents hard-block on match">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg>
+                    Hard-block
+                </span>
+            {else}
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border font-mono text-[10px] uppercase tracking-widest2 bg-caution-500/10 text-caution-500 border-caution-500/30" title="{$isProtected ? 'target is on the protected set — capped at advisory' : 'below corroboration threshold — advisory only'}">
+                    Advisory{if $isProtected} (protected){/if}
+                </span>
+            {/if}
+            {if $entry->is_seeded === 1}
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border font-mono text-[10px] uppercase tracking-widest2 bg-accent/10 text-accent border-accent/30" title="genesis-seeded antibody">
+                    Genesis
+                </span>
+            {/if}
             <button data-copy="{$ab['id']}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors inline-flex items-center gap-1.5" aria-label="Copy IMM ID">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Copy
@@ -200,8 +218,8 @@
 
         {var $publishTxHex = $entry->publish_tx_hash !== null ? '0x' . bin2hex($entry->publish_tx_hash) : null}
         {var $explorerUrl = $publishTxHex !== null
-            ? 'https://chainscan-galileo.0g.ai/tx/' . $publishTxHex
-            : 'https://chainscan-galileo.0g.ai/address/' . $ab['publisher_addr']}
+            ? 'https://sepolia.basescan.org/tx/' . $publishTxHex
+            : 'https://sepolia.basescan.org/address/' . $ab['publisher_addr']}
         {* Publisher + timestamps row *}
         <div class="flex flex-wrap items-center gap-x-8 gap-y-3 mt-5 text-[12.5px]">
             <div class="flex items-center gap-2">
@@ -210,7 +228,7 @@
                 <a href="{$explorerUrl}"
                    target="_blank"
                    rel="noopener noreferrer"
-                   title="{$publishTxHex !== null ? 'View publish transaction on Galileo explorer' : 'View publisher on Galileo explorer'}"
+                   title="{$publishTxHex !== null ? 'View publish transaction on Basescan' : 'View publisher on Basescan'}"
                    class="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-fg-primary transition-colors border border-fg-tertiary/30 hover:border-fg-primary/40 rounded px-2 py-0.5">
                     View on explorer
                     {* Tabler icon: external-link (https://tabler.io/icons/icon/external-link) *}
@@ -293,6 +311,54 @@
                 </div>
             </section>
 
+            {* ----------- CORROBORATION PANEL ----------- *}
+            {*
+             * The hard-block story made visible: every publisher that independently
+             * declared the same primary_matcher_hash. K corroborators flips an
+             * antibody from advisory to hard-block.
+             *}
+            {var $corroborators = $corroborationSet}
+            <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
+                <header class="px-7 py-4 border-b border-ink-line/40 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Corroboration</span>
+                        <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {count($corroborators) >= $corroborationK ? 'text-immune-500' : 'text-caution-500'}">
+                            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true"></span>
+                            {count($corroborators)} of {$corroborationK} to hard-block
+                        </span>
+                    </div>
+                    <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">Same matcher hash</span>
+                </header>
+                <div class="px-7 py-6">
+                    {if count($corroborators) <= 1}
+                        <p class="text-[13px] text-fg-secondary leading-[1.7]">
+                            No other publisher has independently declared this matcher yet. This antibody stands alone — advisory until {$corroborationK} distinct publishers corroborate.
+                        </p>
+                    {else}
+                        <p class="text-[12.5px] text-fg-tertiary leading-[1.6] mb-4">
+                            Corroborated by <span class="text-fg-primary">{count($corroborators)}</span> independent publisher{count($corroborators) === 1 ? '' : 's'} declaring the same primary matcher.
+                        </p>
+                        <ul class="divide-y divide-ink-line/30">
+                            {foreach $corroborators as $c}
+                                {var $cAddr = '0x' . bin2hex($c->publisher)}
+                                {var $cName = $c->publisher_ens ?? substr($cAddr, 0, 10) . '..' . substr($cAddr, -6)}
+                                {var $isSelf = $c->id === $entry->id}
+                                <li class="flex items-center justify-between gap-4 py-2.5">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <a href="/antibody/{$c->imm_id}" class="font-mono text-[12px] {$isSelf ? 'text-accent' : 'text-fg-secondary hover:text-accent'} transition-colors shrink-0">{$c->imm_id}</a>
+                                        {if $isSelf}<span class="font-mono text-[9px] uppercase tracking-widest2 text-fg-dim">this</span>{/if}
+                                    </div>
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <a href="/publisher/{$cAddr}" class="{$c->publisher_ens !== null ? 'text-[12.5px]' : 'font-mono text-[11.5px]'} text-fg-tertiary hover:text-fg-primary transition-colors truncate" title="{$cAddr}">{$cName}</a>
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-sm font-mono text-[9.5px] uppercase tracking-widest2 bg-ink-elevated/60 text-fg-tertiary shrink-0">{strtoupper($c->status)}</span>
+                                    </div>
+                                </li>
+                            {/foreach}
+                        </ul>
+                    {/if}
+                </div>
+            </section>
+
             {* ----------- EVIDENCE PANEL ----------- *}
             <section class="border border-ink-line/60 rounded-sm bg-ink-elevated/20">
 
@@ -343,16 +409,29 @@
                         </div>
 
                         <div>
-                            <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-2">Evidence CID</div>
-                            {if $ab['evidence']['evidence_cid'] !== null}
-                                <div class="flex items-center gap-2">
-                                    <code class="font-mono text-[11.5px] text-fg-secondary bg-ink-sunken/60 border border-ink-line/40 rounded-sm px-3 py-2 break-all min-w-0 flex-1">{$ab['evidence']['evidence_cid']}</code>
-                                </div>
+                            <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-2">Evidence on Lighthouse</div>
+                            {if $hasEvidenceCid}
+                                <a href="{$evidenceUrl}" target="_blank" rel="noopener noreferrer"
+                                   class="flex items-center gap-2 group"
+                                   title="Open the public evidence envelope on the Lighthouse IPFS gateway">
+                                    <code class="font-mono text-[11px] text-fg-secondary group-hover:text-accent bg-ink-sunken/60 border border-ink-line/40 group-hover:border-accent/40 rounded-sm px-3 py-2 break-all min-w-0 flex-1 transition-colors">{\App\Models\Core\Cid::digestToCidV0($entry->evidence_cid)}</code>
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="text-fg-dim group-hover:text-accent shrink-0 transition-colors"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+                                </a>
+                                <div class="font-mono text-[10px] text-fg-dim mt-1.5 px-1">Public CIDv0 on Lighthouse IPFS — resolves the signed envelope.</div>
                             {else}
                                 <div class="font-mono text-[11.5px] text-fg-dim italic px-3 py-2">(envelope not yet uploaded)</div>
                             {/if}
                         </div>
                     </div>
+
+                    {* Encrypted context — non-zero context_hash means CRE-only sealed inputs. *}
+                    {if !\App\Models\Core\Hex::isZero($entry->context_hash)}
+                        <div class="flex items-center gap-2.5 pt-2">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-accent-soft shrink-0" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <span class="font-mono text-[11px] uppercase tracking-widest2 text-fg-secondary">Encrypted context (CRE-only)</span>
+                            <span class="font-mono text-[10.5px] text-fg-dim normal-case tracking-normal">— sealed inputs readable only inside the verification runtime.</span>
+                        </div>
+                    {/if}
 
                 </div>
             </section>
@@ -600,6 +679,83 @@
                     </div>
                 </dl>
             </div>
+
+            {* ----------- PROTOCOL STATE ----------- *}
+            {var $escrowed = (float) $entry->escrowed_fees}
+            {var $prominenceLabel = match($entry->prominence_tier) {
+                0 => 'standard', 1 => 'elevated', 2 => 'high', default => 'tier ' . $entry->prominence_tier,
+            }}
+            <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-5">
+                <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Protocol state</div>
+                <dl class="space-y-3">
+                    <div class="flex items-baseline justify-between gap-3" title="The {$corroborationK}-of-N rule: agents hard-block once K distinct publishers corroborate the same matcher.">
+                        <dt class="text-fg-tertiary text-[11.5px]">Corroboration</dt>
+                        <dd class="font-mono text-[12px] {$entry->corroboration_count >= $corroborationK ? 'text-immune-500' : 'text-fg-primary'} tabular-nums">{$entry->corroboration_count} / {$corroborationK}</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3" title="Publisher's USDC stake bonded against this antibody.">
+                        <dt class="text-fg-tertiary text-[11.5px]">Bond</dt>
+                        <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{format('decimal', (float) $entry->bond_amount, 2)} USDC</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3" title="Match fees held in escrow until the antibody matures; released to the publisher on maturity, clawed back on a successful challenge.">
+                        <dt class="text-fg-tertiary text-[11.5px]">Fees escrowed</dt>
+                        <dd class="font-mono text-[12px] {$escrowed > 0 ? 'text-caution-500' : 'text-fg-dim'} tabular-nums">{format('decimal', $escrowed, 4)} USDC</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3" title="Once matured the antibody is final: escrowed fees release to the publisher and the challenge window closes.">
+                        <dt class="text-fg-tertiary text-[11.5px]">Maturity</dt>
+                        {if $entry->isProbation()}
+                            <dd class="font-mono text-[12px] text-accent">{$entry->matured_at !== null ? format('datetime', $entry->matured_at) : 'on probation'}</dd>
+                        {elseif $entry->matured_at !== null}
+                            <dd class="font-mono text-[12px] text-immune-500" title="{format('datetime', $entry->matured_at)}">matured</dd>
+                        {else}
+                            <dd class="font-mono text-[12px] text-fg-dim">—</dd>
+                        {/if}
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3" title="Prominence weighting used when ranking matches.">
+                        <dt class="text-fg-tertiary text-[11.5px]">Prominence</dt>
+                        <dd class="font-mono text-[12px] text-fg-secondary">{$prominenceLabel}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            {* ----------- PUBLISHER REPUTATION ----------- *}
+            {if $publisher !== null}
+                {var $repTier = $publisher->reputationTier()}
+                {var $repTone = match($repTier) {
+                    'trusted'     => 'text-immune-500',
+                    'established' => 'text-accent',
+                    'emerging'    => 'text-fg-secondary',
+                    default       => 'text-fg-dim',
+                }}
+                <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary">Publisher</div>
+                        <a href="/publisher/{$ab['publisher_addr']}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors">Profile &rarr;</a>
+                    </div>
+                    <div class="mb-4">
+                        <a href="/publisher/{$ab['publisher_addr']}" class="{$publisher->ens !== null ? 'text-fg-primary' : 'font-mono text-[13px] text-fg-primary'} hover:text-accent transition-colors break-all">{$ab['publisher']}</a>
+                    </div>
+                    <dl class="space-y-3">
+                        <div class="flex items-baseline justify-between gap-3">
+                            <dt class="text-fg-tertiary text-[11.5px]">Reputation</dt>
+                            <dd class="font-mono text-[12px] {$repTone} tabular-nums">{format('decimal', (float) $publisher->score, 0)} <span class="text-fg-dim uppercase tracking-widest2 text-[9.5px]">{$repTier}</span></dd>
+                        </div>
+                        <div class="flex items-baseline justify-between gap-3">
+                            <dt class="text-fg-tertiary text-[11.5px]">Matured</dt>
+                            <dd class="font-mono text-[12px] text-fg-primary tabular-nums">{$publisher->matured_count}</dd>
+                        </div>
+                        <div class="flex items-baseline justify-between gap-3" title="Strikes from slashed antibodies or lost challenges.">
+                            <dt class="text-fg-tertiary text-[11.5px]">Strikes</dt>
+                            <dd class="font-mono text-[12px] {$publisher->slashed_count > 0 ? 'text-threat-500' : 'text-fg-dim'} tabular-nums">{$publisher->slashed_count}</dd>
+                        </div>
+                        {if (float) $publisher->genesis_granted > 0}
+                            <div class="flex items-baseline justify-between gap-3" title="Genesis reputation grant at network bootstrap.">
+                                <dt class="text-fg-tertiary text-[11.5px]">Genesis grant</dt>
+                                <dd class="font-mono text-[12px] text-accent tabular-nums">{format('decimal', (float) $publisher->genesis_granted, 0)}</dd>
+                            </div>
+                        {/if}
+                    </dl>
+                </div>
+            {/if}
 
         </aside>
     </div>
