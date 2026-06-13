@@ -20,6 +20,8 @@
     'ChallengeManager.Escalated'               => ['Escalated',      'text-caution-500',  'bg-caution-500'],
     'ChallengeManager.Resolved'                => ['Resolved',       'text-immune-300',   'bg-immune-300'],
     'CREVerdictReceiver.VerdictReceived'       => ['Jury verdict',   'text-immune-300',   'bg-immune-300'],
+    'Registry.Matched'                         => ['Check blocked',  'text-threat-300',   'bg-threat-300'],
+    'Registry.Checked'                         => ['Check allowed',  'text-immune-500',   'bg-immune-500'],
     'NovelVerification.VerificationRequested'  => ['CRE requested',  'text-accent-soft',  'bg-accent-soft'],
     'NovelVerification.Verified'               => ['CRE verdict',    'text-caution-300',  'bg-caution-300'],
     'Reputation.Matured'                       => ['Rep +matured',   'text-immune-500',   'bg-immune-500'],
@@ -169,6 +171,11 @@
                                     {var $inv = !empty($p['invalid'])}
                                     <span class="{if $inv}text-threat-300{else}text-immune-300{/if} font-semibold">{if $inv}INVALIDATED{else}UPHELD{/if}</span>
                                     <span class="text-fg-dim">&middot; antibody {substr($p['antibodyId'] ?? '0x', 0, 12)}&hellip;</span>
+                                {elseif $e['event_name'] === 'Registry.Matched'}
+                                    <span class="text-threat-300 font-semibold">blocked</span>
+                                    <span class="text-fg-dim">&middot; matched antibody {substr($p['antibodyId'] ?? '0x', 0, 12)}&hellip;</span>
+                                {elseif $e['event_name'] === 'Registry.Checked'}
+                                    <span class="text-immune-500 font-semibold">allowed</span><span class="text-fg-dim"> &middot; no antibody match</span>
                                 {elseif isset($p['antibodyId'])}
                                     <span class="text-fg-dim">antibody</span> {substr($p['antibodyId'], 0, 14)}&hellip;
                                 {elseif isset($p['keccakId'])}
@@ -269,6 +276,8 @@
     'ChallengeManager.Escalated':              ['Escalated',      'text-caution-500',  'bg-caution-500'],
     'ChallengeManager.Resolved':               ['Resolved',       'text-immune-300',   'bg-immune-300'],
     'CREVerdictReceiver.VerdictReceived':      ['Jury verdict',   'text-immune-300',   'bg-immune-300'],
+    'Registry.Matched':                        ['Check blocked',  'text-threat-300',   'bg-threat-300'],
+    'Registry.Checked':                        ['Check allowed',  'text-immune-500',   'bg-immune-500'],
     'NovelVerification.VerificationRequested': ['CRE requested',  'text-accent-soft',  'bg-accent-soft'],
     'NovelVerification.Verified':              ['CRE verdict',    'text-caution-300',  'bg-caution-300'],
     'Reputation.Matured':                      ['Rep +matured',   'text-immune-500',   'bg-immune-500'],
@@ -327,6 +336,13 @@
       const inv = !!p.invalid;
       return '<span class="' + (inv ? 'text-threat-300' : 'text-immune-300') + ' font-semibold">' + (inv ? 'INVALIDATED' : 'UPHELD') + '</span>' +
              '<span class="text-fg-dim"> · antibody ' + clip(p.antibodyId, 12) + '</span>';
+    }
+    if (name === 'Registry.Matched') {
+      return '<span class="text-threat-300 font-semibold">blocked</span>' +
+             '<span class="text-fg-dim"> · matched antibody ' + clip(p.antibodyId, 12) + '</span>';
+    }
+    if (name === 'Registry.Checked') {
+      return '<span class="text-immune-500 font-semibold">allowed</span><span class="text-fg-dim"> · no antibody match</span>';
     }
     if (p.antibodyId) return '<span class="text-fg-dim">antibody</span> ' + clip(p.antibodyId, 14);
     if (p.keccakId)   return '<span class="text-fg-dim">antibody</span> ' + clip(p.keccakId, 14);
