@@ -12,3 +12,6 @@ package-lock.json
 !scripts/package.json
 !scripts/package-lock.json
 .phpunit.cache/
+.playwright-mcp/
+dev-router.php
+*.png
