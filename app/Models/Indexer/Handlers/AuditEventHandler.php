@@ -27,8 +27,15 @@ class AuditEventHandler
     public function handle(array $decoded): bool
     {
         $txHashHex = strtolower(self::stripHex((string) $decoded['txHash']));
+        // Qualify with the emitting contract ("ChallengeManager.VerdictRequested")
+        // when known, matching the Reputation/BondLedger naming so the event feed
+        // can render each type distinctly. Single-contract sources (no contract
+        // key) keep the bare event name.
+        $name = isset($decoded['contract']) && $decoded['contract'] !== null
+            ? $decoded['contract'] . '.' . $decoded['event']
+            : $decoded['event'];
         $id = $this->broker->insert(
-            $decoded['event'],
+            $name,
             $decoded['args'],
             (int) $decoded['blockNumber'],
             '\\x' . $txHashHex,
