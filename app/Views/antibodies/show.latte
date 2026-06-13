@@ -63,8 +63,15 @@
 {var $hasEvidenceCid = bin2hex($entry->evidence_cid) !== str_repeat('0', 64)}
 {var $evidenceUrl = $hasEvidenceCid ? 'https://gateway.lighthouse.storage/ipfs/' . \App\Models\Core\Cid::digestToCidV0($entry->evidence_cid) : null}
 {var $challengeOpen = $entry->isProbation()}
+{*
+ * Threat-centric: $id is the Threat ID (IMM-T-YYYY-NNNN) when routed via
+ * /threat; $entry is the headline (earliest corroborating) antibody whose
+ * envelope/evidence drive the panels. Falls back to the antibody imm_id for the
+ * legacy /antibody route with no threat.
+ *}
 {var $ab = [
-  'id'             => $entry->imm_id,
+  'id'             => $id,
+  'headline_imm'   => $entry->imm_id,
   'keccak'         => '0x' . bin2hex($entry->keccak_id),
   'type'           => strtoupper($entry->type),
   'verdict'        => strtoupper($entry->verdict),
@@ -128,7 +135,7 @@
 
     {* ----------- BREADCRUMB ----------- *}
     <nav class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-8 flex items-center gap-2" aria-label="Breadcrumb">
-        <a href="/antibodies" class="hover:text-fg-secondary transition-colors">Antibodies</a>
+        <a href="/antibodies" class="hover:text-fg-secondary transition-colors">Threats</a>
         <span class="text-fg-dim" aria-hidden="true">/</span>
         <span class="text-fg-secondary">{$ab['id']}</span>
     </nav>
@@ -148,7 +155,7 @@
 
     <header class="mb-14">
 
-        {* IMM ID + status pill + copy *}
+        {* Threat ID + status pill + copy *}
         <div class="flex items-center gap-4 flex-wrap mb-3">
             <h1 class="font-mono text-[34px] text-fg-primary tracking-tight leading-none">{$ab['id']}</h1>
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm border font-mono text-[10px] uppercase tracking-widest2 {$statusBadge}">
@@ -171,21 +178,31 @@
                     Genesis
                 </span>
             {/if}
-            <button data-copy="{$ab['id']}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors inline-flex items-center gap-1.5" aria-label="Copy IMM ID">
+            <button data-copy="{$ab['id']}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors inline-flex items-center gap-1.5" aria-label="Copy Threat ID">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Copy
             </button>
         </div>
 
-        {* Keccak row *}
+        {* Flagged-by summary — the corroboration headline of the threat view. *}
+        {var $corroboratorCount = count($corroborationSet)}
+        <p class="text-fg-secondary text-[14px] sm:text-[15px] mb-6 leading-[1.6]">
+            Flagged by <span class="text-fg-primary tabular-nums">{$corroboratorCount}</span> independent publisher{$corroboratorCount === 1 ? '' : 's'} declaring the same primary matcher.
+            {if $isHardBlock}Corroboration threshold met — agents hard-block on match.{else}Advisory until {$corroborationK} distinct publishers corroborate.{/if}
+        </p>
+
+        {* Matcher-hash row — the threat's on-chain identity (the shared bad thing). *}
+        {var $matcherHashHex = $threat !== null ? '0x' . $threat->matcher_hash_hex : ($entry->primary_matcher_hash !== null ? '0x' . bin2hex($entry->primary_matcher_hash) : null)}
+        {if $matcherHashHex !== null}
         <div class="flex items-center gap-3 mb-7">
-            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary shrink-0">Keccak</span>
-            <code class="font-mono text-[12px] text-fg-secondary truncate min-w-0">{$ab['keccak']}</code>
-            <button data-copy="{$ab['keccak']}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors inline-flex items-center gap-1.5 shrink-0" aria-label="Copy keccak">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary shrink-0">Matcher</span>
+            <code class="font-mono text-[12px] text-fg-secondary truncate min-w-0">{$matcherHashHex}</code>
+            <button data-copy="{$matcherHashHex}" class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim hover:text-accent transition-colors inline-flex items-center gap-1.5 shrink-0" aria-label="Copy matcher hash">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Copy
             </button>
         </div>
+        {/if}
 
         {* Metadata strip: 5 cells *}
         <div class="border-t border-b border-ink-line/60 grid grid-cols-2 md:grid-cols-5 divide-x divide-ink-line/40">
@@ -342,15 +359,33 @@
                             {foreach $corroborators as $c}
                                 {var $cAddr = '0x' . bin2hex($c->publisher)}
                                 {var $cName = $c->publisher_ens ?? substr($cAddr, 0, 10) . '..' . substr($cAddr, -6)}
-                                {var $isSelf = $c->id === $entry->id}
+                                {var $isHeadline = $c->id === $entry->id}
+                                {var $cHasEvidence = !\App\Models\Core\Hex::isZero($c->evidence_cid)}
+                                {var $cHasAttestation = !\App\Models\Core\Hex::isZero($c->attestation)}
+                                {var $cEvidenceUrl = $cHasEvidence ? 'https://gateway.lighthouse.storage/ipfs/' . \App\Models\Core\Cid::digestToCidV0($c->evidence_cid) : null}
                                 <li class="flex items-center justify-between gap-4 py-2.5">
                                     <div class="flex items-center gap-3 min-w-0">
-                                        <a href="/antibody/{$c->imm_id}" class="font-mono text-[12px] {$isSelf ? 'text-accent' : 'text-fg-secondary hover:text-accent'} transition-colors shrink-0">{$c->imm_id}</a>
-                                        {if $isSelf}<span class="font-mono text-[9px] uppercase tracking-widest2 text-fg-dim">this</span>{/if}
-                                    </div>
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <a href="/publisher/{$cAddr}" class="{$c->publisher_ens !== null ? 'text-[12.5px]' : 'font-mono text-[11.5px]'} text-fg-tertiary hover:text-fg-primary transition-colors truncate" title="{$cAddr}">{$cName}</a>
+                                        <a href="/publisher/{$cAddr}" class="{$c->publisher_ens !== null ? 'text-[12.5px]' : 'font-mono text-[11.5px]'} text-fg-primary hover:text-accent transition-colors truncate" title="{$cAddr}">{$cName}</a>
+                                        {if $isHeadline}<span class="font-mono text-[9px] uppercase tracking-widest2 text-fg-dim shrink-0">headline</span>{/if}
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded-sm font-mono text-[9.5px] uppercase tracking-widest2 bg-ink-elevated/60 text-fg-tertiary shrink-0">{strtoupper($c->status)}</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 shrink-0">
+                                        {if $cHasAttestation}
+                                            <span class="inline-flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-widest2 text-immune-500" title="TEE-attested verdict">
+                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                                TEE
+                                            </span>
+                                        {else}
+                                            <span class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim" title="curated by human, no TEE attestation">curated</span>
+                                        {/if}
+                                        {if $cHasEvidence}
+                                            <a href="{$cEvidenceUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary hover:text-accent transition-colors" title="Evidence envelope on Lighthouse">
+                                                Evidence
+                                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+                                            </a>
+                                        {else}
+                                            <span class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim">no CID</span>
+                                        {/if}
                                     </div>
                                 </li>
                             {/foreach}
