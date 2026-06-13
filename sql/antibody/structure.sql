@@ -62,9 +62,11 @@ CREATE INDEX entry_publisher_idx  ON antibody.entry (publisher);
 
 -- Tier-2 lookup index: the SDK queries the on-chain matcherIndex by the
 -- canonical primary matcher hash; the app exposes the same lookup via
--- /api/antibody/by-matcher-hash/{hash}. Partial unique because legacy rows
--- (pre-v3 indexed envelopes) may have NULL hashes; nulls remain unconstrained.
-CREATE UNIQUE INDEX entry_primary_matcher_hash_idx
+-- /api/antibody/by-matcher-hash/{hash}. NOT unique: corroboration has several
+-- distinct publishers each mint their own antibody (own keccak_id) for the SAME
+-- matcher hash to reach corroboration==K. Uniqueness stays on keccak_id.
+-- Partial because legacy rows may carry NULL hashes.
+CREATE INDEX entry_primary_matcher_hash_idx
     ON antibody.entry (primary_matcher_hash)
     WHERE primary_matcher_hash IS NOT NULL;
 
