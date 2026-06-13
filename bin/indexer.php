@@ -164,8 +164,21 @@ $baseHandlers = [
         $audit->handle($d);
         return $r;
     },
-    'Registry.Checked'        => fn (array $d) => $checkedHandler->handle($d),
-    'Registry.Matched'        => fn (array $d) => $matchedHandler->handle($d),
+    'Registry.Checked'        => function (array $d) use ($checkedHandler, $audit): bool {
+        $r = $checkedHandler->handle($d);
+        // Surface ALLOWED checks (no antibody match) in the event feed so a
+        // legit check is visible. Matched checks already log via Registry.Matched,
+        // so skip them here to avoid double-logging the same check.
+        if (empty($d['args']['wasMatch'])) {
+            $audit->handle($d);
+        }
+        return $r;
+    },
+    'Registry.Matched'        => function (array $d) use ($matchedHandler, $audit): bool {
+        $r = $matchedHandler->handle($d);
+        $audit->handle($d);
+        return $r;
+    },
     'Registry.BondLocked'     => fn (array $d) => $bondLedger->handleBondLocked($d),
     'Registry.BondReleased'   => fn (array $d) => $bondLedger->handleBondReleased($d),
     'Registry.FeesEscrowed'   => fn (array $d) => $bondLedger->handleFeesEscrowed($d),
