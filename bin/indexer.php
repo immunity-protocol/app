@@ -41,6 +41,7 @@ use App\Models\Indexer\Handlers\AuditEventHandler;
 use App\Models\Indexer\Handlers\BondLedgerHandler;
 use App\Models\Indexer\Handlers\ChallengeHandler;
 use App\Models\Indexer\Handlers\CheckSettledHandler;
+use App\Models\Indexer\Handlers\CorroborationHandler;
 use App\Models\Indexer\Handlers\EnsIngestHandler;
 use App\Models\Indexer\Handlers\ExpiredHandler;
 use App\Models\Indexer\Handlers\MaturedHandler;
@@ -117,18 +118,37 @@ $bondLedger       = new BondLedgerHandler($db);
 $reputation       = new ReputationHandler($db);
 $identity         = new PublisherIdentityHandler($db);
 $audit            = new AuditEventHandler($contractEventBroker);
-// Phase 2: challenges/jury, protected set, ENS subname mirror.
+// Phase 2: challenges/jury, protected set, corroboration, ENS subname mirror.
 $challenge        = new ChallengeHandler($db);
 $protectedSet     = new ProtectedSetHandler($db);
+$corroboration    = new CorroborationHandler($db);
 $ensIngest        = new EnsIngestHandler($db);
 
 $baseHandlers = [
-    'Registry.Published'      => fn (array $d) => $publishedHandler->handle($d),
+    // Published/Slashed/Expired/Retired also refresh corroboration_count for the
+    // antibody's matcher-hash group (a corroborator joining or dropping out).
+    'Registry.Published'      => function (array $d) use ($publishedHandler, $corroboration): bool {
+        $inserted = $publishedHandler->handle($d);
+        $corroboration->handlePublished($d);
+        return $inserted;
+    },
     'Registry.Seeded'         => fn (array $d) => $seededHandler->handle($d),
     'Registry.Matured'        => fn (array $d) => $maturedHandler->handle($d),
-    'Registry.Expired'        => fn (array $d) => $expiredHandler->handle($d),
-    'Registry.Retired'        => fn (array $d) => $expiredHandler->handle($d),
-    'Registry.Slashed'        => fn (array $d) => $slashedHandler->handle($d),
+    'Registry.Expired'        => function (array $d) use ($expiredHandler, $corroboration): bool {
+        $r = $expiredHandler->handle($d);
+        $corroboration->handleByKeccak($d);
+        return $r;
+    },
+    'Registry.Retired'        => function (array $d) use ($expiredHandler, $corroboration): bool {
+        $r = $expiredHandler->handle($d);
+        $corroboration->handleByKeccak($d);
+        return $r;
+    },
+    'Registry.Slashed'        => function (array $d) use ($slashedHandler, $corroboration): bool {
+        $r = $slashedHandler->handle($d);
+        $corroboration->handleByKeccak($d);
+        return $r;
+    },
     'Registry.Checked'        => fn (array $d) => $checkedHandler->handle($d),
     'Registry.Matched'        => fn (array $d) => $matchedHandler->handle($d),
     'Registry.BondLocked'     => fn (array $d) => $bondLedger->handleBondLocked($d),
