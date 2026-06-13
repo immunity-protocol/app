@@ -40,18 +40,44 @@ class ContractEventBroker extends Broker
               LIMIT ?",
             [$limit]
         );
-        return array_map(static function (stdClass $r): array {
-            $payload = is_string($r->payload) ? json_decode($r->payload, true) : (array) $r->payload;
-            return [
-                'id'           => (int) $r->id,
-                'event_name'   => (string) $r->event_name,
-                'payload'      => is_array($payload) ? $payload : [],
-                'block_number' => (int) $r->block_number,
-                'tx_hash'      => (string) $r->tx_hash,
-                'log_index'    => (int) $r->log_index,
-                'occurred_at'  => (string) $r->occurred_at,
-            ];
-        }, $rows);
+        return array_map([self::class, 'mapFeedRow'], $rows);
+    }
+
+    /**
+     * Older events strictly before the (block_number, log_index, id) keyset
+     * cursor, for the dashboard's infinite scroll. Same shape + order as
+     * findRecentForFeed so the client renders them identically.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findOlderForFeed(int $beforeBlock, int $beforeLogIndex, int $beforeId, int $limit): array
+    {
+        $rows = $this->select(
+            "SELECT id, event_name, payload, block_number,
+                    '0x' || encode(tx_hash, 'hex') AS tx_hash,
+                    log_index, occurred_at
+               FROM event.contract_event
+              WHERE (block_number, log_index, id) < (?, ?, ?)
+              ORDER BY block_number DESC, log_index DESC, id DESC
+              LIMIT ?",
+            [$beforeBlock, $beforeLogIndex, $beforeId, $limit]
+        );
+        return array_map([self::class, 'mapFeedRow'], $rows);
+    }
+
+    /** @return array<string, mixed> */
+    private static function mapFeedRow(stdClass $r): array
+    {
+        $payload = is_string($r->payload) ? json_decode($r->payload, true) : (array) $r->payload;
+        return [
+            'id'           => (int) $r->id,
+            'event_name'   => (string) $r->event_name,
+            'payload'      => is_array($payload) ? $payload : [],
+            'block_number' => (int) $r->block_number,
+            'tx_hash'      => (string) $r->tx_hash,
+            'log_index'    => (int) $r->log_index,
+            'occurred_at'  => (string) $r->occurred_at,
+        ];
     }
 
     public function countByName(string $eventName): int
