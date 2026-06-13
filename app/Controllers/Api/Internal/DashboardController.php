@@ -9,6 +9,7 @@ use App\Models\Demo\Brokers\AgentActivityBroker;
 use App\Models\Demo\Brokers\HeartbeatBroker;
 use App\Models\Event\Brokers\BlockEventBroker;
 use App\Models\Event\Brokers\CheckEventBroker;
+use App\Models\Event\Brokers\ContractEventBroker;
 use Zephyrus\Http\Request;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;
@@ -58,6 +59,21 @@ final class DashboardController extends Controller
             'next_since'          => $nextSince,
             'next_activity_since' => $nextActivitySince,
         ])->withHeader('Cache-Control', 'no-store');
+    }
+
+    /**
+     * Live on-chain event feed for the dashboard. Returns the latest contract
+     * events (CRE verifications, jury verdicts, challenges, antibody lifecycle)
+     * newest-first; the page renders them with type badges and Basescan links.
+     * Static snapshot (no cursor) — the page replaces its list each tick, which
+     * is cheap at this volume and keeps relative timestamps fresh.
+     */
+    #[Get('/dashboard/events')]
+    public function events(): Response
+    {
+        $events = (new ContractEventBroker())->findRecentForFeed(60);
+        return Response::json(['events' => $events])
+            ->withHeader('Cache-Control', 'no-store');
     }
 
     /**
