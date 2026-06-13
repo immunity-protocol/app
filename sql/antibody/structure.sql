@@ -10,7 +10,7 @@ CREATE TYPE antibody.entry_verdict AS ENUM (
 );
 
 CREATE TYPE antibody.entry_status AS ENUM (
-    'active', 'challenged', 'slashed', 'expired'
+    'probation', 'active', 'challenged', 'slashed', 'expired'
 );
 
 CREATE TYPE antibody.mirror_status AS ENUM (
