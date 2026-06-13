@@ -9,17 +9,18 @@ use App\Models\Mirror\MirrorEnvelopeBuffer;
 use Zephyrus\Data\Database;
 
 /**
- * AntibodyPublished(
+ * Registry.Published(
  *   indexed bytes32 keccakId, indexed uint32 immSeq, indexed address publisher,
  *   uint8 abType, uint8 flavor, uint8 verdict, uint8 severity, uint8 confidence,
  *   address reviewer, bytes32 primaryMatcherHash, bytes32 evidenceCid,
  *   bytes32 contextHash, bytes32 embeddingHash, bytes32 attestation,
- *   uint256 stake, uint64 stakeLockUntil, uint64 expiresAt, uint64 createdAt,
- *   bool isSeeded
+ *   uint256 bond, uint64 expiresAt, uint64 createdAt, bool isSeeded
  * )
  *
- * Inserts a row into antibody.entry (idempotent on keccak_id), upserts the
- * publisher aggregate, and enqueues a 0G Storage hydration job.
+ * Inserts a row into antibody.entry (idempotent on keccak_id) under the bond
+ * model: a fresh antibody enters PROBATION (advisory, fees escrow on match);
+ * genesis-seeded ones are born ACTIVE. Upserts the publisher aggregate and
+ * enqueues a Lighthouse evidence hydration job.
  */
 class AntibodyPublishedHandler
 {
@@ -88,14 +89,13 @@ class AntibodyPublishedHandler
 
         $createdAtSec = (int) $a['createdAt'];
         $expiresAtSec = (int) $a['expiresAt'];
-        $stakeLockUntilSec = (int) $a['stakeLockUntil'];
+        $isSeeded = (bool) $a['isSeeded'];
+        $status = $isSeeded ? 'active' : 'probation';
 
-        $createdAtIso = gmdate('Y-m-d\TH:i:s\Z', $createdAtSec);
         $year = gmdate('Y', $createdAtSec);
         $immId = sprintf('IMM-%s-%04d', $year, (int) $a['immSeq']);
 
-        $stakeWei = (string) $a['stake'];
-        $stakeUsdc = self::weiToUsdc($stakeWei);
+        $bondUsdc = self::weiToUsdc((string) $a['bond']);
 
         try {
             $row = $this->db->query(
@@ -105,18 +105,21 @@ class AntibodyPublishedHandler
                     confidence, severity, status,
                     primary_matcher, primary_matcher_hash, secondary_matchers,
                     context_hash, evidence_cid, embedding_hash, embedding_cid,
-                    stake_lock_until, expires_at, publisher, publisher_ens,
-                    stake_amount, attestation, publish_tx_hash, seed_source, redacted_reasoning,
+                    expires_at, matured_at, publisher, publisher_ens,
+                    bond_amount, escrowed_fees, is_seeded, prominence_tier, corroboration_count,
+                    attestation, publish_tx_hash, seed_source, redacted_reasoning,
                     created_at, updated_at
                 )
                 VALUES (
                     ?, ?, ?::antibody.entry_type, ?, ?::antibody.entry_verdict,
-                    ?, ?, 'active'::antibody.entry_status,
+                    ?, ?, ?::antibody.entry_status,
                     '{}'::jsonb, ?, '[]'::jsonb,
                     ?, ?, ?, NULL,
-                    to_timestamp(?), CASE WHEN ? > 0 THEN to_timestamp(?) ELSE NULL END,
+                    CASE WHEN ? > 0 THEN to_timestamp(?) ELSE NULL END,
+                    CASE WHEN ? THEN to_timestamp(?) ELSE NULL END,
                     ?, NULL,
-                    ?, ?, ?, CASE WHEN ? THEN 'admin' ELSE NULL END, NULL,
+                    ?, 0, ?, 0, 0,
+                    ?, ?, CASE WHEN ? THEN 'admin' ELSE NULL END, NULL,
                     to_timestamp(?), to_timestamp(?)
                 )
                 ON CONFLICT (keccak_id) DO NOTHING
@@ -124,23 +127,22 @@ class AntibodyPublishedHandler
                 SQL,
                 [
                     $keccakIdBytea, $immId, $type, $flavor, $verdict,
-                    (int) $a['confidence'], (int) $a['severity'],
+                    (int) $a['confidence'], (int) $a['severity'], $status,
                     $primaryMatcherHashBytea,
                     $contextHashBytea, $evidenceCidBytea, $embeddingHashBytea,
-                    $stakeLockUntilSec,
                     $expiresAtSec, $expiresAtSec,
+                    $isSeeded ? 't' : 'f', $createdAtSec,
                     $publisherBytea,
-                    $stakeUsdc, $attestationBytea, $publishTxHashBytea,
-                    (bool) $a['isSeeded'] ? 't' : 'f',
+                    $bondUsdc, $isSeeded ? 1 : 0,
+                    $attestationBytea, $publishTxHashBytea, $isSeeded ? 't' : 'f',
                     $createdAtSec, $createdAtSec,
                 ]
             );
             $inserted = $row->fetch(\PDO::FETCH_ASSOC) !== false;
         } catch (\Throwable $e) {
-            // Most often a Unique violation on imm_id when a registry is
-            // redeployed and emits the same imm_id slot for a fresh keccak.
-            // Treat as "already known, skip insert" and continue so the
-            // mirror enqueue path still fires for the new keccak.
+            // Most often a unique violation on imm_id when a registry is
+            // redeployed and reuses an imm_id slot for a fresh keccak. Treat as
+            // "already known, skip insert" and continue.
             if (str_contains((string) $e->getMessage(), 'unique')
                 || str_contains((string) $e->getMessage(), 'duplicate key')) {
                 $inserted = false;
@@ -150,7 +152,7 @@ class AntibodyPublishedHandler
         }
 
         if ($inserted) {
-            // Publisher aggregate: only adjust when this is a new entry (avoid
+            // Publisher aggregate: only adjust on a new entry (avoid
             // double-counting on event replays during backfill).
             $this->db->query(
                 <<<'SQL'
@@ -161,12 +163,10 @@ class AntibodyPublishedHandler
                     total_staked_usdc    = antibody.publisher.total_staked_usdc + EXCLUDED.total_staked_usdc,
                     last_active_at       = GREATEST(antibody.publisher.last_active_at, EXCLUDED.last_active_at)
                 SQL,
-                [$publisherBytea, $stakeUsdc, $createdAtSec, $createdAtSec]
+                [$publisherBytea, $bondUsdc, $createdAtSec, $createdAtSec]
             );
-        }
 
-        // Insert an activity row so the dashboard's live feed reflects it.
-        if ($inserted) {
+            // Live feed row for the dashboard.
             $this->db->query(
                 <<<'SQL'
                 INSERT INTO event.activity (event_type, entry_id, payload, actor, occurred_at)
@@ -183,20 +183,18 @@ class AntibodyPublishedHandler
             );
         }
 
-        // Enqueue 0G Storage hydration unless evidenceCid is empty.
+        // Enqueue evidence hydration unless evidenceCid is empty.
         if (!self::isZeroHex($evidenceCidHex)) {
             $this->queue->enqueueHex($keccakIdHex, $evidenceCidHex);
         }
 
-        // Stash the full event args for the relayer on every observation
-        // (including replays/backfills): the auxiliary event drains the
-        // buffer and enqueues mirror jobs, which are idempotent on
+        // Stash the full event args for the relayer (A3) on every observation
+        // (including replays/backfills): mirror enqueue is idempotent on
         // (keccak, chain, type). Gating on $inserted would break backfills.
         if ($this->envelopeBuffer !== null) {
             $this->envelopeBuffer->stash($keccakIdHex, $a);
         }
 
-        unset($decoded['blockNumber'], $decoded['logIndex']);
         return $inserted;
     }
 
@@ -214,8 +212,8 @@ class AntibodyPublishedHandler
     }
 
     /**
-     * Stake amounts are quoted in USDC base units (6 decimals) per the SDK.
-     * We store them as numeric(20,6); divide by 1e6.
+     * Bond/fee amounts are quoted in USDC base units (6 decimals); we store
+     * them as numeric(20,6).
      */
     private static function weiToUsdc(string $value): string
     {
