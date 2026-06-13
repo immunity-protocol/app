@@ -23,6 +23,10 @@
         {
             "type": "vcs",
             "url": "https://github.com/ophelios-studio/php-ethereum-moralis.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/ophelios-studio/php-lighthouse-storage.git"
         }
     ],
     "require": {
@@ -31,8 +35,11 @@
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "ext-sodium": "*",
+        "kornrunner/keccak": "^1.1",
         "ophelios/php-ethereum-ens": "dev-dev",
         "ophelios/php-ethereum-moralis": "dev-main",
+        "ophelios/php-lighthouse-storage": "dev-main",
+        "simplito/elliptic-php": "^1.0",
         "zephyrus-framework/core": "dev-dev"
     },
     "require-dev": {
