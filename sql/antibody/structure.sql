@@ -71,6 +71,27 @@ CREATE INDEX entry_primary_matcher_hash_idx
     WHERE primary_matcher_hash IS NOT NULL;
 
 -- ##################################################################################################################
+-- THREAT (one row per distinct primary_matcher_hash — the CVE-style registry unit)
+-- ##################################################################################################################
+-- Corroboration means N distinct publishers each mint their OWN antibody (own
+-- keccak_id) for the SAME primary_matcher_hash. The threat is the shared bad
+-- thing; the per-publisher antibodies are corroborating sources. This table
+-- assigns a stable, sequential, CVE-style identifier to each distinct matcher
+-- on the first antibody seen for it. threat_seq is a bigserial so re-runs over
+-- the same events never renumber an existing threat (upsert is keyed on
+-- matcher_hash, DO NOTHING on conflict → the serial is consumed once).
+CREATE TABLE antibody.threat
+(
+    threat_seq    bigserial PRIMARY KEY,
+    threat_id     varchar(32) NOT NULL UNIQUE,
+    matcher_hash  bytea NOT NULL UNIQUE,
+    first_seen_at timestamptz NOT NULL DEFAULT now(),
+    created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX threat_matcher_hash_idx ON antibody.threat (matcher_hash);
+
+-- ##################################################################################################################
 -- MIRROR (per-chain replication of an antibody)
 -- ##################################################################################################################
 CREATE TABLE antibody.mirror
