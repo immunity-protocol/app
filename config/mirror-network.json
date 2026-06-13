@@ -3,22 +3,22 @@
     "name": "sepolia",
     "rpcUrl": "${SEPOLIA_RPC_URL}",
     "poolManager": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
-    "mirror": null,
+    "mirror": "0x6C65b6588B6FE02D33fDc090E6F5432e3Df62fba",
     "hook": null,
-    "deployedAt": "2026-04-27T18:34:41Z",
-    "deployBlock": 10744251,
+    "deployedAt": "2026-06-13T20:55:00Z",
+    "deployBlock": 11053731,
     "relayerPrivateKeyEnv": "RELAYER_PRIVATE_KEY_SEPOLIA",
-    "pollIntervalMs": 3600000,
-    "note": "old 0G-era Mirror admin'd by a key we no longer control; disabled (mirror=null). Re-enable with a fresh Mirror if an Ethereum-Sepolia pool is needed."
+    "note": "fresh Mirror (admin+relayer = deployer), deterministic CREATE2 — same address as the Base mirror, different chain. Cross-chain target: Base Registry -> this Sepolia Mirror. Hook/pool for the DEX to follow."
   },
   "84532": {
     "name": "base-sepolia",
     "rpcUrl": "${BASE_SEPOLIA_RPC_URL}",
     "poolManager": "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408",
-    "mirror": "0x6C65b6588B6FE02D33fDc090E6F5432e3Df62fba",
+    "mirror": null,
     "hook": "0x42C8471FBDb1cC4B3DE774a890F98801f5F10080",
     "deployedAt": "2026-06-13T19:45:00Z",
     "deployBlock": 42803431,
-    "relayerPrivateKeyEnv": "RELAYER_PRIVATE_KEY_BASE_SEPOLIA"
+    "relayerPrivateKeyEnv": "RELAYER_PRIVATE_KEY_BASE_SEPOLIA",
+    "note": "the Immunity Registry's home chain; not a mirror destination (mirror=null). The Base hook 0x42C8 was deployed here but the cross-chain Mirror lives on Sepolia."
   }
 }
