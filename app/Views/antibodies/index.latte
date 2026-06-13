@@ -5,8 +5,12 @@
 {block content}
 
 {*
- * Rows are passed in by the controller from EntryService::findRecent(30).
- * Each is an Entry entity (snake_case props from the antibody.entry table).
+ * Rows are passed in by the controller from EntryService::findThreatPage(30).
+ * Each is a GROUPED threat row (stdClass) — ONE per distinct primary_matcher_hash,
+ * NOT one per antibody. Corroborating antibodies collapse into a single threat
+ * carrying: threat_id (CVE-style), type, verdict, severity (worst in group),
+ * is_seeded, corroboration (distinct publishers), status, matcher_hash_hex,
+ * first_seen_at.
  *}
 
 <section class="max-w-[1400px] mx-auto px-5 sm:px-7 pt-20 sm:pt-14 pb-10">
@@ -27,10 +31,10 @@
         <div class="md:text-right md:shrink-0">
             <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Registry totals</div>
             <div class="font-mono text-[12.5px] text-fg-secondary leading-[1.6] flex flex-wrap md:block gap-x-5 gap-y-1 md:gap-0">
+                <div><span class="text-fg-primary tabular-nums">{$threatTotal}</span> threats</div>
                 <div><span class="text-fg-primary tabular-nums">{$totals['active']}</span> active</div>
                 <div><span class="text-fg-primary tabular-nums">{$totals['probation']}</span> probation</div>
                 <div><span class="text-fg-primary tabular-nums">{$totals['challenged']}</span> challenged</div>
-                <div><span class="text-fg-primary tabular-nums">{$totals['expired']}</span> expired</div>
                 <div><span class="text-fg-primary tabular-nums">{$totals['slashed']}</span> slashed</div>
             </div>
         </div>
@@ -221,15 +225,15 @@
     <table class="w-full border-collapse text-[13px] tabular-nums">
         <thead>
             <tr class="text-left">
-                <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">IMM ID</th>
+                <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Threat ID</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Type</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Verdict</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Enforcement</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Corrob</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Sev</th>
-                <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Publisher</th>
+                <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Matcher</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Status</th>
-                <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 text-right">Created</th>
+                <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 text-right">First seen</th>
             </tr>
         </thead>
         <tbody>
@@ -237,6 +241,8 @@
             {var $typeUpper = strtoupper($r->type)}
             {var $verdictUpper = strtoupper($r->verdict)}
             {var $statusUpper = strtoupper($r->status)}
+            {var $corrob = (int) $r->corroboration}
+            {var $isSeeded = (int) $r->is_seeded === 1}
             {var $typeColor = match($typeUpper) {
                 'ADDRESS'      => 'text-fg-secondary',
                 'CALL_PATTERN' => 'text-caution-300',
@@ -254,12 +260,12 @@
                 default      => 'bg-fg-dim/10 text-fg-tertiary',
             }}
             {* Enforcement tier — the single SDK rule: corroboration >= K OR is_seeded. *}
-            {var $isHardBlock = \App\Models\Core\EnforcementTier::isHardBlock($r->corroboration_count, $r->is_seeded === 1, $corroborationK)}
-            {var $publisherDisplay = $r->publisher_ens ?? '0x' . substr(bin2hex($r->publisher), 0, 8) . '..' . substr(bin2hex($r->publisher), -4)}
-            {var $isHexPub = $r->publisher_ens === null}
+            {var $isHardBlock = \App\Models\Core\EnforcementTier::isHardBlock($corrob, $isSeeded, $corroborationK)}
+            {* The threat's identifier IS the matcher hash (the shared bad thing). *}
+            {var $matcherShort = '0x' . substr($r->matcher_hash_hex, 0, 8) . '..' . substr($r->matcher_hash_hex, -4)}
             <tr class="border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
                 <td class="py-3 pr-6">
-                    <a href="/antibody/{$r->imm_id}" class="font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">{$r->imm_id}</a>
+                    <a href="/threat/{$r->threat_id}" class="font-mono text-[12.5px] text-fg-primary group-hover:text-accent transition-colors">{$r->threat_id}</a>
                 </td>
                 <td class="py-3 pr-6">
                     <span class="font-mono text-[10.5px] uppercase tracking-widest2 {$typeColor}">{$typeUpper}</span>
@@ -280,18 +286,18 @@
                     {/if}
                 </td>
                 <td class="py-3 pr-6 text-right">
-                    <span class="{$r->corroboration_count >= $corroborationK ? 'text-immune-500' : 'text-fg-secondary'}" title="{$r->corroboration_count} corroborating publisher(s); K={$corroborationK}">{$r->corroboration_count}/{$corroborationK}</span>
+                    <span class="{$corrob >= $corroborationK ? 'text-immune-500' : 'text-fg-secondary'}" title="{$corrob} distinct publisher(s) corroborate this matcher; K={$corroborationK}">{$corrob}/{$corroborationK}</span>
                 </td>
                 <td class="py-3 pr-6 text-right">
                     <span class="text-fg-secondary">{$r->severity}</span>
                 </td>
                 <td class="py-3 pr-6">
-                    <span class="{$isHexPub ? 'font-mono text-[12px] text-fg-secondary' : 'text-fg-secondary'}">{$publisherDisplay}</span>
+                    <code class="font-mono text-[11.5px] text-fg-tertiary" title="0x{$r->matcher_hash_hex}">{$matcherShort}</code>
                 </td>
                 <td class="py-3 pr-6">
                     <span class="inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-[10px] uppercase tracking-widest2 {$statusBadge}">{$statusUpper}</span>
                 </td>
-                <td class="py-3 text-right font-mono text-[11.5px] text-fg-tertiary">{format('timeago', $r->created_at)}</td>
+                <td class="py-3 text-right font-mono text-[11.5px] text-fg-tertiary">{format('timeago', $r->first_seen_at)}</td>
             </tr>
         {/foreach}
         </tbody>
