@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Controllers\Api\Public;
 
 use App\Models\Agent\Brokers\FleetActivityBroker;
+use App\Models\Agent\Brokers\FleetControlBroker;
 use App\Models\Agent\Brokers\FleetMemberBroker;
 use Zephyrus\Http\Request;
 use Zephyrus\Http\Response;
+use Zephyrus\Routing\Attribute\Get;
 use Zephyrus\Routing\Attribute\Post;
 
 /**
@@ -31,6 +33,17 @@ use Zephyrus\Routing\Attribute\Post;
 final class AgentReportController extends Controller
 {
     private const VALID_STATUS = ['allow', 'block', 'novel', 'error', 'info'];
+
+    /**
+     * Fleet pause flag — agents poll this each tick and idle while paused.
+     * Public + uncacheable; flipped by the judge-gated playground control.
+     */
+    #[Get('/agents/control')]
+    public function control(): Response
+    {
+        return Response::json(['paused' => (new FleetControlBroker())->isPaused()])
+            ->withHeader('Cache-Control', 'no-store');
+    }
 
     #[Post('/agents/heartbeat')]
     public function heartbeat(Request $request): Response

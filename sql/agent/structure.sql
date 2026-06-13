@@ -72,3 +72,18 @@ CREATE INDEX fleet_activity_occurred_at_idx ON agent.fleet_activity (occurred_at
 CREATE INDEX fleet_activity_id_desc_idx     ON agent.fleet_activity (id DESC);
 CREATE INDEX fleet_activity_agent_idx       ON agent.fleet_activity (agent_id, occurred_at DESC);
 CREATE INDEX fleet_activity_status_idx      ON agent.fleet_activity (status);
+
+-- ##################################################################################################################
+-- FLEET_CONTROL (singleton row: the judge-operated fleet pause flag)
+-- Agents poll GET /v1/agents/control each tick and idle while paused (their
+-- heartbeat keeps running, so they stay online). The playground flips it.
+-- ##################################################################################################################
+CREATE TABLE agent.fleet_control
+(
+    id          smallint    PRIMARY KEY DEFAULT 1,
+    paused      boolean     NOT NULL DEFAULT false,
+    updated_at  timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT fleet_control_singleton CHECK (id = 1)
+);
+
+INSERT INTO agent.fleet_control (id, paused) VALUES (1, false) ON CONFLICT DO NOTHING;

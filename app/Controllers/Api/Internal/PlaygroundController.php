@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\Internal;
 
+use App\Models\Agent\Brokers\FleetControlBroker;
 use App\Models\Antibody\Brokers\EntryBroker;
 use App\Models\Demo\Brokers\CommandBroker;
 use App\Models\Demo\Brokers\FleetStateBroker;
@@ -75,6 +76,19 @@ final class PlaygroundController extends Controller
             ],
             'generated_at' => gmdate('Y-m-d\TH:i:s\Z'),
         ])->withHeader('Cache-Control', 'no-store');
+    }
+
+    /**
+     * Fleet pause/resume (judge control). Flips the agent.fleet_control flag the
+     * live SDK fleet polls each tick — paused agents idle (heartbeat only) and
+     * resume acting the moment it clears. Body: {"paused": true|false}.
+     */
+    #[Post('/playground/fleet/control')]
+    public function fleetControl(Request $request): Response
+    {
+        $paused = (bool) $request->body()->get('paused', false);
+        (new FleetControlBroker())->setPaused($paused);
+        return Response::json(['paused' => $paused], 200);
     }
 
     private function countBlocksSince(string $sinceIso): int
