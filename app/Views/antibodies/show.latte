@@ -723,9 +723,12 @@
         {* ----------- SIDE RAIL ----------- *}
         <aside class="space-y-6">
 
-            {* Publisher identity — ENS name + avatar, address beneath *}
+            {* Publisher identity — ENS name + avatar, address beneath. Prefer the
+             * resolved publisher record's ENS (every publisher registers a
+             * *.immunity.eth subname); fall back to short hex only if unresolved. *}
             {var $pubHex = substr($ab['publisher_addr'], 2)}
-            {var $pubName = $entry->publisher_ens ?? (substr($ab['publisher_addr'], 0, 6) . '…' . substr($ab['publisher_addr'], -4))}
+            {var $pubEns = ($publisher !== null && $publisher->ens !== null) ? $publisher->ens : $entry->publisher_ens}
+            {var $pubName = $pubEns ?? (substr($ab['publisher_addr'], 0, 6) . '…' . substr($ab['publisher_addr'], -4))}
             <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 p-5">
                 <div class="font-mono text-[10px] uppercase tracking-widest2 text-fg-tertiary mb-4">Publisher</div>
                 <a href="/publisher/{$ab['publisher_addr']}" class="flex items-center gap-3 group" title="{$ab['publisher_addr']}">
