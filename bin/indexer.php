@@ -45,6 +45,7 @@ use App\Models\Indexer\Handlers\CorroborationHandler;
 use App\Models\Indexer\Handlers\EnsIngestHandler;
 use App\Models\Indexer\Handlers\ExpiredHandler;
 use App\Models\Indexer\Handlers\MaturedHandler;
+use App\Models\Indexer\Handlers\NovelVerificationHandler;
 use App\Models\Indexer\Handlers\ProtectedSetHandler;
 use App\Models\Indexer\Handlers\PublisherIdentityHandler;
 use App\Models\Indexer\Handlers\ReputationHandler;
@@ -125,33 +126,42 @@ $protectedSet     = new ProtectedSetHandler($db);
 $corroboration    = new CorroborationHandler($db);
 $threat           = new ThreatHandler($db);
 $ensIngest        = new EnsIngestHandler($db);
+$novelVerify      = new NovelVerificationHandler($contractEventBroker);
 
 $baseHandlers = [
     // Published/Slashed/Expired/Retired also refresh corroboration_count for the
     // antibody's matcher-hash group (a corroborator joining or dropping out).
-    'Registry.Published'      => function (array $d) use ($publishedHandler, $corroboration, $threat): bool {
+    'Registry.Published'      => function (array $d) use ($publishedHandler, $corroboration, $threat, $audit): bool {
         // Assign/link the threat (per-matcher CVE-style id) BEFORE the antibody
         // row lands so the first corroborator already has its threat to link to.
         $threat->handlePublished($d);
         $inserted = $publishedHandler->handle($d);
         $corroboration->handlePublished($d);
+        $audit->handle($d);
         return $inserted;
     },
     'Registry.Seeded'         => fn (array $d) => $seededHandler->handle($d),
-    'Registry.Matured'        => fn (array $d) => $maturedHandler->handle($d),
-    'Registry.Expired'        => function (array $d) use ($expiredHandler, $corroboration): bool {
-        $r = $expiredHandler->handle($d);
-        $corroboration->handleByKeccak($d);
+    'Registry.Matured'        => function (array $d) use ($maturedHandler, $audit): bool {
+        $r = $maturedHandler->handle($d);
+        $audit->handle($d);
         return $r;
     },
-    'Registry.Retired'        => function (array $d) use ($expiredHandler, $corroboration): bool {
+    'Registry.Expired'        => function (array $d) use ($expiredHandler, $corroboration, $audit): bool {
         $r = $expiredHandler->handle($d);
         $corroboration->handleByKeccak($d);
+        $audit->handle($d);
         return $r;
     },
-    'Registry.Slashed'        => function (array $d) use ($slashedHandler, $corroboration): bool {
+    'Registry.Retired'        => function (array $d) use ($expiredHandler, $corroboration, $audit): bool {
+        $r = $expiredHandler->handle($d);
+        $corroboration->handleByKeccak($d);
+        $audit->handle($d);
+        return $r;
+    },
+    'Registry.Slashed'        => function (array $d) use ($slashedHandler, $corroboration, $audit): bool {
         $r = $slashedHandler->handle($d);
         $corroboration->handleByKeccak($d);
+        $audit->handle($d);
         return $r;
     },
     'Registry.Checked'        => fn (array $d) => $checkedHandler->handle($d),
@@ -171,13 +181,33 @@ $baseHandlers = [
     'PublisherRegistrar.Deregistered'     => fn (array $d) => $identity->handleDeregistered($d),
     'PublisherRegistrar.ReputationSynced' => fn (array $d) => $identity->handleReputationSynced($d),
 
-    // Phase 2: challenges/jury.
+    // Phase 2: challenges/jury. State lands in antibody.challenge; the
+    // challenge-opened (VerdictRequested), jury tally (VerdictReceived), and
+    // resolution also surface in event.contract_event so the dashboard event
+    // feed can render them with their decoded args.
     'Registry.ChallengeOpened'             => fn (array $d) => $challenge->handleChallengeOpened($d),
     'Registry.ChallengeTimedOut'           => fn (array $d) => $challenge->handleChallengeTimedOut($d),
-    'ChallengeManager.VerdictRequested'    => fn (array $d) => $challenge->handleVerdictRequested($d),
+    'ChallengeManager.VerdictRequested'    => function (array $d) use ($challenge, $audit): bool {
+        $r = $challenge->handleVerdictRequested($d);
+        $audit->handle($d);
+        return $r;
+    },
     'ChallengeManager.Escalated'           => fn (array $d) => $challenge->handleEscalated($d),
-    'ChallengeManager.Resolved'            => fn (array $d) => $challenge->handleResolved($d),
-    'CREVerdictReceiver.VerdictReceived'   => fn (array $d) => $challenge->handleVerdictReceived($d),
+    'ChallengeManager.Resolved'            => function (array $d) use ($challenge, $audit): bool {
+        $r = $challenge->handleResolved($d);
+        $audit->handle($d);
+        return $r;
+    },
+    'CREVerdictReceiver.VerdictReceived'   => function (array $d) use ($challenge, $audit): bool {
+        $r = $challenge->handleVerdictReceived($d);
+        $audit->handle($d);
+        return $r;
+    },
+
+    // Per-check CRE verification (NovelVerification): request + verdict, both
+    // surfaced in the event feed.
+    'NovelVerification.VerificationRequested' => fn (array $d) => $novelVerify->handleRequested($d),
+    'NovelVerification.Verified'              => fn (array $d) => $novelVerify->handleVerified($d),
 
     // Phase 2: protected set + ENS subname/text mirror.
     'ProtectedSet.ProtectedUpdated'        => fn (array $d) => $protectedSet->handle($d),
