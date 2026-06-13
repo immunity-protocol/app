@@ -19,7 +19,7 @@ final class DashboardController extends Controller
         // antibody lifecycle) the indexer has ingested from Base Sepolia. Renders
         // server-side on first paint and stays fresh via the activity poller.
         $network = NetworkConfig::baseSepolia();
-        $events = (new ContractEventBroker())->findRecentForFeed(60);
+        $events = (new ContractEventBroker())->findRecentForFeed(200);
         return $this->render('dashboard', [
             'events'      => $events,
             'explorerUrl' => $network->blockExplorerUrl,
