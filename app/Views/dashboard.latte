@@ -145,43 +145,43 @@
                                 </span>
                             </td>
                             <td class="pr-5 sm:pr-7 py-2.5 text-[12px] text-fg-secondary leading-snug break-words font-mono">
+                                {var $immId = $e['imm_id'] ?? null}
+                                {var $reason = $e['reasoning'] ?? null}
+                                {var $abRef = $immId
+                                    ? '<a href="/antibody/' . $immId . '" class="text-accent-soft hover:text-accent transition-colors">' . $immId . '</a>'
+                                    : '<span class="text-fg-dim">' . substr((string) ($p['antibodyId'] ?? $p['keccakId'] ?? '0x'), 0, 20) . '&hellip;</span>'}
                                 {if $e['event_name'] === 'NovelVerification.Verified'}
                                     {var $vTone = match ($p['verdictLabel'] ?? '') {
-                                        'MALICIOUS'  => 'text-threat-300',
-                                        'SUSPICIOUS' => 'text-caution-300',
-                                        'BENIGN'     => 'text-immune-500',
-                                        default      => 'text-fg-secondary',
+                                        'MALICIOUS' => 'text-threat-300', 'SUSPICIOUS' => 'text-caution-300',
+                                        'BENIGN' => 'text-immune-500', default => 'text-fg-secondary',
                                     }}
                                     <span class="{$vTone} font-semibold">{$p['verdictLabel'] ?? '?'}</span>
                                     <span class="text-fg-dim">&middot; confidence {$p['confidence'] ?? 0}% &middot; severity {$p['severity'] ?? 0}</span>
                                 {elseif $e['event_name'] === 'NovelVerification.VerificationRequested'}
-                                    <span class="text-fg-dim">check</span> {substr($p['checkId'] ?? '0x', 0, 14)}&hellip;
+                                    <span class="text-fg-dim">check</span> {substr($p['checkId'] ?? '0x', 0, 22)}&hellip;
                                 {elseif $e['event_name'] === 'CREVerdictReceiver.VerdictReceived'}
-                                    {var $valid = (int) ($p['validVotes'] ?? 0)}
-                                    {var $invalid = (int) ($p['invalidVotes'] ?? 0)}
-                                    {var $total = $valid + $invalid}
-                                    {var $upheld = $valid >= $invalid}
-                                    <span class="{if $upheld}text-immune-300{else}text-threat-300{/if} font-semibold">
-                                        {if $upheld}{$valid}-of-{$total} VALID{else}{$invalid}-of-{$total} INVALID{/if}
-                                    </span>
-                                    <span class="text-fg-dim">&middot; antibody {substr($p['antibodyId'] ?? '0x', 0, 12)}&hellip;</span>
+                                    {var $valid = (int) ($p['validVotes'] ?? 0)}{var $invalid = (int) ($p['invalidVotes'] ?? 0)}{var $total = $valid + $invalid}{var $upheld = $valid >= $invalid}
+                                    <span class="{if $upheld}text-immune-300{else}text-threat-300{/if} font-semibold">{if $upheld}{$valid}-of-{$total} VALID{else}{$invalid}-of-{$total} INVALID{/if}</span>
+                                    <span class="text-fg-dim">&middot; </span>{$abRef|noescape}
                                 {elseif $e['event_name'] === 'ChallengeManager.VerdictRequested'}
-                                    <span class="text-fg-dim">antibody</span> {substr($p['antibodyId'] ?? '0x', 0, 14)}&hellip;
+                                    <span class="text-fg-dim">challenge opened &middot; </span>{$abRef|noescape}
                                 {elseif $e['event_name'] === 'ChallengeManager.Resolved'}
                                     {var $inv = !empty($p['invalid'])}
                                     <span class="{if $inv}text-threat-300{else}text-immune-300{/if} font-semibold">{if $inv}INVALIDATED{else}UPHELD{/if}</span>
-                                    <span class="text-fg-dim">&middot; antibody {substr($p['antibodyId'] ?? '0x', 0, 12)}&hellip;</span>
+                                    <span class="text-fg-dim">&middot; </span>{$abRef|noescape}
                                 {elseif $e['event_name'] === 'Registry.Matched'}
                                     <span class="text-threat-300 font-semibold">blocked</span>
-                                    <span class="text-fg-dim">&middot; matched antibody {substr($p['antibodyId'] ?? '0x', 0, 12)}&hellip;</span>
+                                    <span class="text-fg-dim">&middot; matched </span>{$abRef|noescape}
+                                    {if $reason}<span class="block text-fg-dim text-[11px] leading-snug mt-1 break-words">{$reason}</span>{/if}
                                 {elseif $e['event_name'] === 'Registry.Checked'}
                                     <span class="text-immune-500 font-semibold">allowed</span><span class="text-fg-dim"> &middot; no antibody match</span>
-                                {elseif isset($p['antibodyId'])}
-                                    <span class="text-fg-dim">antibody</span> {substr($p['antibodyId'], 0, 14)}&hellip;
-                                {elseif isset($p['keccakId'])}
-                                    <span class="text-fg-dim">antibody</span> {substr($p['keccakId'], 0, 14)}&hellip;
+                                {elseif $e['event_name'] === 'Registry.Published'}
+                                    <span class="text-fg-dim">minted </span>{$abRef|noescape}
+                                    {if $reason}<span class="block text-fg-dim text-[11px] leading-snug mt-1 break-words">{$reason}</span>{/if}
+                                {elseif $immId}
+                                    <span class="text-fg-dim">antibody </span>{$abRef|noescape}
                                 {elseif isset($p['publisher'])}
-                                    <span class="text-fg-dim">publisher</span> {substr($p['publisher'], 0, 12)}&hellip;
+                                    <span class="text-fg-dim">publisher</span> {substr($p['publisher'], 0, 14)}&hellip;
                                 {else}
                                     <span class="text-fg-dim">block #{$e['block_number']}</span>
                                 {/if}
@@ -312,8 +312,16 @@
   }
   function clip(hex, n) { return hex ? escapeHtml(String(hex).slice(0, n)) + '…' : '?'; }
 
-  function detail(name, p) {
-    p = p || {};
+  function abLink(e) {
+    if (e.imm_id) return '<a href="/antibody/' + escapeHtml(e.imm_id) + '" class="text-accent-soft hover:text-accent transition-colors">' + escapeHtml(e.imm_id) + '</a>';
+    const p = e.payload || {};
+    return '<span class="text-fg-dim">' + clip(p.antibodyId || p.keccakId, 20) + '</span>';
+  }
+  function reasonLine(e) {
+    return e.reasoning ? '<span class="block text-fg-dim text-[11px] leading-snug mt-1 break-words">' + escapeHtml(e.reasoning) + '</span>' : '';
+  }
+  function detail(e) {
+    const name = e.event_name, p = e.payload || {};
     if (name === 'NovelVerification.Verified') {
       const tone = { 'MALICIOUS': 'text-threat-300', 'SUSPICIOUS': 'text-caution-300', 'BENIGN': 'text-immune-500' }[p.verdictLabel] || 'text-fg-secondary';
       return '<span class="' + tone + ' font-semibold">' + escapeHtml(p.verdictLabel || '?') + '</span>' +
@@ -326,27 +334,26 @@
       const valid = Number(p.validVotes || 0), invalid = Number(p.invalidVotes || 0), total = valid + invalid;
       const upheld = valid >= invalid;
       const label = upheld ? (valid + '-of-' + total + ' VALID') : (invalid + '-of-' + total + ' INVALID');
-      return '<span class="' + (upheld ? 'text-immune-300' : 'text-threat-300') + ' font-semibold">' + label + '</span>' +
-             '<span class="text-fg-dim"> · antibody ' + clip(p.antibodyId, 12) + '</span>';
+      return '<span class="' + (upheld ? 'text-immune-300' : 'text-threat-300') + ' font-semibold">' + label + '</span><span class="text-fg-dim"> · </span>' + abLink(e);
     }
     if (name === 'ChallengeManager.VerdictRequested') {
-      return '<span class="text-fg-dim">antibody</span> ' + clip(p.antibodyId, 14);
+      return '<span class="text-fg-dim">challenge opened · </span>' + abLink(e);
     }
     if (name === 'ChallengeManager.Resolved') {
       const inv = !!p.invalid;
-      return '<span class="' + (inv ? 'text-threat-300' : 'text-immune-300') + ' font-semibold">' + (inv ? 'INVALIDATED' : 'UPHELD') + '</span>' +
-             '<span class="text-fg-dim"> · antibody ' + clip(p.antibodyId, 12) + '</span>';
+      return '<span class="' + (inv ? 'text-threat-300' : 'text-immune-300') + ' font-semibold">' + (inv ? 'INVALIDATED' : 'UPHELD') + '</span><span class="text-fg-dim"> · </span>' + abLink(e);
     }
     if (name === 'Registry.Matched') {
-      return '<span class="text-threat-300 font-semibold">blocked</span>' +
-             '<span class="text-fg-dim"> · matched antibody ' + clip(p.antibodyId, 12) + '</span>';
+      return '<span class="text-threat-300 font-semibold">blocked</span><span class="text-fg-dim"> · matched </span>' + abLink(e) + reasonLine(e);
     }
     if (name === 'Registry.Checked') {
       return '<span class="text-immune-500 font-semibold">allowed</span><span class="text-fg-dim"> · no antibody match</span>';
     }
-    if (p.antibodyId) return '<span class="text-fg-dim">antibody</span> ' + clip(p.antibodyId, 14);
-    if (p.keccakId)   return '<span class="text-fg-dim">antibody</span> ' + clip(p.keccakId, 14);
-    if (p.publisher)  return '<span class="text-fg-dim">publisher</span> ' + clip(p.publisher, 12);
+    if (name === 'Registry.Published') {
+      return '<span class="text-fg-dim">minted </span>' + abLink(e) + reasonLine(e);
+    }
+    if (e.imm_id)     return '<span class="text-fg-dim">antibody </span>' + abLink(e);
+    if (p.publisher)  return '<span class="text-fg-dim">publisher</span> ' + clip(p.publisher, 14);
     return '';
   }
 
@@ -354,7 +361,7 @@
 
   function renderRow(e) {
     const meta = META[e.event_name] || [e.event_name, 'text-fg-tertiary', 'bg-fg-dim'];
-    const d = detail(e.event_name, e.payload) || '<span class="text-fg-dim">block #' + e.block_number + '</span>';
+    const d = detail(e) || '<span class="text-fg-dim">block #' + e.block_number + '</span>';
     return (
       '<tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top" data-evkey="' + keyOf(e) + '" data-ts="' + escapeHtml(e.occurred_at) + '">' +
         '<td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap" data-time>' + timeAgo(e.occurred_at) + '</td>' +
