@@ -25,12 +25,14 @@ final class AntibodyController extends Controller
         $filters = AntibodyFilters::fromRequest($request);
         $entries = new EntryService();
 
-        $total = $entries->countAll(
+        // Grouped by distinct primary_matcher_hash: ONE row per threat (the
+        // CVE-style registry unit), not one per corroborating antibody.
+        $total = $entries->countThreats(
             $filters->types, $filters->statuses, $filters->verdicts,
             $filters->search, $filters->range,
             $filters->sevMin, $filters->sevMax, $filters->publisher
         );
-        $rows = $entries->findPage(
+        $rows = $entries->findThreatPage(
             $filters->types, $filters->statuses, $filters->verdicts,
             $filters->search, $filters->range,
             $filters->sevMin, $filters->sevMax, $filters->publisher,
@@ -38,9 +40,10 @@ final class AntibodyController extends Controller
         );
         $pagination = Pagination::compute($total, $filters->page, $filters->perPage);
 
-        $statusCounts = $entries->countByStatus();
-        $typeCounts = $entries->countByType();
-        $verdictCounts = $entries->countByVerdict();
+        // Facets tally distinct threats (matcher hashes), matching the grouped view.
+        $statusCounts = $entries->countThreatsByStatus();
+        $typeCounts = $entries->countThreatsByType();
+        $verdictCounts = $entries->countThreatsByVerdict();
 
         return $this->render('antibodies/index', [
             'rows'       => $rows,
@@ -48,6 +51,7 @@ final class AntibodyController extends Controller
             'filters'    => $filters,
             'pagination' => $pagination,
             'corroborationK' => NetworkConfig::baseSepolia()->corroborationK,
+            'threatTotal' => $total,
             'totals'     => [
                 'probation'  => $statusCounts['probation']  ?? 0,
                 'active'     => $statusCounts['active']      ?? 0,
@@ -63,6 +67,26 @@ final class AntibodyController extends Controller
         ]);
     }
 
+    #[Get('/threat/{id}')]
+    public function threat(string $id): Response
+    {
+        $entries = new EntryService();
+        // Route by Threat ID (IMM-T-YYYY-NNNN) first, then fall back to a raw
+        // matcher hash. The threat is the centerpiece; its headline antibody is
+        // the earliest corroborator.
+        $threat = $entries->findThreatByThreatId($id) ?? $entries->findThreatByMatcherHash($id);
+        if ($threat === null) {
+            return $this->render('errors/404', ['requestPath' => "/threat/{$id}"])->withStatus(404);
+        }
+        $corroborators = $entries->findAllByPrimaryMatcherHash($threat->matcher_hash_hex);
+        if ($corroborators === []) {
+            return $this->render('errors/404', ['requestPath' => "/threat/{$id}"])->withStatus(404);
+        }
+        // Headline antibody for the envelope/evidence panels: the earliest
+        // corroborator (findAllByPrimaryMatcherHash is oldest-first).
+        return $this->renderThreat($threat, $corroborators[0], $entries);
+    }
+
     #[Get('/antibody/{id}')]
     public function show(string $id): Response
     {
@@ -71,33 +95,65 @@ final class AntibodyController extends Controller
         if ($entry === null) {
             return $this->render('errors/404', ['requestPath' => "/antibody/{$id}"])->withStatus(404);
         }
-        $mirrors = (new MirrorService())->findByEntryId($entry->id);
-        $blocks = (new BlockEventService())->findRecentByEntryId($entry->id, 10);
-        $publisher = (new PublisherService())->findByAddressHex(bin2hex($entry->publisher));
-        $impact = $entries->impactFor($entry->id);
+        // Antibodies are corroborating sources, not headline rows: redirect to
+        // the threat-centric view this antibody belongs to.
+        $threat = $entry->primary_matcher_hash !== null
+            ? $entries->findThreatByMatcherHash(bin2hex($entry->primary_matcher_hash))
+            : null;
+        if ($threat !== null) {
+            return $this->redirect("/threat/{$threat->threat_id}");
+        }
+        // Legacy antibody with no matcher hash / no threat: render it standalone.
+        $corroborationSet = $entry->primary_matcher_hash !== null
+            ? $entries->findAllByPrimaryMatcherHash(bin2hex($entry->primary_matcher_hash))
+            : [$entry];
+        return $this->renderThreat(null, $entry, $entries, $corroborationSet);
+    }
+
+    /**
+     * Threat-centric detail render shared by /threat/{id} and the legacy
+     * /antibody/{id} fallback. $headline is the antibody whose envelope/evidence
+     * panels drive the page (the earliest corroborator). $threat is the matcher
+     * aggregate (null only for the legacy no-threat fallback).
+     *
+     * @param \stdClass|null            $threat
+     * @param \App\Models\Antibody\Entities\Entry $headline
+     * @param array<int, mixed>|null    $corroborationSet pre-fetched, or resolved here
+     */
+    private function renderThreat(
+        ?\stdClass $threat,
+        $headline,
+        EntryService $entries,
+        ?array $corroborationSet = null,
+    ): Response {
+        $mirrors = (new MirrorService())->findByEntryId($headline->id);
+        $blocks = (new BlockEventService())->findRecentByEntryId($headline->id, 10);
+        $publisher = (new PublisherService())->findByAddressHex(bin2hex($headline->publisher));
+        $impact = $entries->impactFor($headline->id);
         // Total mirror chains we're configured to fan out to. Drives the
         // "X of N chains mirrored" denominator in the detail view.
         $mirrorChainsTotal = count(MirrorNetworkRegistry::default()->all());
 
-        // Corroboration set: the other publishers' antibodies for the same
-        // primary_matcher_hash. This is the hard-block story made visible.
-        $corroborationSet = [];
-        if ($entry->primary_matcher_hash !== null) {
-            $corroborationSet = $entries->findAllByPrimaryMatcherHash(
-                bin2hex($entry->primary_matcher_hash)
-            );
+        // Corroboration set: every publisher's antibody for the same
+        // primary_matcher_hash. This is the hard-block story made visible and
+        // the centerpiece of the threat view.
+        if ($corroborationSet === null) {
+            $corroborationSet = $headline->primary_matcher_hash !== null
+                ? $entries->findAllByPrimaryMatcherHash(bin2hex($headline->primary_matcher_hash))
+                : [$headline];
         }
 
         // Protected-set membership caps enforcement at advisory. Resolve the
         // matcher's target address (address-kind matchers only) against the set.
-        $matcher = $entry->primary_matcher;
+        $matcher = $headline->primary_matcher;
         $target = is_object($matcher) ? ($matcher->target ?? null) : null;
         $isProtected = is_string($target)
             && (new ProtectedTargetService())->isProtected($target);
 
         return $this->render('antibodies/show', [
-            'id'                => $id,
-            'entry'             => $entry,
+            'id'                => $threat !== null ? $threat->threat_id : $headline->imm_id,
+            'threat'            => $threat,
+            'entry'             => $headline,
             'mirrors'           => $mirrors,
             'blocks'            => $blocks,
             'publisher'         => $publisher,
