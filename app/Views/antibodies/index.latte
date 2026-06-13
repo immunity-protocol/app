@@ -26,8 +26,10 @@
         </div>
         <div class="md:text-right md:shrink-0">
             <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Registry totals</div>
-            <div class="font-mono text-[12.5px] text-fg-secondary leading-[1.6] flex md:block gap-5 md:gap-0">
+            <div class="font-mono text-[12.5px] text-fg-secondary leading-[1.6] flex flex-wrap md:block gap-x-5 gap-y-1 md:gap-0">
                 <div><span class="text-fg-primary tabular-nums">{$totals['active']}</span> active</div>
+                <div><span class="text-fg-primary tabular-nums">{$totals['probation']}</span> probation</div>
+                <div><span class="text-fg-primary tabular-nums">{$totals['challenged']}</span> challenged</div>
                 <div><span class="text-fg-primary tabular-nums">{$totals['expired']}</span> expired</div>
                 <div><span class="text-fg-primary tabular-nums">{$totals['slashed']}</span> slashed</div>
             </div>
@@ -140,6 +142,7 @@
                 <div class="space-y-1.5">
                     {var $statusOptions = [
                       ['active',     'Active',     'immune-500'],
+                      ['probation',  'Probation',  'accent'],
                       ['challenged', 'Challenged', 'caution-500'],
                       ['expired',    'Expired',    'fg-tertiary'],
                       ['slashed',    'Slashed',    'threat-500'],
@@ -221,7 +224,8 @@
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">IMM ID</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Type</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Verdict</th>
-                <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Conf</th>
+                <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Enforcement</th>
+                <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Corrob</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6 text-right">Sev</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Publisher</th>
                 <th class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary font-normal pb-4 pr-6">Status</th>
@@ -243,11 +247,14 @@
             {var $verdictColor = $verdictUpper === 'MALICIOUS' ? 'text-threat-500' : 'text-caution-500'}
             {var $statusBadge = match($statusUpper) {
                 'ACTIVE'     => 'bg-immune-500/10 text-immune-500',
+                'PROBATION'  => 'bg-accent/10 text-accent',
                 'CHALLENGED' => 'bg-caution-500/10 text-caution-500',
                 'EXPIRED'    => 'bg-fg-dim/15 text-fg-tertiary',
                 'SLASHED'    => 'bg-threat-500/15 text-threat-500',
                 default      => 'bg-fg-dim/10 text-fg-tertiary',
             }}
+            {* Enforcement tier — the single SDK rule: corroboration >= K OR is_seeded. *}
+            {var $isHardBlock = \App\Models\Core\EnforcementTier::isHardBlock($r->corroboration_count, $r->is_seeded === 1, $corroborationK)}
             {var $publisherDisplay = $r->publisher_ens ?? '0x' . substr(bin2hex($r->publisher), 0, 8) . '..' . substr(bin2hex($r->publisher), -4)}
             {var $isHexPub = $r->publisher_ens === null}
             <tr class="border-b border-ink-line/40 hover:bg-ink-elevated/40 transition-colors group">
@@ -260,8 +267,20 @@
                 <td class="py-3 pr-6">
                     <span class="font-mono text-[10.5px] uppercase tracking-widest2 {$verdictColor}">{$verdictUpper}</span>
                 </td>
+                <td class="py-3 pr-6">
+                    {if $isHardBlock}
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm font-mono text-[10px] uppercase tracking-widest2 bg-threat-500/10 text-threat-500" title="corroboration ≥ {$corroborationK} or seeded — agents hard-block on match">
+                            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true"></span>
+                            Hard-block
+                        </span>
+                    {else}
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm font-mono text-[10px] uppercase tracking-widest2 bg-caution-500/10 text-caution-500" title="below corroboration threshold — advisory only">
+                            Advisory
+                        </span>
+                    {/if}
+                </td>
                 <td class="py-3 pr-6 text-right">
-                    <span class="text-fg-primary">{$r->confidence|number:1}</span>
+                    <span class="{$r->corroboration_count >= $corroborationK ? 'text-immune-500' : 'text-fg-secondary'}" title="{$r->corroboration_count} corroborating publisher(s); K={$corroborationK}">{$r->corroboration_count}/{$corroborationK}</span>
                 </td>
                 <td class="py-3 pr-6 text-right">
                     <span class="text-fg-secondary">{$r->severity}</span>
