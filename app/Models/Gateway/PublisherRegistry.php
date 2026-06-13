@@ -15,13 +15,13 @@ use RuntimeException;
  * Reads `PublisherRegistrar.isRegistered(address) → bool` on Base Sepolia via a
  * read-only eth_call. No keys, no writes.
  *
- *   registrar  0x35F65a08a11f44F73622f51ade1911BC28036faF  (Base Sepolia, 84532)
+ *   registrar  0x762CF28bE7502CC99B6286076e9b4Fb71EE84002  (Base Sepolia, 84532)
  *   ABI        isRegistered(address account) view returns (bool)   [exact]
  */
 final class PublisherRegistry implements RegistrationGate
 {
     /** Live PublisherRegistrar on Base Sepolia. */
-    public const string DEFAULT_REGISTRAR = '0x35F65a08a11f44F73622f51ade1911BC28036faF';
+    public const string DEFAULT_REGISTRAR = '0x762CF28bE7502CC99B6286076e9b4Fb71EE84002';
     /** Public Base Sepolia RPC fallback when BASE_SEPOLIA_RPC_URL is unset. */
     public const string DEFAULT_RPC_URL = 'https://sepolia.base.org';
 
