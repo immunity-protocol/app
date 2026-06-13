@@ -49,12 +49,12 @@ class Supervisor
     private const CONN_LOST_EXIT_THRESHOLD = 3;
 
     /**
-     * @param BackfillBootstrap[] $bootstraps  one per chain (0G + each Mirror chain)
+     * @param BackfillBootstrap[] $bootstraps  one per chain (Base + each Mirror chain)
      * @param array<int, array{poller: EventPoller, intervalSec: int}> $pollers
      *        one entry per chain. The intervalSec is the per-chain cadence
      *        (overrides the supervisor's global tick when larger). Tuples
-     *        keep the configuration flexible: Galileo can poll every 2s
-     *        while Sepolia polls every hour, all from the same loop.
+     *        keep the configuration flexible: Base Sepolia can poll every few
+     *        seconds while Sepolia Mirror polls every hour, all from one loop.
      */
     public function __construct(
         private readonly array $bootstraps,

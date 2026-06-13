@@ -6,8 +6,8 @@ namespace App\Models\Indexer\Chain;
 
 /**
  * Minimal contract that EventDecoder requires from any ABI source. Lets the
- * decoder serve both Registry (0G) and Mirror (Sepolia, future chains) without
- * a hard dependency on the concrete class.
+ * decoder serve both the Base contract suite and the Mirror chains without a
+ * hard dependency on the concrete class.
  */
 interface EventAbi
 {

@@ -1,7 +1,7 @@
 -- ##################################################################################################################
 -- STATE (one row per indexed chain tracking the indexer's progress through history)
 -- ##################################################################################################################
--- Chain examples: 16602 (0G Galileo Registry), 11155111 (Sepolia Mirror).
+-- Chain examples: 84532 (Base Sepolia suite), 11155111 (Sepolia Mirror).
 -- Rows are seeded at process start by BackfillBootstrap based on each chain's
 -- deploy block; this table starts empty.
 CREATE TABLE indexer.state
@@ -13,7 +13,7 @@ CREATE TABLE indexer.state
 );
 
 -- ##################################################################################################################
--- HYDRATION_QUEUE (jobs to fetch antibody envelopes from 0G Storage)
+-- HYDRATION_QUEUE (jobs to fetch antibody envelopes from Lighthouse/IPFS)
 -- ##################################################################################################################
 CREATE TABLE indexer.hydration_queue
 (

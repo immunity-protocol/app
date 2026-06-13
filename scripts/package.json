@@ -2,14 +2,12 @@
   "name": "immunity-indexer-scripts",
   "version": "0.0.0",
   "private": true,
-  "description": "Node helpers for the PHP indexer worker (e.g. 0G Storage downloads).",
+  "description": "Node helpers for the PHP indexer worker (e.g. Mirror relayer sends).",
   "type": "module",
   "scripts": {
-    "og-download": "node og-download.mjs",
     "mirror-send": "node mirror-send.mjs"
   },
   "dependencies": {
-    "@0gfoundation/0g-ts-sdk": "^1.2.6",
     "ethers": "^6.13.0"
   }
 }

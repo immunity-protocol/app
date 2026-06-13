@@ -96,7 +96,7 @@ final class MoralisPriceService
 
         $resolved = $this->resolveAddress($tokenAddress, $chainId);
         if ($resolved === null) {
-            return null; // unsupported chain (e.g. 0G Galileo)
+            return null; // unsupported chain (e.g. an unpriced testnet)
         }
         [$moralisChain, $lookupAddress] = $resolved;
 
