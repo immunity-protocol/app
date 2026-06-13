@@ -39,9 +39,13 @@ use App\Models\Indexer\Handlers\AntibodySlashedHandler;
 use App\Models\Indexer\Handlers\AntibodyUnmirroredHandler;
 use App\Models\Indexer\Handlers\AuditEventHandler;
 use App\Models\Indexer\Handlers\BondLedgerHandler;
+use App\Models\Indexer\Handlers\ChallengeHandler;
 use App\Models\Indexer\Handlers\CheckSettledHandler;
+use App\Models\Indexer\Handlers\CorroborationHandler;
+use App\Models\Indexer\Handlers\EnsIngestHandler;
 use App\Models\Indexer\Handlers\ExpiredHandler;
 use App\Models\Indexer\Handlers\MaturedHandler;
+use App\Models\Indexer\Handlers\ProtectedSetHandler;
 use App\Models\Indexer\Handlers\PublisherIdentityHandler;
 use App\Models\Indexer\Handlers\ReputationHandler;
 use App\Models\Indexer\Handlers\SeededHandler;
@@ -114,9 +118,18 @@ $bondLedger       = new BondLedgerHandler($db);
 $reputation       = new ReputationHandler($db);
 $identity         = new PublisherIdentityHandler($db);
 $audit            = new AuditEventHandler($contractEventBroker);
+// Phase 2: challenges/jury, protected set, corroboration, ENS subname mirror.
+$challenge        = new ChallengeHandler($db);
+$protectedSet     = new ProtectedSetHandler($db);
+$corroboration    = new CorroborationHandler($db);
+$ensIngest        = new EnsIngestHandler($db);
 
 $baseHandlers = [
-    'Registry.Published'      => fn (array $d) => $publishedHandler->handle($d),
+    'Registry.Published'      => function (array $d) use ($publishedHandler, $corroboration): bool {
+        $inserted = $publishedHandler->handle($d);
+        $corroboration->handle($d);
+        return $inserted;
+    },
     'Registry.Seeded'         => fn (array $d) => $seededHandler->handle($d),
     'Registry.Matured'        => fn (array $d) => $maturedHandler->handle($d),
     'Registry.Expired'        => fn (array $d) => $expiredHandler->handle($d),
@@ -138,6 +151,19 @@ $baseHandlers = [
     'PublisherRegistrar.Registered'       => fn (array $d) => $identity->handleRegistered($d),
     'PublisherRegistrar.Deregistered'     => fn (array $d) => $identity->handleDeregistered($d),
     'PublisherRegistrar.ReputationSynced' => fn (array $d) => $identity->handleReputationSynced($d),
+
+    // Phase 2: challenges/jury.
+    'Registry.ChallengeOpened'             => fn (array $d) => $challenge->handleChallengeOpened($d),
+    'Registry.ChallengeTimedOut'           => fn (array $d) => $challenge->handleChallengeTimedOut($d),
+    'ChallengeManager.VerdictRequested'    => fn (array $d) => $challenge->handleVerdictRequested($d),
+    'ChallengeManager.Escalated'           => fn (array $d) => $challenge->handleEscalated($d),
+    'ChallengeManager.Resolved'            => fn (array $d) => $challenge->handleResolved($d),
+    'CREVerdictReceiver.VerdictReceived'   => fn (array $d) => $challenge->handleVerdictReceived($d),
+
+    // Phase 2: protected set + ENS subname/text mirror.
+    'ProtectedSet.ProtectedUpdated'        => fn (array $d) => $protectedSet->handle($d),
+    'L2Registry.SubnodeCreated'            => fn (array $d) => $ensIngest->handleSubnodeCreated($d),
+    'L2Registry.TextChanged'               => fn (array $d) => $ensIngest->handleTextChanged($d),
 ];
 // Operator/treasury balance movements: audit log only (KPI, optional).
 foreach (['Registry.Deposited', 'Registry.Withdrew', 'Registry.TreasuryWithdrawn'] as $auditKey) {
