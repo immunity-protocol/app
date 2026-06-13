@@ -44,7 +44,10 @@ final class EntryFactoryTest extends TestCase
         $factory = new EntryFactory($publishers, total: 350);
         $rows = $factory->generate();
         $counts = array_count_values(array_column($rows, 'status'));
-        $this->assertGreaterThan(280, $counts['active'] ?? 0);
+        // active + probation are the live (non-terminal) states under the bond
+        // model; together they should dominate the population.
+        $live = ($counts['active'] ?? 0) + ($counts['probation'] ?? 0);
+        $this->assertGreaterThan(280, $live);
     }
 
     public function testImmIdsAreSequentialAndUnique(): void
