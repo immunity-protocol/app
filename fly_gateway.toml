@@ -1,0 +1,46 @@
+app = 'immunity-gateway'
+primary_region = 'yyz'
+
+[build]
+  dockerfile = '.flyio/Dockerfile.app'
+
+[env]
+  APP_ENV      = 'production'
+  APP_DEBUG    = 'false'
+  APP_TIMEZONE = 'UTC'
+  MODE         = 'GATEWAY'
+  GATEWAY_QUOTA_PER_HOUR = '60'
+
+# Injected via `fly secrets set` (never committed):
+#   LIGHTHOUSE_API_KEY    - the only key the gateway holds (pins to Lighthouse/IPFS)
+#   BASE_SEPOLIA_RPC_URL  - read-only RPC for PublisherRegistrar.isRegistered
+#   DATABASE_URL          - shared Postgres (immunity-db); gateway.upload ledger
+# Optional:
+#   PUBLISHER_REGISTRAR_ADDRESS - defaults to the live Base Sepolia registrar
+
+# Single Apache process serving POST /evidence + /health. Publishers POST from
+# their own machines, so this is a public HTTP service (force_https).
+[processes]
+  app = "apache2-foreground"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+  [http_service.concurrency]
+    type = 'connections'
+    hard_limit = 25
+    soft_limit = 20
+
+# Low-spec: the gateway is I/O-bound (verify + upload), not compute-heavy.
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '256mb'
+  processes = ['app']
+
+[deploy]
+  strategy = 'immediate'
