@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\Models\Indexer\Workers;
 
 use App\Models\Indexer\Brokers\HydrationQueueBroker;
-use App\Models\Indexer\Storage\NodeBridge;
+use App\Models\Indexer\Storage\LighthouseFetcher;
 use Throwable;
 use Zephyrus\Data\Database;
 
 /**
  * Drains pending hydration jobs from indexer.hydration_queue. For each job we
- * shell out to scripts/og-download.mjs to fetch the antibody envelope from
- * 0G Storage at the evidence_cid root hash, then hydrate the antibody row's
- * primary_matcher / redacted_reasoning columns from the envelope payload.
+ * reconstruct the Lighthouse CID from the on-chain evidence_cid digest, fetch
+ * the antibody public envelope from the keyless IPFS gateway, then hydrate the
+ * antibody row's primary_matcher / redacted_reasoning columns from the payload.
  *
  * Failures back off (2^attempts * 30s) up to 3 attempts; after that the job
  * is marked failed and skipped permanently.
@@ -25,7 +25,7 @@ class HydrationWorker
     public function __construct(
         private readonly Database $db,
         private readonly HydrationQueueBroker $queue,
-        private readonly NodeBridge $bridge,
+        private readonly LighthouseFetcher $fetcher,
     ) {
     }
 
@@ -43,11 +43,10 @@ class HydrationWorker
             $stats['processed']++;
             $jobId = (int) $job->id;
             $attempts = (int) $job->attempts + 1;
-            $rootHashHex = '0x' . bin2hex((string) $job->evidence_cid);
             $keccakHex = bin2hex((string) $job->antibody_keccak_id);
 
             try {
-                $envelope = $this->bridge->downloadEnvelope($rootHashHex);
+                $envelope = $this->fetcher->downloadEnvelope((string) $job->evidence_cid);
             } catch (Throwable $e) {
                 if ($attempts >= self::MAX_ATTEMPTS) {
                     $this->queue->markFailed($jobId, $e->getMessage());
