@@ -11,13 +11,14 @@ use Zephyrus\Routing\Attribute\Get;
 use Zephyrus\Routing\Attribute\Post;
 
 /**
- * The /playground page is the interactive demo surface. Two access tiers:
- *   - judge: PLAYGROUND_PASSWORD unlocks the page + Section 1/2 endpoints.
- *   - admin: ADMIN_PASSWORD additionally unlocks Section 3 + destructive ops.
+ * The /playground page is the interactive demo surface. Single access tier:
+ *   - judge: PLAYGROUND_PASSWORD unlocks the page + all endpoints (publish,
+ *     inject, check-address, fleet pause/resume).
  *
  * Auth is session-cookie based. The page itself self-handles the gate so it
  * can render a login form on miss instead of returning JSON 401 (which is
- * what the playground/admin middlewares do for the API endpoints).
+ * what the playground middleware does for the API endpoints). The old admin
+ * tier (destructive ops, kill-node) was removed.
  */
 final class PlaygroundController extends Controller
 {
@@ -49,26 +50,6 @@ final class PlaygroundController extends Controller
 
         session(['playground_login_error' => null]);
         PlaygroundSession::grant(PlaygroundSession::TIER_JUDGE);
-        return Response::redirect('/playground');
-    }
-
-    #[Post('/playground/admin-login')]
-    public function adminLogin(Request $request): Response
-    {
-        if (!PlaygroundSession::hasJudge()) {
-            return Response::redirect('/playground');
-        }
-
-        $expected = (string) ($_ENV['ADMIN_PASSWORD'] ?? getenv('ADMIN_PASSWORD') ?: '');
-        $submitted = (string) $request->body()->get('password', '');
-
-        if ($expected === '' || !hash_equals($expected, $submitted)) {
-            session(['playground_admin_error' => 'Wrong admin password.']);
-            return Response::redirect('/playground');
-        }
-
-        session(['playground_admin_error' => null]);
-        PlaygroundSession::grant(PlaygroundSession::TIER_ADMIN);
         return Response::redirect('/playground');
     }
 

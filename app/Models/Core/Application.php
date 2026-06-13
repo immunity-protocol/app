@@ -89,15 +89,8 @@ final class Application extends Kernel
             ),
         );
 
-        // Section 3 + destructive endpoints (kill agents, manual queue insert,
-        // scenario triggers). Granted by posting ADMIN_PASSWORD to
-        // /playground/admin-login on top of an existing judge session.
-        $builder = $builder->registerMiddleware(
-            'admin',
-            new AuthGuardMiddleware(
-                new PredicateAuthGuard(static fn () => PlaygroundSession::hasAdmin()),
-            ),
-        );
+        // (The old 'admin' tier — destructive ops, kill-node — was removed; the
+        // playground is judge-only now.)
 
         // Pretty 404 for HTML clients; JSON-shaped 404 for API clients.
         // The framework's default returns plain text "Not Found", which is
