@@ -23,13 +23,14 @@ class EventDecoder
     /**
      * @param array<string, mixed> $log a single eth_getLogs result entry
      * @return array{
+     *   contract: string|null,
      *   event: string,
      *   args: array<string, mixed>,
      *   blockNumber: int,
      *   txHash: string,
      *   logIndex: int,
      *   address: string
-     * }|null  null if topic0 doesn't match any known event
+     * }|null  null if the address/topic0 doesn't match any known event
      */
     public function decode(array $log): ?array
     {
@@ -38,7 +39,25 @@ class EventDecoder
             return null;
         }
         $topic0 = strtolower((string) $topics[0]);
-        $abiItem = $this->abi->eventByTopic($topic0);
+        $address = strtolower((string) ($log['address'] ?? ''));
+
+        // Address-aware resolution: with a multi-contract registry we first map
+        // the emitting address to its ABI, so same-named events on different
+        // contracts (Registry.Matured vs Reputation.Matured) and identical
+        // signatures (TreasuryWithdrawn) never collide. Single-contract sources
+        // (e.g. MirrorAbi) keep the flat topic0 path.
+        $abiSource = $this->abi;
+        $contractName = null;
+        if ($this->abi instanceof ContractRegistry) {
+            $contract = $this->abi->contractAt($address);
+            if ($contract === null) {
+                return null;
+            }
+            $abiSource = $contract;
+            $contractName = $contract->name();
+        }
+
+        $abiItem = $abiSource->eventByTopic($topic0);
         if ($abiItem === null) {
             return null;
         }
@@ -62,6 +81,7 @@ class EventDecoder
         }
 
         return [
+            'contract'    => $contractName,
             'event'       => (string) $abiItem['name'],
             'args'        => $args,
             'blockNumber' => JsonRpcClient::hexToInt((string) ($log['blockNumber'] ?? '0x0')),
