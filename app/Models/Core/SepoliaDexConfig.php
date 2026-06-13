@@ -80,8 +80,9 @@ final class SepoliaDexConfig
             tickSpacing:            (int) (getenv('BASE_DEX_TICK_SPACING') ?: 60),
             protectedPoolId:        getenv('BASE_PROTECTED_POOL_ID')   ?: '0x3da31e9c10d509506bc8bcc50867b6da38ea6820fd588c6736021210327a2cc9',
             unprotectedPoolId:      getenv('BASE_UNPROTECTED_POOL_ID') ?: '0xe706a1b80032a97f7e2c6fbc56a3f51ef23f312393f85b7cb81425f174f386ea',
-            tokenALabel:            getenv('BASE_DEX_TOKEN_A_LABEL') ?: 'INT-A',
-            tokenBLabel:            getenv('BASE_DEX_TOKEN_B_LABEL') ?: 'INT-B',
+            // Obvious demo labels: INT-A is the antibody-flagged token, INT-B is clean.
+            tokenALabel:            getenv('BASE_DEX_TOKEN_A_LABEL') ?: 'EVIL',
+            tokenBLabel:            getenv('BASE_DEX_TOKEN_B_LABEL') ?: 'GOOD',
         );
     }
 

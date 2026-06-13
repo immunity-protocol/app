@@ -169,11 +169,17 @@
                         <dd><a href="{$cfg->blockExplorerUrl}/address/{$cfg->mirrorAddress}" target="_blank" rel="noopener" class="text-fg-secondary hover:text-accent transition-colors">{$shortMirror}</a></dd>
                     </div>
                     <div class="flex items-center justify-between gap-2">
-                        <dt class="text-fg-tertiary uppercase tracking-widest2">{$cfg->tokenALabel}</dt>
+                        <dt class="uppercase tracking-widest2 inline-flex items-center gap-1.5 text-threat-300">
+                            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-threat-300"></span>{$cfg->tokenALabel}
+                            <span class="text-[8.5px] text-threat-300/70 normal-case tracking-normal">flagged</span>
+                        </dt>
                         <dd><a href="{$cfg->blockExplorerUrl}/address/{$cfg->tokenA}" target="_blank" rel="noopener" class="text-fg-secondary hover:text-accent transition-colors">{$shortTokenA}</a></dd>
                     </div>
                     <div class="flex items-center justify-between gap-2">
-                        <dt class="text-fg-tertiary uppercase tracking-widest2">{$cfg->tokenBLabel}</dt>
+                        <dt class="uppercase tracking-widest2 inline-flex items-center gap-1.5 text-immune-500">
+                            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500"></span>{$cfg->tokenBLabel}
+                            <span class="text-[8.5px] text-immune-500/70 normal-case tracking-normal">clean</span>
+                        </dt>
                         <dd><a href="{$cfg->blockExplorerUrl}/address/{$cfg->tokenB}" target="_blank" rel="noopener" class="text-fg-secondary hover:text-accent transition-colors">{$shortTokenB}</a></dd>
                     </div>
                 </dl>
