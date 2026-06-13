@@ -35,7 +35,7 @@ final class NetworkConfig
 
     /**
      * Build the Base Sepolia (84532) config from environment variables, falling
-     * back to the contracts deployed 2026-06-13 (see
+     * back to the hardened core redeployed + seeded 2026-06-13 (see
      * contracts-v1-plan/DEPLOYED-base-sepolia.md). Override any field via env.
      */
     public static function baseSepolia(): self
@@ -45,16 +45,16 @@ final class NetworkConfig
             chainId:                   (int) (getenv('BASE_CHAIN_ID') ?: 84532),
             rpcUrl:                    getenv('BASE_SEPOLIA_RPC_URL') ?: 'https://sepolia.base.org',
             blockExplorerUrl:          getenv('BASE_BLOCK_EXPLORER')  ?: 'https://sepolia.basescan.org',
-            usdcAddress:               getenv('BASE_USDC_ADDRESS')    ?: '0x26265722fa5d94bB3A3C866124aDdC7b85670b16',
+            usdcAddress:               getenv('BASE_USDC_ADDRESS')    ?: '0xe697EF7724453F239D8c0EB9295D87C344D9CE60',
             ensRpcUrl:                 getenv('ENS_RPC_URL')          ?: 'https://eth.llamarpc.com',
-            deployBlock:               (int) (getenv('BASE_DEPLOY_BLOCK') ?: 42781168),
-            registryAddress:           getenv('BASE_REGISTRY_ADDRESS')            ?: '0xdB155c21D26b917294BF0e2A1E46C9A14361BF44',
-            reputationAddress:         getenv('BASE_REPUTATION_ADDRESS')          ?: '0x0e03F6Ca9e97447E2d97aFbFCe4cBF49202e9F25',
-            publisherRegistrarAddress: getenv('BASE_PUBLISHER_REGISTRAR_ADDRESS') ?: '0x35F65a08a11f44F73622f51ade1911BC28036faF',
-            challengeManagerAddress:   getenv('BASE_CHALLENGE_MANAGER_ADDRESS')   ?: '0xe83525cA155e3f285Cc58f91cB1120338ecb2417',
-            creVerdictReceiverAddress: getenv('BASE_CRE_RECEIVER_ADDRESS')        ?: '0xA3FD7E9E7dDc32A25441b93F34AaEcEbE0304485',
-            protectedSetAddress:       getenv('BASE_PROTECTED_SET_ADDRESS')       ?: '0xFc9EfB73662ccE25267e9E467c43e812F7C7A4d8',
-            l2RegistryAddress:         getenv('BASE_L2_REGISTRY_ADDRESS')         ?: '0xa0A4CE62b6Fa02ed5ddFbb1DE6e56fC559033C06',
+            deployBlock:               (int) (getenv('BASE_DEPLOY_BLOCK') ?: 42796000),
+            registryAddress:           getenv('BASE_REGISTRY_ADDRESS')            ?: '0x9bD765E191e186679252467Ebbc1D389a59E04B8',
+            reputationAddress:         getenv('BASE_REPUTATION_ADDRESS')          ?: '0x828666a9E2887F8dD03E61b0D9546C32CaDB52d3',
+            publisherRegistrarAddress: getenv('BASE_PUBLISHER_REGISTRAR_ADDRESS') ?: '0x762CF28bE7502CC99B6286076e9b4Fb71EE84002',
+            challengeManagerAddress:   getenv('BASE_CHALLENGE_MANAGER_ADDRESS')   ?: '0xc71c354fFf57652A64b214F654E1A68c7f3cef79',
+            creVerdictReceiverAddress: getenv('BASE_CRE_RECEIVER_ADDRESS')        ?: '0x02ED0a8b0e6b98C1C05CE125157566313cEe4834',
+            protectedSetAddress:       getenv('BASE_PROTECTED_SET_ADDRESS')       ?: '0x95faC80e27419619A9108C53573bf9A77967397A',
+            l2RegistryAddress:         getenv('BASE_L2_REGISTRY_ADDRESS')         ?: '0xded674AAbCe67B2cFe724c8c50c928830468E0cC',
         );
     }
 
