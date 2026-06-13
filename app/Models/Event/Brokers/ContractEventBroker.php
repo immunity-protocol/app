@@ -32,11 +32,14 @@ class ContractEventBroker extends Broker
     public function findRecentForFeed(int $limit): array
     {
         $rows = $this->select(
-            "SELECT id, event_name, payload, block_number,
-                    '0x' || encode(tx_hash, 'hex') AS tx_hash,
-                    log_index, occurred_at
-               FROM event.contract_event
-              ORDER BY block_number DESC, log_index DESC, id DESC
+            "SELECT ce.id, ce.event_name, ce.payload, ce.block_number,
+                    '0x' || encode(ce.tx_hash, 'hex') AS tx_hash,
+                    ce.log_index, ce.occurred_at,
+                    ae.imm_id AS imm_id, ae.redacted_reasoning AS reasoning
+               FROM event.contract_event ce
+               LEFT JOIN antibody.entry ae
+                 ON ae.keccak_id = decode(substr(coalesce(ce.payload->>'keccakId', ce.payload->>'antibodyId'), 3), 'hex')
+              ORDER BY ce.block_number DESC, ce.log_index DESC, ce.id DESC
               LIMIT ?",
             [$limit]
         );
@@ -53,12 +56,15 @@ class ContractEventBroker extends Broker
     public function findOlderForFeed(int $beforeBlock, int $beforeLogIndex, int $beforeId, int $limit): array
     {
         $rows = $this->select(
-            "SELECT id, event_name, payload, block_number,
-                    '0x' || encode(tx_hash, 'hex') AS tx_hash,
-                    log_index, occurred_at
-               FROM event.contract_event
-              WHERE (block_number, log_index, id) < (?, ?, ?)
-              ORDER BY block_number DESC, log_index DESC, id DESC
+            "SELECT ce.id, ce.event_name, ce.payload, ce.block_number,
+                    '0x' || encode(ce.tx_hash, 'hex') AS tx_hash,
+                    ce.log_index, ce.occurred_at,
+                    ae.imm_id AS imm_id, ae.redacted_reasoning AS reasoning
+               FROM event.contract_event ce
+               LEFT JOIN antibody.entry ae
+                 ON ae.keccak_id = decode(substr(coalesce(ce.payload->>'keccakId', ce.payload->>'antibodyId'), 3), 'hex')
+              WHERE (ce.block_number, ce.log_index, ce.id) < (?, ?, ?)
+              ORDER BY ce.block_number DESC, ce.log_index DESC, ce.id DESC
               LIMIT ?",
             [$beforeBlock, $beforeLogIndex, $beforeId, $limit]
         );
@@ -77,6 +83,8 @@ class ContractEventBroker extends Broker
             'tx_hash'      => (string) $r->tx_hash,
             'log_index'    => (int) $r->log_index,
             'occurred_at'  => (string) $r->occurred_at,
+            'imm_id'       => isset($r->imm_id) ? (string) $r->imm_id : null,
+            'reasoning'    => isset($r->reasoning) ? (string) $r->reasoning : null,
         ];
     }
 
