@@ -41,7 +41,6 @@ use App\Models\Indexer\Handlers\AuditEventHandler;
 use App\Models\Indexer\Handlers\BondLedgerHandler;
 use App\Models\Indexer\Handlers\ChallengeHandler;
 use App\Models\Indexer\Handlers\CheckSettledHandler;
-use App\Models\Indexer\Handlers\CorroborationHandler;
 use App\Models\Indexer\Handlers\EnsIngestHandler;
 use App\Models\Indexer\Handlers\ExpiredHandler;
 use App\Models\Indexer\Handlers\MaturedHandler;
@@ -118,18 +117,13 @@ $bondLedger       = new BondLedgerHandler($db);
 $reputation       = new ReputationHandler($db);
 $identity         = new PublisherIdentityHandler($db);
 $audit            = new AuditEventHandler($contractEventBroker);
-// Phase 2: challenges/jury, protected set, corroboration, ENS subname mirror.
+// Phase 2: challenges/jury, protected set, ENS subname mirror.
 $challenge        = new ChallengeHandler($db);
 $protectedSet     = new ProtectedSetHandler($db);
-$corroboration    = new CorroborationHandler($db);
 $ensIngest        = new EnsIngestHandler($db);
 
 $baseHandlers = [
-    'Registry.Published'      => function (array $d) use ($publishedHandler, $corroboration): bool {
-        $inserted = $publishedHandler->handle($d);
-        $corroboration->handle($d);
-        return $inserted;
-    },
+    'Registry.Published'      => fn (array $d) => $publishedHandler->handle($d),
     'Registry.Seeded'         => fn (array $d) => $seededHandler->handle($d),
     'Registry.Matured'        => fn (array $d) => $maturedHandler->handle($d),
     'Registry.Expired'        => fn (array $d) => $expiredHandler->handle($d),
