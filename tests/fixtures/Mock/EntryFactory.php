@@ -25,7 +25,8 @@ final class EntryFactory
     ];
 
     private const STATUS_WEIGHTS = [
-        'active'     => 92,
+        'active'     => 80,
+        'probation'  => 12,
         'challenged' => 4,
         'slashed'    => 1,
         'expired'    => 3,
@@ -72,7 +73,6 @@ final class EntryFactory
         $severity = (int) min(99, max(20, round(Seeds::logNormal(60, 0.4))));
         $publisher = $this->publishers->pickRandom();
         $createdAt = $this->randomCreatedAt($isRecent);
-        $stakeLockUntil = $this->plusHours($createdAt, 72);
         $expiresAt = Seeds::chance(0.7)
             ? $this->plusHours($createdAt, Seeds::int(7 * 24, 365 * 24))
             : null;
@@ -91,11 +91,11 @@ final class EntryFactory
             'primary_matcher'   => $this->primaryMatcher($type),
             'context_hash'      => '\\x' . $contextHashHex,
             'evidence_cid'      => '\\x' . $evidenceCidHex,
-            'stake_lock_until'  => $stakeLockUntil,
             'expires_at'        => $expiresAt,
+            'matured_at'        => $status === 'active' ? $createdAt : null,
             'publisher'         => '\\x' . bin2hex($publisher['address']),
             'publisher_ens'     => $publisher['ens'],
-            'stake_amount'      => '1.000000',
+            'bond_amount'       => '1.000000',
             'attestation'       => '\\x' . $attestationHex,
             'redacted_reasoning' => $this->redactedReasoning($type, $verdict),
             'created_at'        => $createdAt,
@@ -106,6 +106,7 @@ final class EntryFactory
         }
         if (Seeds::chance(0.25)) {
             $row['seed_source'] = Seeds::pick(self::SEED_SOURCES);
+            $row['is_seeded'] = 1;
         }
         if ($type === 'semantic') {
             $row['embedding_hash'] = '\\x' . bin2hex(random_bytes(32));

@@ -105,12 +105,12 @@ final class CheckEventValueAtRiskTest extends IntegrationTestCase
             "INSERT INTO antibody.entry (
                 keccak_id, imm_id, type, verdict, confidence, severity, status,
                 primary_matcher, context_hash, evidence_cid,
-                stake_lock_until, publisher, stake_amount, attestation
+                publisher, bond_amount, attestation
              ) VALUES (
                 ?, 'IMM-T', 'address'::antibody.entry_type, 'malicious'::antibody.entry_verdict,
                 80, 70, 'active'::antibody.entry_status,
                 '{}'::jsonb, ?, ?,
-                '2026-12-31 00:00:00+00', ?, '1.000000', ?
+                ?, '1.000000', ?
              ) RETURNING id",
             [$stub, $stub, $stub, $pub, $stub]
         )->fetch();

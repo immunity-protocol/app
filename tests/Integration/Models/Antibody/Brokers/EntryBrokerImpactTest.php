@@ -91,9 +91,8 @@ final class EntryBrokerImpactTest extends IntegrationTestCase
             'primary_matcher'   => '{}',
             'context_hash'      => $stub,
             'evidence_cid'      => $stub,
-            'stake_lock_until'  => '2026-12-31 00:00:00+00',
             'publisher'         => $pub,
-            'stake_amount'      => '1.000000',
+            'bond_amount'      => '1.000000',
             'attestation'       => $stub,
         ]);
     }

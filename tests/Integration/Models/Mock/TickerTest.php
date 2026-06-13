@@ -53,9 +53,8 @@ final class TickerTest extends IntegrationTestCase
             'primary_matcher'  => '{}',
             'context_hash'     => $hex,
             'evidence_cid'     => $hex,
-            'stake_lock_until' => '2026-12-31 00:00:00+00',
             'publisher'        => '\\x' . str_repeat('aa', 20),
-            'stake_amount'     => '1.000000',
+            'bond_amount'     => '1.000000',
             'attestation'      => $hex,
         ]);
     }

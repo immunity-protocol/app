@@ -68,9 +68,8 @@ final class EntryServiceTest extends IntegrationTestCase
             'primary_matcher'  => '{"address":"0xdeadbeef"}',
             'context_hash'     => $hex,
             'evidence_cid'     => $hex,
-            'stake_lock_until' => '2026-12-31 00:00:00+00',
             'publisher'        => '\\x' . substr(hash('sha256', $immId), 0, 40),
-            'stake_amount'     => '1.000000',
+            'bond_amount'     => '1.000000',
             'attestation'      => $hex,
         ];
     }

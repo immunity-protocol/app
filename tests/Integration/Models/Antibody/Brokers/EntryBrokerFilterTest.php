@@ -168,10 +168,9 @@ final class EntryBrokerFilterTest extends IntegrationTestCase
             'primary_matcher'   => '{}',
             'context_hash'      => $stub,
             'evidence_cid'      => $stub,
-            'stake_lock_until'  => '2026-12-31 00:00:00+00',
             'publisher'         => '\\x' . substr(hash('sha256', $immId), 0, 40),
             'publisher_ens'     => $publisherEns,
-            'stake_amount'      => '1.000000',
+            'bond_amount'      => '1.000000',
             'attestation'       => $stub,
         ]);
     }
