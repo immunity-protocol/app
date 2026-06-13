@@ -108,7 +108,7 @@ final class EntryBrokerImpactTest extends IntegrationTestCase
                 ?, 'unknown', ?, 'block'::event.check_decision, ?,
                 ?, false, now()
              ) RETURNING id",
-            [$agent, NetworkConfig::galileo()->chainId, $entryId, $cacheHit ? 'true' : 'false']
+            [$agent, NetworkConfig::baseSepolia()->chainId, $entryId, $cacheHit ? 'true' : 'false']
         )->fetch();
         return (int) $row->id;
     }
@@ -120,7 +120,7 @@ final class EntryBrokerImpactTest extends IntegrationTestCase
                 check_event_id, entry_id, agent_id, value_protected_usd,
                 chain_id, occurred_at
              ) VALUES (?, ?, 'agent', ?::numeric(20, 6), ?, now())",
-            [$checkId, $entryId, $valueUsd, NetworkConfig::galileo()->chainId]
+            [$checkId, $entryId, $valueUsd, NetworkConfig::baseSepolia()->chainId]
         );
     }
 }

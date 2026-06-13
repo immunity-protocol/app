@@ -87,7 +87,7 @@ final class CheckEventValueAtRiskTest extends IntegrationTestCase
         return $this->broker->insert([
             'agent_id'    => '0xagent',
             'tx_kind'     => 'unknown',
-            'chain_id'    => NetworkConfig::galileo()->chainId,
+            'chain_id'    => NetworkConfig::baseSepolia()->chainId,
             'decision'    => 'block',
             'cache_hit'   => 'true',
             'tee_used'    => 'false',
@@ -125,7 +125,7 @@ final class CheckEventValueAtRiskTest extends IntegrationTestCase
                 (check_event_id, entry_id, agent_id, value_protected_usd,
                  chain_id, occurred_at, tx_hash, log_index)
              VALUES (?, ?, '0xagent', 0, ?, now(), ?, 1)",
-            [$checkId, $entryId, NetworkConfig::galileo()->chainId, '\\x' . $hex]
+            [$checkId, $entryId, NetworkConfig::baseSepolia()->chainId, '\\x' . $hex]
         );
     }
 }
