@@ -162,6 +162,91 @@ readonly class EntryService
     }
 
     /**
+     * Grouped threat listing: one row per distinct matcher hash. Rows are
+     * stdClass (denormalised group aggregate, not the Entry entity shape).
+     *
+     * @param array<int, string> $types
+     * @param array<int, string> $statuses
+     * @param array<int, string> $verdicts
+     * @return stdClass[]
+     */
+    public function findThreatPage(
+        array $types = [],
+        array $statuses = [],
+        array $verdicts = [],
+        ?string $search = null,
+        ?string $range = null,
+        ?int $sevMin = null,
+        ?int $sevMax = null,
+        ?string $publisher = null,
+        int $perPage = 30,
+        int $page = 1,
+    ): array {
+        return $this->broker->findThreatPage(
+            $types, $statuses, $verdicts, $search, $range, $sevMin, $sevMax, $publisher, $perPage, $page
+        );
+    }
+
+    /**
+     * @param array<int, string> $types
+     * @param array<int, string> $statuses
+     * @param array<int, string> $verdicts
+     */
+    public function countThreats(
+        array $types = [],
+        array $statuses = [],
+        array $verdicts = [],
+        ?string $search = null,
+        ?string $range = null,
+        ?int $sevMin = null,
+        ?int $sevMax = null,
+        ?string $publisher = null,
+    ): int {
+        return $this->broker->countThreats(
+            $types, $statuses, $verdicts, $search, $range, $sevMin, $sevMax, $publisher
+        );
+    }
+
+    public function findThreatByThreatId(string $threatId): ?\stdClass
+    {
+        return $this->broker->findThreatByThreatId($threatId);
+    }
+
+    public function findThreatByMatcherHash(string $hashHex): ?\stdClass
+    {
+        return $this->broker->findThreatByMatcherHash($hashHex);
+    }
+
+    public function findThreatByImmId(string $immId): ?\stdClass
+    {
+        return $this->broker->findThreatByImmId($immId);
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function countThreatsByType(): array
+    {
+        return $this->broker->countThreatsByType();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function countThreatsByStatus(): array
+    {
+        return $this->broker->countThreatsByStatus();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function countThreatsByVerdict(): array
+    {
+        return $this->broker->countThreatsByVerdict();
+    }
+
+    /**
      * Real per-antibody network-impact metrics, computed from event tables.
      *
      * @return array{

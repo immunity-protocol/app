@@ -556,6 +556,195 @@ class EntryBroker extends Broker
     }
 
     /**
+     * Grouped threat listing for the explorer: ONE row per distinct
+     * primary_matcher_hash (the CVE-style registry unit), not one per antibody.
+     * Corroborating antibodies collapse into a single threat row carrying the
+     * threat's sequential id, the count of distinct publishers (the
+     * corroboration N/K), the worst severity in the group, the most-enforcing
+     * type/verdict, a representative status, and first-seen.
+     *
+     * The same WHERE filters as the per-antibody list apply to the underlying
+     * antibodies before grouping, so facets/filters keep working over the
+     * grouped view.
+     *
+     * @param array<int, string> $types
+     * @param array<int, string> $statuses
+     * @param array<int, string> $verdicts
+     * @return stdClass[]
+     */
+    public function findThreatPage(
+        array $types = [],
+        array $statuses = [],
+        array $verdicts = [],
+        ?string $search = null,
+        ?string $range = null,
+        ?int $sevMin = null,
+        ?int $sevMax = null,
+        ?string $publisher = null,
+        int $perPage = 30,
+        int $page = 1,
+    ): array {
+        [$where, $params] = $this->buildFilterWhere(
+            $types, $statuses, $verdicts, $search, $range, $sevMin, $sevMax, $publisher
+        );
+        $perPage = max(1, min(200, $perPage));
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+        $params[] = $perPage;
+        $params[] = $offset;
+
+        // Newest threat first by first-seen (the earliest antibody's id). The
+        // representative type/verdict/severity is the worst case in the group;
+        // the representative status is the earliest antibody's. corroboration is
+        // distinct publishers among non-terminal antibodies (matches the
+        // corroboration_count denormalization the SDK rule reads).
+        $sql = "
+            SELECT
+                t.threat_id,
+                t.threat_seq,
+                encode(e.primary_matcher_hash, 'hex')                AS matcher_hash_hex,
+                min(e.id)                                            AS first_entry_id,
+                (array_agg(e.imm_id ORDER BY e.id))[1]               AS first_imm_id,
+                (array_agg(e.type::text ORDER BY e.severity DESC, e.id))[1]    AS type,
+                (array_agg(e.verdict::text ORDER BY (e.verdict = 'malicious') DESC, e.id))[1] AS verdict,
+                (array_agg(e.status::text ORDER BY e.id))[1]         AS status,
+                max(e.severity)                                      AS severity,
+                max(e.is_seeded)                                     AS is_seeded,
+                count(DISTINCT e.publisher) FILTER (
+                    WHERE e.status NOT IN ('slashed'::antibody.entry_status, 'expired'::antibody.entry_status)
+                )                                                    AS corroboration,
+                count(*)                                             AS antibody_count,
+                min(e.created_at)                                    AS first_seen_at
+              FROM antibody.entry e
+              JOIN antibody.threat t ON t.matcher_hash = e.primary_matcher_hash
+             WHERE " . implode(' AND ', $where) . "
+               AND e.primary_matcher_hash IS NOT NULL
+             GROUP BY t.threat_id, t.threat_seq, e.primary_matcher_hash
+             ORDER BY min(e.id) DESC
+             LIMIT ? OFFSET ?";
+        return $this->select($sql, $params);
+    }
+
+    /**
+     * Count of distinct threats (matcher hashes) matching the filter set — the
+     * grouped-list total used for pagination.
+     *
+     * @param array<int, string> $types
+     * @param array<int, string> $statuses
+     * @param array<int, string> $verdicts
+     */
+    public function countThreats(
+        array $types = [],
+        array $statuses = [],
+        array $verdicts = [],
+        ?string $search = null,
+        ?string $range = null,
+        ?int $sevMin = null,
+        ?int $sevMax = null,
+        ?string $publisher = null,
+    ): int {
+        [$where, $params] = $this->buildFilterWhere(
+            $types, $statuses, $verdicts, $search, $range, $sevMin, $sevMax, $publisher
+        );
+        $sql = "SELECT count(DISTINCT primary_matcher_hash) FROM antibody.entry
+                 WHERE " . implode(' AND ', $where) . " AND primary_matcher_hash IS NOT NULL";
+        return (int) $this->selectValue($sql, $params);
+    }
+
+    /**
+     * The threat for a given matcher hash (bare 64-hex or 0x-prefixed). Used to
+     * resolve a threat-centric detail page from a matcher.
+     */
+    public function findThreatByMatcherHash(string $hashHex): ?stdClass
+    {
+        $stripped = $hashHex;
+        if (str_starts_with($stripped, '0x') || str_starts_with($stripped, '0X')) {
+            $stripped = substr($stripped, 2);
+        }
+        if (!preg_match('/^[0-9a-fA-F]{64}$/', $stripped)) {
+            return null;
+        }
+        return $this->selectOne(
+            "SELECT threat_id, threat_seq, encode(matcher_hash, 'hex') AS matcher_hash_hex, first_seen_at
+               FROM antibody.threat WHERE matcher_hash = decode(?, 'hex')",
+            [strtolower($stripped)]
+        );
+    }
+
+    /**
+     * The threat by its CVE-style id (IMM-T-YYYY-NNNN). Used to route the
+     * threat-centric detail page.
+     */
+    public function findThreatByThreatId(string $threatId): ?stdClass
+    {
+        return $this->selectOne(
+            "SELECT threat_id, threat_seq, encode(matcher_hash, 'hex') AS matcher_hash_hex, first_seen_at
+               FROM antibody.threat WHERE threat_id = ?",
+            [$threatId]
+        );
+    }
+
+    /**
+     * The threat a given antibody (by imm_id) belongs to, resolved through its
+     * matcher hash. Lets the antibody route fall through to the threat view.
+     */
+    public function findThreatByImmId(string $immId): ?stdClass
+    {
+        return $this->selectOne(
+            "SELECT t.threat_id, t.threat_seq, encode(t.matcher_hash, 'hex') AS matcher_hash_hex, t.first_seen_at
+               FROM antibody.entry e
+               JOIN antibody.threat t ON t.matcher_hash = e.primary_matcher_hash
+              WHERE e.imm_id = ?",
+            [$immId]
+        );
+    }
+
+    /**
+     * Per-facet DISTINCT-threat counts for the grouped explorer. Each map value
+     * is the number of distinct matcher hashes that have at least one antibody
+     * with the facet value — so the sidebar tallies threats, not antibodies.
+     *
+     * @return array<string, int>
+     */
+    public function countThreatsByType(): array
+    {
+        return $this->threatFacet('type');
+    }
+
+    /** @return array<string, int> */
+    public function countThreatsByStatus(): array
+    {
+        $out = ['active' => 0, 'probation' => 0, 'challenged' => 0, 'expired' => 0, 'slashed' => 0];
+        return array_merge($out, $this->threatFacet('status'));
+    }
+
+    /** @return array<string, int> */
+    public function countThreatsByVerdict(): array
+    {
+        $out = ['malicious' => 0, 'suspicious' => 0];
+        return array_merge($out, $this->threatFacet('verdict'));
+    }
+
+    /**
+     * @param 'type'|'status'|'verdict' $column pre-validated enum column name
+     * @return array<string, int>
+     */
+    private function threatFacet(string $column): array
+    {
+        $rows = $this->select(
+            "SELECT {$column}::text AS k, count(DISTINCT primary_matcher_hash) AS n
+               FROM antibody.entry
+              WHERE primary_matcher_hash IS NOT NULL
+              GROUP BY {$column}"
+        );
+        $out = [];
+        foreach ($rows as $r) {
+            $out[$r->k] = (int) $r->n;
+        }
+        return $out;
+    }
+
+    /**
      * @param array<string, mixed> $data
      */
     public function insert(array $data): int
