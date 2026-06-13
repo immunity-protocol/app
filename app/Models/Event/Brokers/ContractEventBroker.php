@@ -20,6 +20,40 @@ class ContractEventBroker extends Broker
         );
     }
 
+    /**
+     * Recent on-chain events for the dashboard event feed, newest first. The
+     * tx_hash is returned as a 0x-hex string and the jsonb payload is decoded
+     * to an associative array so the view can read args directly. Ordered by
+     * block then log index (a stable on-chain order) and finally id, so events
+     * ingested in the same backfill tick (shared occurred_at) still sort right.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findRecentForFeed(int $limit): array
+    {
+        $rows = $this->select(
+            "SELECT id, event_name, payload, block_number,
+                    '0x' || encode(tx_hash, 'hex') AS tx_hash,
+                    log_index, occurred_at
+               FROM event.contract_event
+              ORDER BY block_number DESC, log_index DESC, id DESC
+              LIMIT ?",
+            [$limit]
+        );
+        return array_map(static function (stdClass $r): array {
+            $payload = is_string($r->payload) ? json_decode($r->payload, true) : (array) $r->payload;
+            return [
+                'id'           => (int) $r->id,
+                'event_name'   => (string) $r->event_name,
+                'payload'      => is_array($payload) ? $payload : [],
+                'block_number' => (int) $r->block_number,
+                'tx_hash'      => (string) $r->tx_hash,
+                'log_index'    => (int) $r->log_index,
+                'occurred_at'  => (string) $r->occurred_at,
+            ];
+        }, $rows);
+    }
+
     public function countByName(string $eventName): int
     {
         return (int) $this->selectValue(
