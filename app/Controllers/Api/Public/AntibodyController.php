@@ -30,9 +30,10 @@ final class AntibodyController extends Controller
     }
 
     /**
-     * Tier-2 mirror of the on-chain `getAntibodyByMatcherHash`. Lets external
-     * tooling (and the SDK, in degraded modes) resolve by canonical matcher
-     * hash without hitting RPC.
+     * Tier-2 mirror of the on-chain matcher index. Corroboration lets several
+     * distinct publishers each mint their own antibody for the same matcher
+     * hash, so this returns the full SET of entries (with corroboration_count),
+     * not a single row. Lets external tooling resolve by hash without RPC.
      */
     #[Get('/antibody/by-matcher-hash/{hash}')]
     public function byMatcherHash(string $hash): Response
@@ -41,11 +42,16 @@ final class AntibodyController extends Controller
             return Response::json(['error' => 'invalid matcher hash', 'hash' => $hash], 400);
         }
         $this->entries ??= new EntryService();
-        $entry = $this->entries->findByPrimaryMatcherHash($hash);
-        if ($entry === null) {
+        $entries = $this->entries->findAllByPrimaryMatcherHash($hash);
+        if ($entries === []) {
             return Response::json(['error' => 'not found', 'matcher_hash' => $hash], 404);
         }
-        return $this->packEntry($entry);
+        return Response::json([
+            'matcher_hash'        => $hash,
+            'corroboration_count' => (int) ($entries[0]->corroboration_count ?? 0),
+            'count'               => count($entries),
+            'entries'             => $entries,
+        ])->withHeader('Cache-Control', 'public, max-age=15, stale-while-revalidate=30');
     }
 
     private function packEntry(\App\Models\Antibody\Entities\Entry $entry): Response

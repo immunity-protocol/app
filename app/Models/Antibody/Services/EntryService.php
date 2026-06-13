@@ -24,9 +24,14 @@ readonly class EntryService
         return Entry::build($this->broker->findByImmId($immId));
     }
 
-    public function findByPrimaryMatcherHash(string $hashHex): ?Entry
+    /**
+     * Every entry corroborating a matcher hash, oldest-first.
+     *
+     * @return Entry[]
+     */
+    public function findAllByPrimaryMatcherHash(string $hashHex): array
     {
-        return Entry::build($this->broker->findByPrimaryMatcherHash($hashHex));
+        return Entry::buildArray($this->broker->findAllByPrimaryMatcherHash($hashHex));
     }
 
     /**

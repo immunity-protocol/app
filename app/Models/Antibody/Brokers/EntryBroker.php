@@ -24,19 +24,23 @@ class EntryBroker extends Broker
      * Mirrors the contract's `getAntibodyByMatcherHash` so the SDK and the
      * explorer agree on the indexed envelope.
      *
+     * Returns every entry sharing the matcher hash — corroboration lets several
+     * distinct publishers each mint their own antibody for the same matcher.
+     *
      * @param string $hashHex 0x-prefixed 32-byte hex (66 chars) or bare 64 hex.
+     * @return stdClass[] ordered oldest-first
      */
-    public function findByPrimaryMatcherHash(string $hashHex): ?stdClass
+    public function findAllByPrimaryMatcherHash(string $hashHex): array
     {
         $stripped = $hashHex;
         if (str_starts_with($stripped, '0x') || str_starts_with($stripped, '0X')) {
             $stripped = substr($stripped, 2);
         }
         if (!preg_match('/^[0-9a-fA-F]{64}$/', $stripped)) {
-            return null;
+            return [];
         }
-        return $this->selectOne(
-            "SELECT * FROM antibody.entry WHERE primary_matcher_hash = decode(?, 'hex')",
+        return $this->select(
+            "SELECT * FROM antibody.entry WHERE primary_matcher_hash = decode(?, 'hex') ORDER BY created_at ASC",
             [strtolower($stripped)]
         );
     }

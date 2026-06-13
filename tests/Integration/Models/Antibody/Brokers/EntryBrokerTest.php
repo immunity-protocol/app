@@ -83,7 +83,7 @@ final class EntryBrokerTest extends IntegrationTestCase
         $this->assertSame(1, $counts['semantic']);
     }
 
-    public function testFindByPrimaryMatcherHashRoundTrip(): void
+    public function testFindAllByPrimaryMatcherHashRoundTrip(): void
     {
         $hashHex = str_repeat('ab', 32);
         $id = $this->broker->insert($this->fixture(
@@ -91,12 +91,12 @@ final class EntryBrokerTest extends IntegrationTestCase
             primaryMatcherHash: '\\x' . $hashHex,
         ));
 
-        $found = $this->broker->findByPrimaryMatcherHash('0x' . $hashHex);
-        $this->assertNotNull($found);
-        $this->assertSame($id, (int) $found->id);
+        $found = $this->broker->findAllByPrimaryMatcherHash('0x' . $hashHex);
+        $this->assertCount(1, $found);
+        $this->assertSame($id, (int) $found[0]->id);
     }
 
-    public function testFindByPrimaryMatcherHashAcceptsBareHex(): void
+    public function testFindAllByPrimaryMatcherHashAcceptsBareHex(): void
     {
         $hashHex = str_repeat('cd', 32);
         $this->broker->insert($this->fixture(
@@ -104,11 +104,10 @@ final class EntryBrokerTest extends IntegrationTestCase
             primaryMatcherHash: '\\x' . $hashHex,
         ));
 
-        $found = $this->broker->findByPrimaryMatcherHash($hashHex);
-        $this->assertNotNull($found);
+        $this->assertCount(1, $this->broker->findAllByPrimaryMatcherHash($hashHex));
     }
 
-    public function testFindByPrimaryMatcherHashIsCaseInsensitive(): void
+    public function testFindAllByPrimaryMatcherHashIsCaseInsensitive(): void
     {
         $hashHex = str_repeat('ef', 32);
         $this->broker->insert($this->fixture(
@@ -116,22 +115,19 @@ final class EntryBrokerTest extends IntegrationTestCase
             primaryMatcherHash: '\\x' . $hashHex,
         ));
 
-        $found = $this->broker->findByPrimaryMatcherHash('0x' . strtoupper($hashHex));
-        $this->assertNotNull($found);
+        $this->assertCount(1, $this->broker->findAllByPrimaryMatcherHash('0x' . strtoupper($hashHex)));
     }
 
-    public function testFindByPrimaryMatcherHashReturnsNullForUnknown(): void
+    public function testFindAllByPrimaryMatcherHashReturnsEmptyForUnknown(): void
     {
-        $this->assertNull(
-            $this->broker->findByPrimaryMatcherHash('0x' . str_repeat('11', 32)),
-        );
+        $this->assertSame([], $this->broker->findAllByPrimaryMatcherHash('0x' . str_repeat('11', 32)));
     }
 
-    public function testFindByPrimaryMatcherHashRejectsMalformedInput(): void
+    public function testFindAllByPrimaryMatcherHashRejectsMalformedInput(): void
     {
-        $this->assertNull($this->broker->findByPrimaryMatcherHash('0xnothex'));
-        $this->assertNull($this->broker->findByPrimaryMatcherHash('0xabcd'));
-        $this->assertNull($this->broker->findByPrimaryMatcherHash(''));
+        $this->assertSame([], $this->broker->findAllByPrimaryMatcherHash('0xnothex'));
+        $this->assertSame([], $this->broker->findAllByPrimaryMatcherHash('0xabcd'));
+        $this->assertSame([], $this->broker->findAllByPrimaryMatcherHash(''));
     }
 
     /**
