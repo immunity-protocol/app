@@ -49,6 +49,7 @@ use App\Models\Indexer\Handlers\ProtectedSetHandler;
 use App\Models\Indexer\Handlers\PublisherIdentityHandler;
 use App\Models\Indexer\Handlers\ReputationHandler;
 use App\Models\Indexer\Handlers\SeededHandler;
+use App\Models\Indexer\Handlers\ThreatHandler;
 use App\Models\Indexer\Storage\LighthouseFetcher;
 use App\Models\Indexer\Workers\BackfillBootstrap;
 use App\Models\Indexer\Workers\EnsResolutionWorker;
@@ -122,12 +123,16 @@ $audit            = new AuditEventHandler($contractEventBroker);
 $challenge        = new ChallengeHandler($db);
 $protectedSet     = new ProtectedSetHandler($db);
 $corroboration    = new CorroborationHandler($db);
+$threat           = new ThreatHandler($db);
 $ensIngest        = new EnsIngestHandler($db);
 
 $baseHandlers = [
     // Published/Slashed/Expired/Retired also refresh corroboration_count for the
     // antibody's matcher-hash group (a corroborator joining or dropping out).
-    'Registry.Published'      => function (array $d) use ($publishedHandler, $corroboration): bool {
+    'Registry.Published'      => function (array $d) use ($publishedHandler, $corroboration, $threat): bool {
+        // Assign/link the threat (per-matcher CVE-style id) BEFORE the antibody
+        // row lands so the first corroborator already has its threat to link to.
+        $threat->handlePublished($d);
         $inserted = $publishedHandler->handle($d);
         $corroboration->handlePublished($d);
         return $inserted;
