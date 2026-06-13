@@ -134,8 +134,9 @@
                     {foreach $events ?? [] as $e}
                         {var $meta = $eventMeta[$e['event_name']] ?? [$e['event_name'], 'text-fg-tertiary', 'bg-fg-dim']}
                         {var $p = $e['payload']}
-                        <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top">
-                            <td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap">{format('timeago', $e['occurred_at'])}</td>
+                        <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top"
+                            data-evkey="{$e['block_number']}:{$e['log_index']}:{$e['id']}" data-ts="{$e['occurred_at']}">
+                            <td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap" data-time>{format('timeago', $e['occurred_at'])}</td>
                             <td class="pr-4 py-2.5">
                                 <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {$meta[1]}">
                                     <span class="inline-flex h-1.5 w-1.5 rounded-full {$meta[2]}"></span>{$meta[0]}
@@ -187,6 +188,9 @@
                     {/foreach}
                     </tbody>
                 </table>
+                <div data-load-sentinel class="py-6 text-center font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">
+                    <span data-load-label>scroll for older events</span>
+                </div>
             </div>
         </div>
     </div>
@@ -330,12 +334,14 @@
     return '';
   }
 
+  function keyOf(e) { return e.block_number + ':' + e.log_index + ':' + e.id; }
+
   function renderRow(e) {
     const meta = META[e.event_name] || [e.event_name, 'text-fg-tertiary', 'bg-fg-dim'];
     const d = detail(e.event_name, e.payload) || '<span class="text-fg-dim">block #' + e.block_number + '</span>';
     return (
-      '<tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top">' +
-        '<td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap">' + timeAgo(e.occurred_at) + '</td>' +
+      '<tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top" data-evkey="' + keyOf(e) + '" data-ts="' + escapeHtml(e.occurred_at) + '">' +
+        '<td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap" data-time>' + timeAgo(e.occurred_at) + '</td>' +
         '<td class="pr-4 py-2.5"><span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 ' + meta[1] + '">' +
           '<span class="inline-flex h-1.5 w-1.5 rounded-full ' + meta[2] + '"></span>' + escapeHtml(meta[0]) + '</span></td>' +
         '<td class="pr-5 sm:pr-7 py-2.5 text-[12px] text-fg-secondary leading-snug break-words font-mono">' + d + '</td>' +
@@ -346,15 +352,36 @@
     );
   }
 
+  const tbody = document.querySelector('[data-event-body]');
+  function seenKeys() {
+    const s = new Set();
+    if (tbody) tbody.querySelectorAll('tr[data-evkey]').forEach(function (tr) { s.add(tr.getAttribute('data-evkey')); });
+    return s;
+  }
+  function refreshTimes() {
+    if (!tbody) return;
+    tbody.querySelectorAll('tr[data-ts]').forEach(function (tr) {
+      const cell = tr.querySelector('[data-time]');
+      if (cell) cell.textContent = timeAgo(tr.getAttribute('data-ts'));
+    });
+  }
+
+  // Live poll: PREPEND only events we haven't shown yet (newest on top) so the
+  // older rows the user scrolled back to load are never wiped; refresh the
+  // relative timestamps each tick.
   function tick() {
     fetch('/api/v1/dashboard/events', { headers: { 'Accept': 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
-        if (!data || !Array.isArray(data.events)) return;
-        const tbody = document.querySelector('[data-event-body]');
-        if (!tbody) return;
-        if (data.events.length === 0) return;
-        tbody.innerHTML = data.events.map(renderRow).join('');
+        if (!data || !Array.isArray(data.events) || !tbody) return;
+        const seen = seenKeys();
+        const fresh = data.events.filter(function (e) { return !seen.has(keyOf(e)); });
+        if (fresh.length) {
+          const empty = tbody.querySelector('[data-event-empty]');
+          if (empty && empty.closest('tr')) empty.closest('tr').remove();
+          tbody.insertAdjacentHTML('afterbegin', fresh.map(renderRow).join(''));
+        }
+        refreshTimes();
       })
       .catch(function () { /* swallow: next tick retries */ });
   }
@@ -364,6 +391,44 @@
     setTimeout(loop, 4000);
   }
   setTimeout(loop, 800);
+
+  // Infinite scroll: when the sentinel scrolls into view, fetch the next page
+  // of OLDER events (keyset cursor = the oldest row shown) and append them.
+  (function () {
+    const sentinel = document.querySelector('[data-load-sentinel]');
+    const label = document.querySelector('[data-load-label]');
+    if (!sentinel || !tbody || !('IntersectionObserver' in window)) return;
+    let loading = false, exhausted = false;
+    function loadOlder() {
+      if (loading || exhausted) return;
+      const rows = tbody.querySelectorAll('tr[data-evkey]');
+      if (!rows.length) return;
+      const cur = rows[rows.length - 1].getAttribute('data-evkey').split(':');
+      loading = true;
+      if (label) label.textContent = 'loading…';
+      fetch('/api/v1/dashboard/events?before_block=' + cur[0] + '&before_log=' + cur[1] + '&before_id=' + cur[2],
+            { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          const evs = (data && Array.isArray(data.events)) ? data.events : [];
+          if (evs.length === 0) {
+            exhausted = true;
+            if (label) label.textContent = 'end of log';
+            observer.disconnect();
+            return;
+          }
+          tbody.insertAdjacentHTML('beforeend', evs.map(renderRow).join(''));
+          refreshTimes();
+          if (label) label.textContent = 'scroll for older events';
+        })
+        .catch(function () { if (label) label.textContent = 'scroll for older events'; })
+        .finally(function () { loading = false; });
+    }
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) loadOlder(); });
+    }, { rootMargin: '300px' });
+    observer.observe(sentinel);
+  })();
 })();
 </script>
 
