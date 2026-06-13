@@ -27,6 +27,10 @@ final class DashboardController extends Controller
 {
     private const EVENT_LIMIT = 200;
     private const ACTIVITY_LIMIT = 50;
+    /** Latest-window size for the event feed's first paint / live poll. */
+    private const FEED_WINDOW = 200;
+    /** Page size when scrolling back through older events. */
+    private const FEED_PAGE = 50;
 
     #[Get('/dashboard/activity')]
     public function index(Request $request): Response
@@ -62,16 +66,27 @@ final class DashboardController extends Controller
     }
 
     /**
-     * Live on-chain event feed for the dashboard. Returns the latest contract
-     * events (CRE verifications, jury verdicts, challenges, antibody lifecycle)
-     * newest-first; the page renders them with type badges and Basescan links.
-     * Static snapshot (no cursor) — the page replaces its list each tick, which
-     * is cheap at this volume and keeps relative timestamps fresh.
+     * Live on-chain event feed for the dashboard, newest-first. Two modes:
+     *   - no cursor → the latest FEED_WINDOW events (first paint + live poll,
+     *     which prepends only the new ones it hasn't seen);
+     *   - `before_block`/`before_log`/`before_id` keyset cursor → the next page
+     *     of OLDER events, for infinite scroll.
      */
     #[Get('/dashboard/events')]
-    public function events(): Response
+    public function events(Request $request): Response
     {
-        $events = (new ContractEventBroker())->findRecentForFeed(60);
+        $broker = new ContractEventBroker();
+        $beforeBlock = $request->query('before_block');
+        if (is_string($beforeBlock) && $beforeBlock !== '') {
+            $events = $broker->findOlderForFeed(
+                (int) $beforeBlock,
+                (int) ($request->query('before_log') ?? 0),
+                (int) ($request->query('before_id') ?? 0),
+                self::FEED_PAGE,
+            );
+        } else {
+            $events = $broker->findRecentForFeed(self::FEED_WINDOW);
+        }
         return Response::json(['events' => $events])
             ->withHeader('Cache-Control', 'no-store');
     }
