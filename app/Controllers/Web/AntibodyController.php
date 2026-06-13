@@ -8,8 +8,10 @@ use App\Controllers\Web\Antibody\AntibodyFilters;
 use App\Controllers\Web\Antibody\Pagination;
 use App\Models\Antibody\Services\EntryService;
 use App\Models\Antibody\Services\MirrorService;
+use App\Models\Antibody\Services\ProtectedTargetService;
 use App\Models\Antibody\Services\PublisherService;
 use App\Models\Core\MirrorNetworkRegistry;
+use App\Models\Core\NetworkConfig;
 use App\Models\Event\Services\BlockEventService;
 use Zephyrus\Http\Request;
 use Zephyrus\Http\Response;
@@ -45,10 +47,13 @@ final class AntibodyController extends Controller
             'total'      => $total,
             'filters'    => $filters,
             'pagination' => $pagination,
+            'corroborationK' => NetworkConfig::baseSepolia()->corroborationK,
             'totals'     => [
-                'active'  => $statusCounts['active']  ?? 0,
-                'expired' => $statusCounts['expired'] ?? 0,
-                'slashed' => $statusCounts['slashed'] ?? 0,
+                'probation'  => $statusCounts['probation']  ?? 0,
+                'active'     => $statusCounts['active']      ?? 0,
+                'challenged' => $statusCounts['challenged']  ?? 0,
+                'expired'    => $statusCounts['expired']     ?? 0,
+                'slashed'    => $statusCounts['slashed']     ?? 0,
             ],
             'facets' => [
                 'type'    => $typeCounts,
@@ -73,6 +78,23 @@ final class AntibodyController extends Controller
         // Total mirror chains we're configured to fan out to. Drives the
         // "X of N chains mirrored" denominator in the detail view.
         $mirrorChainsTotal = count(MirrorNetworkRegistry::default()->all());
+
+        // Corroboration set: the other publishers' antibodies for the same
+        // primary_matcher_hash. This is the hard-block story made visible.
+        $corroborationSet = [];
+        if ($entry->primary_matcher_hash !== null) {
+            $corroborationSet = $entries->findAllByPrimaryMatcherHash(
+                bin2hex($entry->primary_matcher_hash)
+            );
+        }
+
+        // Protected-set membership caps enforcement at advisory. Resolve the
+        // matcher's target address (address-kind matchers only) against the set.
+        $matcher = $entry->primary_matcher;
+        $target = is_object($matcher) ? ($matcher->target ?? null) : null;
+        $isProtected = is_string($target)
+            && (new ProtectedTargetService())->isProtected($target);
+
         return $this->render('antibodies/show', [
             'id'                => $id,
             'entry'             => $entry,
@@ -81,6 +103,9 @@ final class AntibodyController extends Controller
             'publisher'         => $publisher,
             'impact'            => $impact,
             'mirrorChainsTotal' => $mirrorChainsTotal,
+            'corroborationSet'  => $corroborationSet,
+            'corroborationK'    => NetworkConfig::baseSepolia()->corroborationK,
+            'isProtected'       => $isProtected,
         ]);
     }
 }
