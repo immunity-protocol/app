@@ -52,9 +52,10 @@ window.addEventListener('DOMContentLoaded', () => {
     ? '$' . number_format($earningsTotal, 2)
     : '$' . rtrim(rtrim(number_format($earningsTotal, 4), '0'), '.')}
 
-{* Chainlink CRE TEE inference cost: ~$0.00015 per call.
+{* Compute saved per cache hit = one avoided Claude Haiku 4.5 call in the CRE
+   TEE: a 2–8K-token check ≈ $0.004 (Haiku ~$1/MTok in, ~$5/MTok out).
    Cumulative since registry deploy. Keep in sync with home.latte JS. *}
-{var $computeSavedUsd = $llmSaved * 0.00015}
+{var $computeSavedUsd = $llmSaved * 0.004}
 {var $computeSavedLabel = $computeSavedUsd <= 0
     ? '≈ $0'
     : ($computeSavedUsd < 0.01 ? '≈ <$0.01'

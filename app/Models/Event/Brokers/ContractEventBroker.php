@@ -46,10 +46,14 @@ class ContractEventBroker extends Broker
             "SELECT ce.id, ce.event_name, ce.payload, ce.block_number,
                     '0x' || encode(ce.tx_hash, 'hex') AS tx_hash,
                     ce.log_index, ce.occurred_at,
-                    ae.imm_id AS imm_id, ae.redacted_reasoning AS reasoning
+                    ae.imm_id AS imm_id, ae.redacted_reasoning AS reasoning,
+                    coalesce(ce.payload->>'agent', ce.payload->>'publisher') AS actor_address,
+                    ap.ens AS actor_ens
                FROM event.contract_event ce
                LEFT JOIN antibody.entry ae
                  ON ae.keccak_id = decode(substr(coalesce(ce.payload->>'keccakId', ce.payload->>'antibodyId'), 3), 'hex')
+               LEFT JOIN antibody.publisher ap
+                 ON ap.address = decode(substr(coalesce(ce.payload->>'agent', ce.payload->>'publisher'), 3), 'hex')
               WHERE ce.event_name NOT IN (" . self::FEED_HIDDEN . ")
               ORDER BY ce.block_number DESC, ce.log_index DESC, ce.id DESC
               LIMIT ?",
@@ -71,10 +75,14 @@ class ContractEventBroker extends Broker
             "SELECT ce.id, ce.event_name, ce.payload, ce.block_number,
                     '0x' || encode(ce.tx_hash, 'hex') AS tx_hash,
                     ce.log_index, ce.occurred_at,
-                    ae.imm_id AS imm_id, ae.redacted_reasoning AS reasoning
+                    ae.imm_id AS imm_id, ae.redacted_reasoning AS reasoning,
+                    coalesce(ce.payload->>'agent', ce.payload->>'publisher') AS actor_address,
+                    ap.ens AS actor_ens
                FROM event.contract_event ce
                LEFT JOIN antibody.entry ae
                  ON ae.keccak_id = decode(substr(coalesce(ce.payload->>'keccakId', ce.payload->>'antibodyId'), 3), 'hex')
+               LEFT JOIN antibody.publisher ap
+                 ON ap.address = decode(substr(coalesce(ce.payload->>'agent', ce.payload->>'publisher'), 3), 'hex')
               WHERE (ce.block_number, ce.log_index, ce.id) < (?, ?, ?)
                 AND ce.event_name NOT IN (" . self::FEED_HIDDEN . ")
               ORDER BY ce.block_number DESC, ce.log_index DESC, ce.id DESC
@@ -98,6 +106,8 @@ class ContractEventBroker extends Broker
             'occurred_at'  => (string) $r->occurred_at,
             'imm_id'       => isset($r->imm_id) ? (string) $r->imm_id : null,
             'reasoning'    => isset($r->reasoning) ? (string) $r->reasoning : null,
+            'actor_address'=> isset($r->actor_address) ? (string) $r->actor_address : null,
+            'actor_ens'    => isset($r->actor_ens) ? (string) $r->actor_ens : null,
         ];
     }
 

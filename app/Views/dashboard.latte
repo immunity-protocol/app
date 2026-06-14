@@ -123,26 +123,39 @@
                         <tr class="border-b border-ink-line/40">
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 sm:pl-7 pr-4 py-3 w-24">When</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-36">Event</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-40">Agent</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-5 sm:pr-7 py-3">Detail</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-5 sm:pr-7 py-3 w-20">Tx</th>
                         </tr>
                     </thead>
                     <tbody data-event-body>
                     {if count($events ?? []) === 0}
-                        <tr><td colspan="4" class="px-7 py-10 text-center font-mono text-[11.5px] text-fg-dim" data-event-empty>
+                        <tr><td colspan="5" class="px-7 py-10 text-center font-mono text-[11.5px] text-fg-dim" data-event-empty>
                             No on-chain events ingested yet. Rows appear as the indexer reads Base Sepolia.
                         </td></tr>
                     {/if}
                     {foreach $events ?? [] as $e}
                         {var $meta = $eventMeta[$e['event_name']] ?? [$e['event_name'], 'text-fg-tertiary', 'bg-fg-dim']}
                         {var $p = $e['payload']}
-                        <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top"
+                        <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle"
                             data-evkey="{$e['block_number']}:{$e['log_index']}:{$e['id']}" data-ts="{$e['occurred_at']}">
                             <td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap" data-time>{format('timeago', $e['occurred_at'])}</td>
                             <td class="pr-4 py-2.5">
                                 <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {$meta[1]}">
                                     <span class="inline-flex h-1.5 w-1.5 rounded-full {$meta[2]}"></span>{$meta[0]}
                                 </span>
+                            </td>
+                            <td class="pr-4 py-2.5">
+                                {if !empty($e['actor_address'])}
+                                    {var $aHex = substr($e['actor_address'], 2)}
+                                    {var $aName = $e['actor_ens'] ?? (substr($e['actor_address'], 0, 6) . '…' . substr($e['actor_address'], -4))}
+                                    <a href="/publisher/{$e['actor_address']}" class="inline-flex items-center gap-2 group" title="{$e['actor_address']}">
+                                        <span class="h-5 w-5 rounded-full shrink-0 ring-1 ring-ink-line/50" style="background: linear-gradient(135deg, #{substr($aHex, 0, 6)}, #{substr($aHex, -6)})" aria-hidden="true"></span>
+                                        <span class="font-mono text-[11px] {$e['actor_ens'] ? 'text-fg-secondary' : 'text-fg-dim'} group-hover:text-accent transition-colors truncate max-w-[110px]">{$aName}</span>
+                                    </a>
+                                {else}
+                                    <span class="font-mono text-[10px] text-fg-dim">—</span>
+                                {/if}
                             </td>
                             <td class="pr-5 sm:pr-7 py-2.5 text-[12px] text-fg-secondary leading-snug break-words font-mono">
                                 {var $immId = $e['imm_id'] ?? null}
@@ -249,7 +262,7 @@
       if (!tile) return;
       const n = Number(tile.value);
       if (!Number.isFinite(n) || n <= 0) { setText(el, '≈ $0'); return; }
-      const usd = n * 0.00015;
+      const usd = n * 0.004;
       if (usd < 0.01) setText(el, '≈ <$0.01');
       else if (usd < 1) setText(el, '≈ $' + usd.toFixed(2));
       else setText(el, '≈ $' + usd.toLocaleString('en-US', { maximumFractionDigits: 0 }));
@@ -359,14 +372,26 @@
 
   function keyOf(e) { return e.block_number + ':' + e.log_index + ':' + e.id; }
 
+  function agentCell(e) {
+    const a = e.actor_address;
+    if (!a) return '<td class="pr-4 py-2.5"><span class="font-mono text-[10px] text-fg-dim">—</span></td>';
+    const hex = a.slice(2);
+    const name = e.actor_ens || (a.slice(0, 6) + '…' + a.slice(-4));
+    const tone = e.actor_ens ? 'text-fg-secondary' : 'text-fg-dim';
+    return '<td class="pr-4 py-2.5"><a href="/publisher/' + escapeHtml(a) + '" class="inline-flex items-center gap-2 group" title="' + escapeHtml(a) + '">' +
+      '<span class="h-5 w-5 rounded-full shrink-0 ring-1 ring-ink-line/50" style="background: linear-gradient(135deg, #' + hex.slice(0, 6) + ', #' + hex.slice(-6) + ')"></span>' +
+      '<span class="font-mono text-[11px] ' + tone + ' group-hover:text-accent transition-colors truncate max-w-[110px]">' + escapeHtml(name) + '</span></a></td>';
+  }
+
   function renderRow(e) {
     const meta = META[e.event_name] || [e.event_name, 'text-fg-tertiary', 'bg-fg-dim'];
     const d = detail(e) || '<span class="text-fg-dim">block #' + e.block_number + '</span>';
     return (
-      '<tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top" data-evkey="' + keyOf(e) + '" data-ts="' + escapeHtml(e.occurred_at) + '">' +
+      '<tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle" data-evkey="' + keyOf(e) + '" data-ts="' + escapeHtml(e.occurred_at) + '">' +
         '<td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap" data-time>' + timeAgo(e.occurred_at) + '</td>' +
         '<td class="pr-4 py-2.5"><span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 ' + meta[1] + '">' +
           '<span class="inline-flex h-1.5 w-1.5 rounded-full ' + meta[2] + '"></span>' + escapeHtml(meta[0]) + '</span></td>' +
+        agentCell(e) +
         '<td class="pr-5 sm:pr-7 py-2.5 text-[12px] text-fg-secondary leading-snug break-words font-mono">' + d + '</td>' +
         '<td class="pr-5 sm:pr-7 py-2.5 text-right whitespace-nowrap">' +
           '<a href="' + EXPLORER + '/tx/' + escapeHtml(e.tx_hash) + '" target="_blank" rel="noopener" class="font-mono text-[10.5px] text-accent-soft hover:text-accent transition-colors">' +

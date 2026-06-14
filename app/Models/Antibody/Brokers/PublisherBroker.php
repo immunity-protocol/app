@@ -71,7 +71,11 @@ class PublisherBroker extends Broker
 
     public function countAll(): int
     {
-        return (int) $this->selectValue("SELECT count(*) FROM antibody.publisher");
+        // Only publishers who have actually published an antibody — a registered
+        // identity with zero antibodies isn't a contributor yet.
+        return (int) $this->selectValue(
+            "SELECT count(*) FROM antibody.publisher WHERE antibodies_published > 0"
+        );
     }
 
     /**
@@ -101,6 +105,7 @@ class PublisherBroker extends Broker
                          WHERE e.publisher = p.address
                     ), 0)::text AS total_value_protected_usd
                FROM antibody.publisher p
+              WHERE p.antibodies_published > 0
            ORDER BY p.total_earned_usdc DESC,
                     p.successful_blocks DESC,
                     p.last_active_at DESC,
