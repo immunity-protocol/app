@@ -87,7 +87,12 @@ final class PlaygroundController extends Controller
     public function fleetControl(Request $request): Response
     {
         $paused = (bool) $request->body()->get('paused', false);
+        // Flip BOTH flags so they never desync: agent.fleet_control is what the
+        // live fleet polls; demo.fleet_state.ambient_paused drives the dashboard's
+        // "AMBIENT STATE" indicator.
         (new FleetControlBroker())->setPaused($paused);
+        $state = new FleetStateBroker();
+        $paused ? $state->pause() : $state->resume();
         return Response::json(['paused' => $paused], 200);
     }
 
