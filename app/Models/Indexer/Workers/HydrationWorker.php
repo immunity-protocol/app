@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models\Indexer\Workers;
 
-use App\Models\Antibody\Brokers\ProtectedTargetBroker;
 use App\Models\Indexer\Brokers\HydrationQueueBroker;
 use App\Models\Indexer\Storage\LighthouseFetcher;
 use Throwable;
@@ -67,10 +66,20 @@ class HydrationWorker
                 // The Published event carries no prominenceTier, so derive it here
                 // once the matcher's target is known: a flag on a protected address
                 // is prominence tier 1 (the protected-set / autoimmune-attack signal).
+                // Use the worker's own DB handle — instantiating a Broker here calls
+                // Db::current(), which is not bootstrapped in the indexer context.
                 $target = is_array($primaryMatcher) ? ($primaryMatcher['target'] ?? null) : null;
-                $prominence = is_string($target) && str_starts_with($target, '0x')
-                    && (new ProtectedTargetBroker())->isProtected(strtolower(substr($target, 2)))
-                    ? 1 : null;
+                $prominence = null;
+                if (is_string($target) && str_starts_with($target, '0x')) {
+                    $hit = $this->db->query(
+                        "SELECT 1 AS ok FROM antibody.protected_target
+                          WHERE address = decode(?, 'hex') AND protected = true",
+                        [strtolower(substr($target, 2))]
+                    )->fetch();
+                    if ($hit !== false && $hit !== null) {
+                        $prominence = 1;
+                    }
+                }
 
                 $this->db->query(
                     "UPDATE antibody.entry SET
