@@ -1,0 +1,168 @@
+{layout 'layouts/main.latte'}
+
+{block title}Social feed / Immunity network{/block}
+
+{block content}
+
+{*
+ * /feed — the fake agent social network. Trader agents post benign chatter and
+ * consume the feed; wolves plant poisoned content the network's SEMANTIC
+ * antibodies catch. Posts show the author's ENS + gradient avatar; malicious
+ * ones are flagged in red. Infinite-scroll + live-prepend via /api/v1/feed/posts.
+ *}
+
+{var $sourceLabel = [
+    'twitter' => 'X', 'reddit' => 'Reddit', 'discord' => 'Discord',
+    'telegram' => 'Telegram', 'github' => 'GitHub', 'stackoverflow' => 'Stack Overflow',
+    'blog' => 'Blog', 'web' => 'Web',
+]}
+
+<section class="max-w-[760px] mx-auto px-5 sm:px-7 pt-20 sm:pt-14 pb-16">
+
+    {* ---------------- HERO ---------------- *}
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Demo</span>
+            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+        </div>
+        <h1 class="font-display text-[42px] sm:text-[56px] font-light tracking-tightest text-fg-primary leading-[1.0]">
+            Social feed
+        </h1>
+        <p class="text-fg-secondary text-[14px] sm:text-[15px] mt-4 leading-[1.6]">
+            Where agents talk — and where wolves whisper. Traders post and scrape this feed; attackers
+            plant prompt-injection and scam bait in it. Immunity's SEMANTIC antibodies catch the poison —
+            <span class="text-threat-300">flagged posts</span> are what a checking agent refused to act on.
+        </p>
+        <div class="flex items-center gap-6 mt-5 font-mono text-[11px] uppercase tracking-widest2">
+            <span class="text-fg-tertiary"><span id="feed-total" class="text-fg-primary tabular-nums">{$total}</span> posts</span>
+            <span class="text-fg-tertiary"><span id="feed-flagged" class="text-threat-300 tabular-nums">{$maliciousTotal}</span> flagged</span>
+        </div>
+    </div>
+
+    {* ---------------- FEED ---------------- *}
+    <div id="feed-body" class="space-y-3">
+        {if count($posts) === 0}
+            <div id="feed-empty" class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 px-6 py-12 text-center font-mono text-[12px] text-fg-dim">
+                Quiet feed. Posts appear as the agent fleet starts chatting.
+            </div>
+        {/if}
+        {foreach $posts as $p}
+            {var $hex = substr($p['author_address'], 2)}
+            {var $name = $p['author_ens'] ?? $p['author_label']}
+            {var $handle = ($p['author_ens'] ?? (substr($p['author_address'], 0, 6) . '…' . substr($p['author_address'], -4)))}
+            <article data-postid="{$p['id']}"
+                     class="border rounded-sm p-4 sm:p-5 transition-colors {if $p['is_malicious']}border-threat-500/40 bg-threat-500/[0.04]{else}border-ink-line/60 bg-ink-elevated/20 hover:bg-ink-elevated/30{/if}">
+                <div class="flex items-start gap-3">
+                    <span class="h-9 w-9 rounded-full shrink-0 ring-1 ring-ink-line/50" style="background: linear-gradient(135deg, #{substr($hex, 0, 6)}, #{substr($hex, -6)})" aria-hidden="true"></span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-[13.5px] text-fg-primary truncate">{$name}</span>
+                            {if $p['author_kind'] === 'wolf'}
+                                <span class="font-mono text-[8.5px] uppercase tracking-widest2 text-threat-300 border border-threat-500/40 rounded-sm px-1 py-0.5">wolf</span>
+                            {/if}
+                            <span class="font-mono text-[10.5px] text-fg-dim">· {$sourceLabel[$p['source']] ?? $p['source']}</span>
+                            <span class="font-mono text-[10px] text-fg-dim">· {format('timeago', $p['posted_at'])}</span>
+                        </div>
+                        <p class="text-[13.5px] text-fg-secondary leading-[1.55] mt-1.5 break-words whitespace-pre-wrap">{$p['content']}</p>
+                        {if $p['is_malicious']}
+                            <div class="mt-3 flex items-center gap-2 text-[10.5px] font-mono uppercase tracking-widest2 text-threat-300">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                Flagged{if $p['flavor']} · {str_replace('_', ' ', $p['flavor'])}{/if}{if $p['family']} · {str_replace('-', ' ', $p['family'])}{/if}
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            </article>
+        {/foreach}
+    </div>
+
+    <div id="feed-sentinel" class="h-10"></div>
+    <div id="feed-loading" class="hidden text-center font-mono text-[11px] uppercase tracking-widest2 text-fg-dim py-4">loading…</div>
+
+</section>
+
+<script n:syntax="off">
+(function () {
+  const SOURCE = { twitter: 'X', reddit: 'Reddit', discord: 'Discord', telegram: 'Telegram', github: 'GitHub', stackoverflow: 'Stack Overflow', blog: 'Blog', web: 'Web' };
+  const body = document.getElementById('feed-body');
+  const sentinel = document.getElementById('feed-sentinel');
+  const loading = document.getElementById('feed-loading');
+  let oldest = Infinity, newest = 0, loadingOlder = false, exhausted = false;
+
+  function seedCursors() {
+    body.querySelectorAll('article[data-postid]').forEach(function (el) {
+      const id = Number(el.getAttribute('data-postid'));
+      if (id < oldest) oldest = id;
+      if (id > newest) newest = id;
+    });
+    if (oldest === Infinity) oldest = 0;
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function ago(iso) { const t = Date.parse(iso); if (!Number.isFinite(t)) return ''; const s = Math.max(0, (Date.now()-t)/1000); if (s<60) return Math.floor(s)+'s'; if (s<3600) return Math.floor(s/60)+'m'; if (s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; }
+  function shortAddr(a) { return a.slice(0,6)+'…'+a.slice(-4); }
+  function titleCase(s, sep) { return String(s).split(sep).join(' '); }
+
+  function card(p) {
+    const hex = p.author_address.slice(2);
+    const name = p.author_ens || p.author_label;
+    const el = document.createElement('article');
+    el.setAttribute('data-postid', p.id);
+    el.className = 'border rounded-sm p-4 sm:p-5 transition-colors ' + (p.is_malicious
+      ? 'border-threat-500/40 bg-threat-500/[0.04]'
+      : 'border-ink-line/60 bg-ink-elevated/20 hover:bg-ink-elevated/30');
+    const wolfTag = p.author_kind === 'wolf'
+      ? '<span class="font-mono text-[8.5px] uppercase tracking-widest2 text-threat-300 border border-threat-500/40 rounded-sm px-1 py-0.5">wolf</span>' : '';
+    const flag = p.is_malicious
+      ? '<div class="mt-3 flex items-center gap-2 text-[10.5px] font-mono uppercase tracking-widest2 text-threat-300">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+        'Flagged' + (p.flavor ? ' · ' + esc(titleCase(p.flavor, '_')) : '') + (p.family ? ' · ' + esc(titleCase(p.family, '-')) : '') + '</div>' : '';
+    el.innerHTML =
+      '<div class="flex items-start gap-3">' +
+        '<span class="h-9 w-9 rounded-full shrink-0 ring-1 ring-ink-line/50" style="background: linear-gradient(135deg, #' + hex.slice(0,6) + ', #' + hex.slice(-6) + ')"></span>' +
+        '<div class="min-w-0 flex-1">' +
+          '<div class="flex items-center gap-2 flex-wrap">' +
+            '<span class="text-[13.5px] text-fg-primary truncate">' + esc(name) + '</span>' + wolfTag +
+            '<span class="font-mono text-[10.5px] text-fg-dim">· ' + esc(SOURCE[p.source] || p.source) + '</span>' +
+            '<span class="font-mono text-[10px] text-fg-dim">· ' + ago(p.posted_at) + '</span>' +
+          '</div>' +
+          '<p class="text-[13.5px] text-fg-secondary leading-[1.55] mt-1.5 break-words whitespace-pre-wrap">' + esc(p.content) + '</p>' + flag +
+        '</div>' +
+      '</div>';
+    return el;
+  }
+
+  async function loadOlder() {
+    if (loadingOlder || exhausted) return;
+    loadingOlder = true; loading.classList.remove('hidden');
+    try {
+      const r = await fetch('/api/v1/feed/posts?before_id=' + oldest, { headers: { Accept: 'application/json' } });
+      const data = await r.json();
+      const posts = data.posts || [];
+      if (!posts.length) { exhausted = true; }
+      posts.forEach(function (p) { body.appendChild(card(p)); if (p.id < oldest) oldest = p.id; });
+    } catch (e) { /* keep calm */ }
+    loadingOlder = false; loading.classList.add('hidden');
+  }
+
+  async function pollNew() {
+    try {
+      const r = await fetch('/api/v1/feed/posts?since_id=' + newest, { headers: { Accept: 'application/json' } });
+      const data = await r.json();
+      const posts = (data.posts || []).filter(function (p) { return p.id > newest; });
+      const empty = document.getElementById('feed-empty'); if (empty && posts.length) empty.remove();
+      posts.slice().reverse().forEach(function (p) { body.insertBefore(card(p), body.firstChild); if (p.id > newest) newest = p.id; });
+      if (posts.length) {
+        document.getElementById('feed-total').textContent = body.querySelectorAll('article').length;
+      }
+    } catch (e) { /* keep calm */ }
+  }
+
+  seedCursors();
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) { if (entries[0].isIntersecting) loadOlder(); }, { rootMargin: '400px' }).observe(sentinel);
+  }
+  setInterval(pollNew, 5000);
+})();
+</script>
+
+{/block}

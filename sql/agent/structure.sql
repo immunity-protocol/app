@@ -87,3 +87,29 @@ CREATE TABLE agent.fleet_control
 );
 
 INSERT INTO agent.fleet_control (id, paused) VALUES (1, false) ON CONFLICT DO NOTHING;
+
+-- ##################################################################################################################
+-- SOCIAL_POST (the fake on-chain-agent social network feed)
+-- Trader agents post benign chatter and consume the feed; wolf agents plant
+-- poisoned content (prompt-injection / scam bait from the curated incident
+-- catalog). The /feed page renders posts with the author's ENS + avatar and
+-- flags the malicious ones. `family` is the attack-family id for malicious posts.
+-- ##################################################################################################################
+CREATE TABLE agent.social_post
+(
+    id              bigserial    PRIMARY KEY,
+    author_address  varchar(42)  NOT NULL,
+    author_label    varchar(128) NOT NULL,
+    author_ens      varchar(255),
+    author_kind     varchar(16)  NOT NULL DEFAULT 'trader',   -- trader | wolf
+    source          varchar(32)  NOT NULL DEFAULT 'web',      -- twitter | reddit | discord | ...
+    content         text         NOT NULL,
+    is_malicious    boolean      NOT NULL DEFAULT false,
+    family          varchar(64),                              -- attack family id (malicious only)
+    flavor          varchar(32),                              -- PROMPT_INJECTION | MANIPULATION | COUNTERPARTY
+    posted_at       timestamptz  NOT NULL DEFAULT now()
+);
+
+CREATE INDEX social_post_posted_at_idx ON agent.social_post (posted_at DESC);
+CREATE INDEX social_post_id_desc_idx   ON agent.social_post (id DESC);
+CREATE INDEX social_post_malicious_idx ON agent.social_post (is_malicious);
