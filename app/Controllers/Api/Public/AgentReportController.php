@@ -69,7 +69,15 @@ final class AgentReportController extends Controller
         $ens = $b->get('ens');
         $ens = is_string($ens) && trim($ens) !== '' ? substr(trim($ens), 0, 255) : null;
 
-        (new FleetMemberBroker())->upsert($agentId, $role, $displayName, $wallet, $ens, $version);
+        // Adversary economics (autoimmune): budget is reported as base-units USDC
+        // (6dp) string; store it as a decimal. Honest roles omit both.
+        $budgetRaw = $b->get('budget');
+        $budget = is_string($budgetRaw) && preg_match('/^\d{1,18}$/', $budgetRaw)
+            ? sprintf('%.6f', ((int) $budgetRaw) / 1000000)
+            : null;
+        $bankrupt = $b->get('bankrupt') === true;
+
+        (new FleetMemberBroker())->upsert($agentId, $role, $displayName, $wallet, $ens, $version, $budget, $bankrupt);
 
         return Response::json(['ok' => true], 200);
     }

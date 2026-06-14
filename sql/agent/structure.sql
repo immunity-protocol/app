@@ -38,6 +38,10 @@ CREATE TABLE agent.fleet_member
     wallet        varchar(42),
     ens           varchar(255),
     version       varchar(32)  NOT NULL,
+    -- Adversary economics (autoimmune role only): remaining bond budget + a
+    -- bankrupt flag the agent self-reports on its heartbeat. NULL for honest roles.
+    budget        numeric(20, 6),
+    bankrupt      boolean      NOT NULL DEFAULT false,
     first_seen    timestamptz  NOT NULL DEFAULT now(),
     last_seen     timestamptz  NOT NULL DEFAULT now()
 );

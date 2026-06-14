@@ -28,19 +28,23 @@ class FleetMemberBroker extends Broker
         string $displayName,
         ?string $wallet,
         ?string $ens,
-        string $version
+        string $version,
+        ?string $budget = null,
+        bool $bankrupt = false
     ): void {
         $this->db->query(
-            "INSERT INTO agent.fleet_member (agent_id, role, display_name, wallet, ens, version)
-                  VALUES (?, ?, ?, ?, ?, ?)
+            "INSERT INTO agent.fleet_member (agent_id, role, display_name, wallet, ens, version, budget, bankrupt)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT (agent_id) DO UPDATE SET
                   role         = EXCLUDED.role,
                   display_name = EXCLUDED.display_name,
                   wallet       = COALESCE(EXCLUDED.wallet, agent.fleet_member.wallet),
                   ens          = COALESCE(EXCLUDED.ens, agent.fleet_member.ens),
                   version      = EXCLUDED.version,
+                  budget       = COALESCE(EXCLUDED.budget, agent.fleet_member.budget),
+                  bankrupt     = EXCLUDED.bankrupt,
                   last_seen    = now()",
-            [$agentId, $role, $displayName, $wallet, $ens, $version]
+            [$agentId, $role, $displayName, $wallet, $ens, $version, $budget, $bankrupt]
         );
     }
 
@@ -83,7 +87,8 @@ class FleetMemberBroker extends Broker
      * first, then most-recently-seen.
      *
      * @return \stdClass[] rows: { agent_id, role, display_name, wallet, ens,
-     *   version, last_seen, online, checks, blocks, publishes }
+     *   version, last_seen, budget, bankrupt, online, checks, blocks, publishes,
+     *   reputation, strikes }
      */
     public function listRoster(int $limit = 100): array
     {
@@ -96,11 +101,14 @@ class FleetMemberBroker extends Broker
                  m.ens,
                  m.version,
                  m.last_seen,
+                 m.budget,
+                 m.bankrupt,
                  (m.last_seen >= now() - make_interval(secs => ?)) AS online,
                  coalesce(a.checks, 0)    AS checks,
                  coalesce(a.blocks, 0)    AS blocks,
                  coalesce(a.publishes, 0) AS publishes,
-                 coalesce(p.score, 0)     AS reputation
+                 coalesce(p.score, 0)     AS reputation,
+                 coalesce(s.strikes, 0)   AS strikes
                FROM agent.fleet_member m
           LEFT JOIN (
                  SELECT agent_id,
@@ -112,6 +120,12 @@ class FleetMemberBroker extends Broker
                ) a ON a.agent_id = m.agent_id
           LEFT JOIN antibody.publisher p
                  ON m.wallet IS NOT NULL AND p.address = decode(substr(m.wallet, 3), 'hex')
+          LEFT JOIN (
+                 SELECT publisher, count(*) AS strikes
+                   FROM antibody.entry
+                  WHERE status = 'slashed'
+               GROUP BY publisher
+               ) s ON m.wallet IS NOT NULL AND s.publisher = decode(substr(m.wallet, 3), 'hex')
            ORDER BY online DESC, m.last_seen DESC
               LIMIT ?",
             [self::ONLINE_WINDOW_SECONDS, $limit]

@@ -15,6 +15,7 @@
     'publisher'    => ['text-accent',       'bg-accent'],
     'hunter'       => ['text-threat-300',   'bg-threat-300'],
     'corroborator' => ['text-immune-500',   'bg-immune-500'],
+    'autoimmune'   => ['text-caution-300',  'bg-caution-300'],
 ]}
 
 <section class="max-w-[1400px] mx-auto px-5 sm:px-7 pt-20 sm:pt-14 pb-16">
@@ -117,7 +118,14 @@
                                 <div class="flex items-center gap-2.5 min-w-0">
                                     <span class="inline-flex h-1.5 w-1.5 rounded-full shrink-0 {if $m->online}bg-immune-500 pulse-soft{else}bg-fg-dim/40{/if}" title="{if $m->online}online{else}offline{/if}"></span>
                                     <div class="min-w-0">
-                                        <div class="text-[12.5px] text-fg-primary truncate">{$m->ens ?? $m->display_name}</div>
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <span class="text-[12.5px] text-fg-primary truncate">{$m->ens ?? $m->display_name}</span>
+                                            {if $m->bankrupt}
+                                                <span class="shrink-0 font-mono text-[8.5px] uppercase tracking-widest2 text-threat-300 border border-threat-300/40 bg-threat-300/10 rounded-sm px-1.5 py-0.5">bankrupt</span>
+                                            {elseif $m->strikes > 0}
+                                                <span class="shrink-0 font-mono text-[8.5px] uppercase tracking-widest2 text-caution-300/80" title="false flags slashed">{$m->strikes}× slashed</span>
+                                            {/if}
+                                        </div>
                                         {if $m->wallet}
                                             <a href="{$explorerUrl}/address/{$m->wallet}" rel="noopener" class="font-mono text-[10px] text-fg-dim hover:text-accent transition-colors">{substr($m->wallet, 0, 6)}…{substr($m->wallet, -4)}</a>
                                         {/if}
@@ -266,6 +274,7 @@
     publisher:    ['text-accent', 'bg-accent'],
     hunter:       ['text-threat-300', 'bg-threat-300'],
     corroborator: ['text-immune-500', 'bg-immune-500'],
+    autoimmune:   ['text-caution-300', 'bg-caution-300'],
   };
   const STATUS_TONE = {
     allow: ['text-immune-500', 'bg-immune-500'],
@@ -303,10 +312,15 @@
         ? '<a href="' + EXPLORER + '/address/' + esc(m.wallet) + '" rel="noopener" class="font-mono text-[10px] text-fg-dim hover:text-accent transition-colors">' + esc(shortAddr(m.wallet)) + '</a>'
         : '';
       const name = esc(m.ens || m.display_name);
+      const badge = m.bankrupt
+        ? '<span class="shrink-0 font-mono text-[8.5px] uppercase tracking-widest2 text-threat-300 border border-threat-300/40 bg-threat-300/10 rounded-sm px-1.5 py-0.5">bankrupt</span>'
+        : (m.strikes > 0
+          ? '<span class="shrink-0 font-mono text-[8.5px] uppercase tracking-widest2 text-caution-300/80" title="false flags slashed">' + m.strikes + '× slashed</span>'
+          : '');
       return '<tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors">' +
         '<td class="pl-5 pr-4 py-2.5 align-middle"><div class="flex items-center gap-2.5 min-w-0">' +
           '<span class="inline-flex h-1.5 w-1.5 rounded-full shrink-0 ' + dot + '"></span>' +
-          '<div class="min-w-0"><div class="text-[12.5px] text-fg-primary truncate">' + name + '</div>' + wallet + '</div>' +
+          '<div class="min-w-0"><div class="flex items-center gap-2 min-w-0"><span class="text-[12.5px] text-fg-primary truncate">' + name + '</span>' + badge + '</div>' + wallet + '</div>' +
         '</div></td>' +
         '<td class="pr-4 py-2.5 align-middle"><span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 ' + tone[0] + '">' +
           '<span class="inline-flex h-1.5 w-1.5 rounded-full ' + tone[1] + '"></span>' + esc(m.role) + '</span></td>' +

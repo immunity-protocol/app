@@ -71,6 +71,9 @@ final class AgentsController extends Controller
             'blocks'       => (int) $r->blocks,
             'publishes'    => (int) $r->publishes,
             'reputation'   => (int) $r->reputation,
+            'strikes'      => (int) $r->strikes,
+            'budget'       => $r->budget === null ? null : (float) $r->budget,
+            'bankrupt'     => (bool) $r->bankrupt,
         ];
     }
 
