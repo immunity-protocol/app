@@ -10,6 +10,17 @@ use stdClass;
 class ContractEventBroker extends Broker
 {
     /**
+     * Low-signal internal/mechanical events hidden from the dashboard feed —
+     * reputation bootstrap, bond/escrow/deposit plumbing, admin setup. The feed
+     * keeps the story: publishes, checks, blocks (Matched), maturations,
+     * challenges/resolutions, CRE verdicts, slashes, cross-chain mirrors.
+     * Static list (no user input) so it's safe to inline.
+     */
+    private const FEED_HIDDEN = "'Reputation.GenesisGranted','Reputation.Matured',"
+        . "'Reputation.ChallengeWon','Registry.BondLocked','Registry.FeesEscrowed',"
+        . "'Registry.Deposited','RelayerSet','AdminTransferred'";
+
+    /**
      * @return stdClass[]
      */
     public function findRecent(int $limit): array
@@ -39,6 +50,7 @@ class ContractEventBroker extends Broker
                FROM event.contract_event ce
                LEFT JOIN antibody.entry ae
                  ON ae.keccak_id = decode(substr(coalesce(ce.payload->>'keccakId', ce.payload->>'antibodyId'), 3), 'hex')
+              WHERE ce.event_name NOT IN (" . self::FEED_HIDDEN . ")
               ORDER BY ce.block_number DESC, ce.log_index DESC, ce.id DESC
               LIMIT ?",
             [$limit]
@@ -64,6 +76,7 @@ class ContractEventBroker extends Broker
                LEFT JOIN antibody.entry ae
                  ON ae.keccak_id = decode(substr(coalesce(ce.payload->>'keccakId', ce.payload->>'antibodyId'), 3), 'hex')
               WHERE (ce.block_number, ce.log_index, ce.id) < (?, ?, ?)
+                AND ce.event_name NOT IN (" . self::FEED_HIDDEN . ")
               ORDER BY ce.block_number DESC, ce.log_index DESC, ce.id DESC
               LIMIT ?",
             [$beforeBlock, $beforeLogIndex, $beforeId, $limit]
