@@ -7,6 +7,7 @@ namespace App\Controllers\Api\Public;
 use App\Models\Agent\Brokers\FleetActivityBroker;
 use App\Models\Agent\Brokers\FleetControlBroker;
 use App\Models\Agent\Brokers\FleetMemberBroker;
+use App\Models\Agent\Brokers\SocialPostBroker;
 use Zephyrus\Http\Request;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;
@@ -121,6 +122,43 @@ final class AgentReportController extends Controller
         ]);
 
         return Response::json(['ok' => true], 202);
+    }
+
+    /**
+     * Wolf-planted social content. Wolves (the live adversary role) POST
+     * genuine-looking bait here; traders scrape the feed and check() it. Same
+     * open-by-design contract as heartbeat/activity — display-only, no authority.
+     *
+     *   POST /v1/agents/social-post
+     */
+    #[Post('/agents/social-post')]
+    public function socialPost(Request $request): Response
+    {
+        $b = $request->body();
+
+        $content = $b->get('content');
+        if (!is_string($content) || trim($content) === '') {
+            return Response::json(['error' => 'content required'], 400);
+        }
+        $label = $this->cleanShort($b->get('authorLabel'), 64) ?? 'wolf';
+        $addrRaw = $b->get('authorAddress');
+        $address = is_string($addrRaw) && preg_match('/^0x[0-9a-fA-F]{40}$/', $addrRaw)
+            ? strtolower($addrRaw)
+            : '0x0000000000000000000000000000000000000000';
+
+        $id = (new SocialPostBroker())->insert([
+            'author_address' => $address,
+            'author_label'   => $label,
+            'author_ens'     => $this->cleanShort($b->get('authorEns'), 255),
+            'author_kind'    => $this->cleanShort($b->get('authorKind'), 32) ?? 'wolf',
+            'source'         => $this->cleanShort($b->get('source'), 32) ?? 'web',
+            'content'        => substr(trim($content), 0, 2000),
+            'is_malicious'   => $b->get('isMalicious') === true,
+            'family'         => $this->cleanShort($b->get('family'), 64),
+            'flavor'         => $this->cleanShort($b->get('flavor'), 64),
+        ]);
+
+        return Response::json(['ok' => true, 'id' => $id], 202);
     }
 
     private function cleanId(mixed $v): ?string
