@@ -45,7 +45,10 @@ use App\Models\Indexer\Handlers\CorroborationHandler;
 use App\Models\Indexer\Handlers\EnsIngestHandler;
 use App\Models\Indexer\Handlers\ExpiredHandler;
 use App\Models\Indexer\Handlers\MaturedHandler;
+use App\Models\Indexer\Handlers\MirrorEnqueueHandler;
 use App\Models\Indexer\Handlers\NovelVerificationHandler;
+use App\Models\Mirror\Brokers\PendingJobsBroker;
+use App\Models\Mirror\MirrorEnvelopeBuffer;
 use App\Models\Indexer\Handlers\ProtectedSetHandler;
 use App\Models\Indexer\Handlers\PublisherIdentityHandler;
 use App\Models\Indexer\Handlers\ReputationHandler;
@@ -109,7 +112,13 @@ if ($moralisApiKey === '') {
 // ---------------------------------------------------------------------------
 // Base Sepolia handlers (Phase 1: antibody lifecycle + reputation + identity).
 // ---------------------------------------------------------------------------
-$publishedHandler = new AntibodyPublishedHandler($db, $queueBroker);
+// Mirror enqueue: AntibodyPublishedHandler stashes each published antibody's
+// envelope into this in-memory buffer; MirrorEnqueueHandler drains it when the
+// matching type event (AddressBlocked/SemanticPatternAdded/…) fires in the same
+// tx, queuing one mirror.pending_jobs row per configured Mirror chain.
+$mirrorBuffer     = new MirrorEnvelopeBuffer();
+$mirrorEnqueue    = new MirrorEnqueueHandler(new PendingJobsBroker($db), MirrorNetworkRegistry::default(), $mirrorBuffer);
+$publishedHandler = new AntibodyPublishedHandler($db, $queueBroker, $mirrorBuffer);
 $seededHandler    = new SeededHandler($db);
 $maturedHandler   = new MaturedHandler($db);
 $expiredHandler   = new ExpiredHandler($db);
@@ -184,6 +193,15 @@ $baseHandlers = [
     'Registry.FeesEscrowed'   => fn (array $d) => $bondLedger->handleFeesEscrowed($d),
     'Registry.FeesReleased'   => fn (array $d) => $bondLedger->handleFeesReleased($d),
     'Registry.FeesClawedBack' => fn (array $d) => $bondLedger->handleFeesClawedBack($d),
+
+    // Cross-chain mirror enqueue: each type event drains the published-envelope
+    // buffer and queues a mirror.pending_jobs row per configured Mirror chain
+    // (the relayer then replays it onto the Sepolia Mirror).
+    'Registry.AddressBlocked'       => fn (array $d) => $mirrorEnqueue->handle($d),
+    'Registry.CallPatternBlocked'   => fn (array $d) => $mirrorEnqueue->handle($d),
+    'Registry.BytecodeBlocked'      => fn (array $d) => $mirrorEnqueue->handle($d),
+    'Registry.GraphTaintAdded'      => fn (array $d) => $mirrorEnqueue->handle($d),
+    'Registry.SemanticPatternAdded' => fn (array $d) => $mirrorEnqueue->handle($d),
 
     'Reputation.Matured'        => fn (array $d) => $reputation->handleMatured($d),
     'Reputation.ChallengeWon'   => fn (array $d) => $reputation->handleChallengeWon($d),
