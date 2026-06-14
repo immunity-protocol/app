@@ -15,7 +15,9 @@
     'publisher'    => ['text-accent',       'bg-accent'],
     'hunter'       => ['text-threat-300',   'bg-threat-300'],
     'corroborator' => ['text-immune-500',   'bg-immune-500'],
+    'trader'       => ['text-immune-300',   'bg-immune-300'],
     'autoimmune'   => ['text-caution-300',  'bg-caution-300'],
+    'wolf'         => ['text-threat-500',   'bg-threat-500'],
 ]}
 
 <section class="max-w-[1400px] mx-auto px-5 sm:px-7 pt-20 sm:pt-14 pb-16">
@@ -46,7 +48,7 @@
     </div>
 
     {* ---------------- STAT TILES (online by role) ---------------- *}
-    <div class="grid grid-cols-3 gap-px bg-ink-line/40 border border-ink-line/60 rounded-sm overflow-hidden mb-10">
+    <div class="grid grid-cols-3 sm:grid-cols-6 gap-px bg-ink-line/40 border border-ink-line/60 rounded-sm overflow-hidden mb-10">
         {foreach $roleCounts as $role => $count}
             {var $tone = $roleTones[$role] ?? ['text-accent-soft', 'bg-accent-soft']}
             <div class="bg-ink-base px-5 py-4">
@@ -200,7 +202,9 @@
     publisher:    ['text-accent', 'bg-accent'],
     hunter:       ['text-threat-300', 'bg-threat-300'],
     corroborator: ['text-immune-500', 'bg-immune-500'],
+    trader:       ['text-immune-300', 'bg-immune-300'],
     autoimmune:   ['text-caution-300', 'bg-caution-300'],
+    wolf:         ['text-threat-500', 'bg-threat-500'],
   };
 
   function esc(s) {

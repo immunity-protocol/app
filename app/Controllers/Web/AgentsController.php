@@ -19,8 +19,8 @@ use Zephyrus\Routing\Attribute\Get;
  */
 final class AgentsController extends Controller
 {
-    /** The three public template roles, in display order. */
-    private const ROLES = ['publisher', 'hunter', 'corroborator'];
+    /** All fleet roles, in display order (honest roles first, adversaries last). */
+    private const ROLES = ['publisher', 'hunter', 'corroborator', 'trader', 'autoimmune', 'wolf'];
 
     #[Get('/agents')]
     public function index(): Response
