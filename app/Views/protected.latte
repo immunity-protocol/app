@@ -1,0 +1,180 @@
+{layout 'layouts/main.latte'}
+
+{block title}Protected set / Immunity network{/block}
+
+{block content}
+
+{*
+ * /protected — the protected set (curated blue-chip safety rail) + the live
+ * history of attempts to flag a protected address (the autoimmune / DoS attack).
+ * Flagging USDC / WETH / the canonical router can never hard-block and is struck
+ * down by the challenge game. Server-rendered first paint, polls
+ * /api/v1/protected/feed for live attack attempts.
+ *}
+
+{var $labels = [
+    '0xe697ef7724453f239d8c0eb9295d87c344d9ce60' => 'USDC',
+    '0x4200000000000000000000000000000000000006' => 'WETH',
+    '0x2626664c2603336e57b271c5c0b26f421741e481' => 'Uniswap v4 router',
+]}
+
+<section class="max-w-[1100px] mx-auto px-5 sm:px-7 pt-20 sm:pt-14 pb-16">
+
+    {* ---------------- HERO ---------------- *}
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Demo</span>
+            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+        </div>
+        <h1 class="font-display text-[42px] sm:text-[56px] font-light tracking-tightest text-fg-primary leading-[1.0]">
+            Protected set
+        </h1>
+        <p class="text-fg-secondary text-[14px] sm:text-[15px] mt-4 max-w-[680px] leading-[1.6]">
+            The blue-chip safety rail. An attacker who flags a genuine address — USDC, WETH, the canonical
+            router — would censor real activity and grief the network. On the protected set that attack
+            <span class="text-immune-500">cannot land</span>: a flag here can never hard-block (advisory at most),
+            costs a far larger bond, and is struck down by the challenge game. Below: the rail, and every
+            <span class="text-caution-300">autoimmune attempt</span> to break it.
+        </p>
+    </div>
+
+    {* ---------------- STAT TILES ---------------- *}
+    <div class="grid grid-cols-3 gap-px bg-ink-line/40 border border-ink-line/60 rounded-sm overflow-hidden mb-10">
+        <div class="bg-ink-base px-5 py-4">
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Protected</div>
+            <div class="font-display text-[30px] font-light tabular-nums text-immune-500 leading-none">{$protectedN}</div>
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim mt-1">blue-chips</div>
+        </div>
+        <div class="bg-ink-base px-5 py-4">
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Attempts</div>
+            <div class="font-display text-[30px] font-light tabular-nums text-caution-300 leading-none"><span id="stat-attacks">{$attacks}</span></div>
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim mt-1">flags on protected</div>
+        </div>
+        <div class="bg-ink-base px-5 py-4">
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Struck down</div>
+            <div class="font-display text-[30px] font-light tabular-nums text-threat-300 leading-none"><span id="stat-defeated">{$defeated}</span></div>
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim mt-1">defences held</div>
+        </div>
+    </div>
+
+    {* ---------------- PROTECTED TARGETS ---------------- *}
+    <h2 class="font-mono text-[11px] uppercase tracking-widest2 text-fg-tertiary mb-4">The rail</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-12">
+        {foreach $targets as $t}
+            {var $addr = strtolower($t->address)}
+            <div class="border border-immune-500/25 bg-immune-500/[0.04] rounded-sm p-4">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <span class="text-[14px] text-fg-primary">{$labels[$addr] ?? 'Protected'}</span>
+                    <span class="font-mono text-[8.5px] uppercase tracking-widest2 text-immune-500 border border-immune-500/40 rounded-sm px-1.5 py-0.5">protected</span>
+                </div>
+                <a href="{$explorerUrl}/address/{$t->address}" rel="noopener" class="font-mono text-[10.5px] text-fg-dim hover:text-accent transition-colors break-all">{substr($t->address, 0, 10)}…{substr($t->address, -8)}</a>
+                <div class="flex items-center gap-4 mt-3 font-mono text-[10px] uppercase tracking-widest2">
+                    <span class="text-fg-tertiary"><span class="text-caution-300 tabular-nums">{$t->attacks}</span> attempts</span>
+                    <span class="text-fg-tertiary"><span class="text-threat-300 tabular-nums">{$t->defeated}</span> struck</span>
+                </div>
+            </div>
+        {/foreach}
+    </div>
+
+    {* ---------------- ATTACK ATTEMPTS ---------------- *}
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="font-mono text-[11px] uppercase tracking-widest2 text-fg-tertiary">Attack attempts</h2>
+        <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">live · autoimmune vs the rail</span>
+    </div>
+    <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-ink-sunken/60">
+                <tr class="border-b border-ink-line/40">
+                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 pr-4 py-3">Attacker</th>
+                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3">Target</th>
+                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-32">State</th>
+                    <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-5 py-3 w-20">When</th>
+                </tr>
+            </thead>
+            <tbody id="attempts-body">
+            {if count($attempts) === 0}
+                <tr id="attempts-empty">
+                    <td colspan="4" class="px-5 py-12 text-center font-mono text-[12px] text-fg-dim">
+                        No attacks yet. When an autoimmune agent flags a protected address, it lands here — and gets struck down.
+                    </td>
+                </tr>
+            {/if}
+            {foreach $attempts as $a}
+                {var $addr = strtolower($a->target)}
+                {var $state = $a->status === 'slashed' ? ['struck down', 'text-threat-300', 'border-threat-300/40 bg-threat-300/10']
+                    : ($a->status === 'challenged' ? ['challenged', 'text-caution-300', 'border-caution-300/40 bg-caution-300/10']
+                    : ['advisory', 'text-fg-dim', 'border-ink-line/60'])}
+                <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors">
+                    <td class="pl-5 pr-4 py-2.5 align-middle">
+                        <div class="text-[12.5px] text-fg-primary truncate">{$a->publisher_ens ?? (substr($a->publisher, 0, 6) . '…' . substr($a->publisher, -4))}</div>
+                    </td>
+                    <td class="pr-4 py-2.5 align-middle">
+                        <span class="text-[12.5px] text-caution-300">{$labels[$addr] ?? (substr($a->target, 0, 6) . '…' . substr($a->target, -4))}</span>
+                        <a href="/antibody/{$a->imm_id}" class="font-mono text-[10px] text-fg-dim hover:text-accent transition-colors ml-1">{$a->imm_id}</a>
+                    </td>
+                    <td class="pr-4 py-2.5 align-middle">
+                        <span class="inline-flex font-mono text-[9px] uppercase tracking-widest2 {$state[1]} border {$state[2]} rounded-sm px-1.5 py-0.5">{$state[0]}</span>
+                    </td>
+                    <td class="pr-5 py-2.5 align-middle text-right font-mono text-[10px] text-fg-dim tabular-nums whitespace-nowrap">{format('timeago', $a->created_at)}</td>
+                </tr>
+            {/foreach}
+            </tbody>
+        </table>
+    </div>
+
+</section>
+
+<script n:syntax="off">
+(function () {
+  const LABELS = {
+    '0xe697ef7724453f239d8c0eb9295d87c344d9ce60': 'USDC',
+    '0x4200000000000000000000000000000000000006': 'WETH',
+    '0x2626664c2603336e57b271c5c0b26f421741e481': 'Uniswap v4 router',
+  };
+  const body = document.getElementById('attempts-body');
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function ago(iso) { const t = Date.parse(iso); if (!Number.isFinite(t)) return ''; const s = Math.max(0,(Date.now()-t)/1000); if (s<60) return Math.floor(s)+'s'; if (s<3600) return Math.floor(s/60)+'m'; if (s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; }
+  function short(a) { return a.slice(0,6)+'…'+a.slice(-4); }
+  function setText(id, v) { const el = document.getElementById(id); if (el && el.textContent !== String(v)) el.textContent = v; }
+
+  function stateOf(status) {
+    if (status === 'slashed') return ['struck down', 'text-threat-300', 'border-threat-300/40 bg-threat-300/10'];
+    if (status === 'challenged') return ['challenged', 'text-caution-300', 'border-caution-300/40 bg-caution-300/10'];
+    return ['advisory', 'text-fg-dim', 'border-ink-line/60'];
+  }
+  function row(a) {
+    const addr = (a.target || '').toLowerCase();
+    const st = stateOf(a.status);
+    const attacker = a.publisher_ens || short(a.publisher || '0x000000');
+    const target = LABELS[addr] || short(a.target || '0x000000');
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors';
+    tr.setAttribute('data-imm', a.imm_id);
+    tr.innerHTML =
+      '<td class="pl-5 pr-4 py-2.5 align-middle"><div class="text-[12.5px] text-fg-primary truncate">' + esc(attacker) + '</div></td>' +
+      '<td class="pr-4 py-2.5 align-middle"><span class="text-[12.5px] text-caution-300">' + esc(target) + '</span>' +
+        '<a href="/antibody/' + esc(a.imm_id) + '" class="font-mono text-[10px] text-fg-dim hover:text-accent transition-colors ml-1">' + esc(a.imm_id) + '</a></td>' +
+      '<td class="pr-4 py-2.5 align-middle"><span class="inline-flex font-mono text-[9px] uppercase tracking-widest2 ' + st[1] + ' border ' + st[2] + ' rounded-sm px-1.5 py-0.5">' + st[0] + '</span></td>' +
+      '<td class="pr-5 py-2.5 align-middle text-right font-mono text-[10px] text-fg-dim tabular-nums whitespace-nowrap">' + ago(a.created_at) + '</td>';
+    return tr;
+  }
+
+  async function tick() {
+    try {
+      const r = await fetch('/api/v1/protected/feed', { headers: { Accept: 'application/json' } });
+      if (!r.ok) return;
+      const data = await r.json();
+      if (data.stats) { setText('stat-attacks', data.stats.attacks); setText('stat-defeated', data.stats.defeated); }
+      const rows = data.attempts || [];
+      if (rows.length) {
+        const empty = document.getElementById('attempts-empty'); if (empty) empty.remove();
+        body.innerHTML = '';
+        rows.forEach(function (a) { body.appendChild(row(a)); });
+      }
+    } catch (e) { /* keep polling */ }
+  }
+  setInterval(tick, 5000);
+})();
+</script>
+
+{/block}
