@@ -8,6 +8,7 @@ use App\Models\Agent\Brokers\FleetActivityBroker;
 use App\Models\Agent\Brokers\FleetControlBroker;
 use App\Models\Agent\Brokers\FleetMemberBroker;
 use App\Models\Agent\Brokers\SocialPostBroker;
+use App\Models\Demo\Brokers\CommandBroker;
 use Zephyrus\Http\Request;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;
@@ -159,6 +160,52 @@ final class AgentReportController extends Controller
         ]);
 
         return Response::json(['ok' => true, 'id' => $id], 202);
+    }
+
+    /**
+     * Agents poll this fast (~15s) to claim the next playground command queued
+     * for them. The server marks it picked-up atomically so it runs once.
+     *
+     *   GET /v1/agents/commands/next?agentId=trader-12
+     */
+    #[Get('/agents/commands/next')]
+    public function nextCommand(Request $request): Response
+    {
+        $agentId = $this->cleanId($request->query('agentId'));
+        if ($agentId === null) {
+            return Response::json(['error' => 'agentId required'], 400);
+        }
+        $row = (new CommandBroker())->claimNext($agentId);
+        if ($row === null) {
+            return Response::json(['command' => null])->withHeader('Cache-Control', 'no-store');
+        }
+        $payload = is_string($row->payload) ? json_decode($row->payload, true) : $row->payload;
+        return Response::json([
+            'command' => [
+                'id'           => (int) $row->id,
+                'command_type' => $row->command_type,
+                'payload'      => $payload ?? new \stdClass(),
+            ],
+        ])->withHeader('Cache-Control', 'no-store');
+    }
+
+    /**
+     * Agents report a command's result here; the playground modal polls
+     * /playground/commands/{id} and renders it.
+     *
+     *   POST /v1/agents/commands/{id}/result   { status, detail }
+     */
+    #[Post('/agents/commands/{id}/result')]
+    public function commandResult(Request $request, string $id): Response
+    {
+        if (!ctype_digit($id)) {
+            return Response::json(['error' => 'id must be a positive integer'], 400);
+        }
+        $b = $request->body();
+        $status = $this->cleanShort($b->get('status'), 32) ?? 'completed';
+        $detail = $b->get('detail');
+        (new CommandBroker())->complete((int) $id, $status, $detail);
+        return Response::json(['ok' => true], 202);
     }
 
     private function cleanId(mixed $v): ?string

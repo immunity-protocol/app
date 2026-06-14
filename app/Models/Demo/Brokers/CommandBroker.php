@@ -48,6 +48,37 @@ class CommandBroker extends Broker
         return $row !== null ? (string) $row->agent_id : null;
     }
 
+    /**
+     * Atomically claim the oldest pending command for an agent (sets
+     * picked_up_at so two pollers never run it twice). Returns null if none.
+     */
+    public function claimNext(string $agentId): ?stdClass
+    {
+        return $this->selectOne(
+            "UPDATE demo.commands SET picked_up_at = now()
+              WHERE id = (
+                  SELECT id FROM demo.commands
+                   WHERE agent_id = ? AND picked_up_at IS NULL
+                   ORDER BY id ASC
+                   LIMIT 1
+                   FOR UPDATE SKIP LOCKED
+              )
+            RETURNING id, command_type, payload",
+            [$agentId]
+        );
+    }
+
+    /** Record a command's terminal result (status + JSON detail). */
+    public function complete(int $id, string $status, mixed $detail): void
+    {
+        $this->db->query(
+            "UPDATE demo.commands
+                SET executed_at = now(), result_status = ?, result_detail = ?::jsonb
+              WHERE id = ?",
+            [$status, $detail === null ? null : json_encode($detail, JSON_UNESCAPED_SLASHES), $id]
+        );
+    }
+
     public function findById(int $id): ?stdClass
     {
         return $this->selectOne(
