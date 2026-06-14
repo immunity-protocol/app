@@ -37,11 +37,20 @@ class ProtectedTargetBroker extends Broker
         );
     }
 
+    /**
+     * Attempts to flag a protected address. Keyed on the target being in the
+     * protected set (the source of truth) rather than the entry's prominence_tier
+     * column, which is only set once evidence hydration resolves the matcher.
+     */
+    private const PROTECTED_FLAG_PREDICATE =
+        "decode(substr(e.primary_matcher->>'target', 3), 'hex')
+            IN (SELECT address FROM antibody.protected_target WHERE protected)";
+
     /** Total recorded attempts to flag a protected address. */
     public function countAttacks(): int
     {
         return (int) $this->selectValue(
-            "SELECT count(*) FROM antibody.entry WHERE prominence_tier >= 1"
+            "SELECT count(*) FROM antibody.entry e WHERE " . self::PROTECTED_FLAG_PREDICATE
         );
     }
 
@@ -49,7 +58,8 @@ class ProtectedTargetBroker extends Broker
     public function countDefeated(): int
     {
         return (int) $this->selectValue(
-            "SELECT count(*) FROM antibody.entry WHERE prominence_tier >= 1 AND status = 'slashed'"
+            "SELECT count(*) FROM antibody.entry e
+              WHERE e.status = 'slashed' AND " . self::PROTECTED_FLAG_PREDICATE
         );
     }
 
@@ -105,7 +115,7 @@ class ProtectedTargetBroker extends Broker
                FROM antibody.entry e
           LEFT JOIN antibody.publisher p ON p.address = e.publisher
           LEFT JOIN antibody.challenge c ON c.keccak_id = e.keccak_id
-              WHERE e.prominence_tier >= 1
+              WHERE " . self::PROTECTED_FLAG_PREDICATE . "
            ORDER BY e.created_at DESC
               LIMIT ?",
             [$limit]

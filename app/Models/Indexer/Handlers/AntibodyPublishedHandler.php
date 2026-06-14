@@ -118,7 +118,7 @@ class AntibodyPublishedHandler
                     CASE WHEN ? > 0 THEN to_timestamp(?) ELSE NULL END,
                     CASE WHEN ? THEN to_timestamp(?) ELSE NULL END,
                     ?, NULL,
-                    ?, 0, ?, ?, 0,
+                    ?, 0, ?, 0, 0,
                     ?, ?, CASE WHEN ? THEN 'admin' ELSE NULL END, NULL,
                     to_timestamp(?), to_timestamp(?)
                 )
@@ -133,7 +133,7 @@ class AntibodyPublishedHandler
                     $expiresAtSec, $expiresAtSec,
                     $isSeeded ? 't' : 'f', $createdAtSec,
                     $publisherBytea,
-                    $bondUsdc, $isSeeded ? 1 : 0, (int) ($a['prominenceTier'] ?? 0),
+                    $bondUsdc, $isSeeded ? 1 : 0,
                     $attestationBytea, $publishTxHashBytea, $isSeeded ? 't' : 'f',
                     $createdAtSec, $createdAtSec,
                 ]

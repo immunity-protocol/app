@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Indexer\Workers;
 
+use App\Models\Antibody\Brokers\ProtectedTargetBroker;
 use App\Models\Indexer\Brokers\HydrationQueueBroker;
 use App\Models\Indexer\Storage\LighthouseFetcher;
 use Throwable;
@@ -63,15 +64,25 @@ class HydrationWorker
                 $primaryMatcher = $envelope['matcher'] ?? null;
                 $reasonSummary = $envelope['reasonSummary'] ?? null;
 
+                // The Published event carries no prominenceTier, so derive it here
+                // once the matcher's target is known: a flag on a protected address
+                // is prominence tier 1 (the protected-set / autoimmune-attack signal).
+                $target = is_array($primaryMatcher) ? ($primaryMatcher['target'] ?? null) : null;
+                $prominence = is_string($target) && str_starts_with($target, '0x')
+                    && (new ProtectedTargetBroker())->isProtected(strtolower(substr($target, 2)))
+                    ? 1 : null;
+
                 $this->db->query(
                     "UPDATE antibody.entry SET
                         primary_matcher    = COALESCE(?::jsonb, primary_matcher),
                         redacted_reasoning = COALESCE(?, redacted_reasoning),
+                        prominence_tier    = COALESCE(?, prominence_tier),
                         updated_at         = now()
                       WHERE keccak_id = ?",
                     [
                         $primaryMatcher !== null ? json_encode($primaryMatcher, JSON_UNESCAPED_SLASHES) : null,
                         $reasonSummary,
+                        $prominence,
                         '\\x' . $keccakHex,
                     ]
                 );
