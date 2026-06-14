@@ -95,7 +95,7 @@
         </header>
 
         <div class="mt-1">
-            <table class="w-full">
+            <table class="w-full table-fixed">
                 <thead class="sticky top-0 bg-ink-base/95 backdrop-blur z-10">
                     <tr class="border-b border-ink-line/40">
                         <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 sm:pl-7 pr-4 py-3 w-24">When</th>
@@ -127,7 +127,7 @@
                         'error' => 'bg-threat-300',
                         default => 'bg-accent-soft',
                     }}
-                    <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top">
+                    <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle">
                         <td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap">{format('timeago', $a->occurred_at)}</td>
                         <td class="pr-4 py-2.5 font-mono text-[11px] text-fg-secondary truncate">{$a->display_name}</td>
                         <td class="pr-4 py-2.5">
@@ -251,7 +251,7 @@
       ? '<a href="/antibody/' + esc(a.antibody_imm_id) + '" class="font-mono text-[10.5px] text-fg-dim hover:text-accent transition-colors ml-1">' + esc(a.antibody_imm_id) + '</a>'
       : '';
     const tr = document.createElement('tr');
-    tr.className = 'border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top';
+    tr.className = 'border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle';
     tr.innerHTML =
       '<td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap">' + ago(a.occurred_at) + '</td>' +
       '<td class="pr-4 py-2.5 font-mono text-[11px] text-fg-secondary truncate">' + esc(a.display_name) + '</td>' +
