@@ -41,8 +41,11 @@ final class AgentReportController extends Controller
     #[Get('/agents/control')]
     public function control(): Response
     {
-        return Response::json(['paused' => (new FleetControlBroker())->isPaused()])
-            ->withHeader('Cache-Control', 'no-store');
+        $control = new FleetControlBroker();
+        return Response::json([
+            'paused'       => $control->isPaused(),
+            'refund_nonce' => $control->getRefundNonce(),
+        ])->withHeader('Cache-Control', 'no-store');
     }
 
     #[Post('/agents/heartbeat')]

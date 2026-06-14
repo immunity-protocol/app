@@ -95,7 +95,7 @@
         <p class="text-fg-secondary text-[13.5px] leading-[1.6] mb-8 max-w-[640px]">
             Pause the live agent fleet for a clean walkthrough — agents stop acting but stay online (they keep heart-beating). Resume to let them publish, corroborate, and challenge again. Takes effect within one agent tick.
         </p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button data-pg-fleet="true"
                     class="px-5 py-4 text-left bg-ink-base border border-ink-line/60 hover:border-caution-500 hover:bg-ink-elevated transition-colors rounded-sm">
                 <div class="font-display text-[18px] tracking-tighter text-fg-primary">Pause fleet</div>
@@ -105,6 +105,11 @@
                     class="px-5 py-4 text-left bg-ink-base border border-ink-line/60 hover:border-immune-500 hover:bg-ink-elevated transition-colors rounded-sm">
                 <div class="font-display text-[18px] tracking-tighter text-fg-primary">Resume fleet</div>
                 <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mt-1">agents resume acting</div>
+            </button>
+            <button data-pg-refund
+                    class="px-5 py-4 text-left bg-ink-base border border-ink-line/60 hover:border-threat-300 hover:bg-ink-elevated transition-colors rounded-sm">
+                <div class="font-display text-[18px] tracking-tighter text-fg-primary">Refund attackers</div>
+                <div class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary mt-1">restart bankrupt autoimmune</div>
             </button>
         </div>
         <div data-pg-fleet-result class="font-mono text-[10.5px] text-fg-dim mt-4"></div>
@@ -126,6 +131,18 @@
           result.textContent = data.paused ? 'fleet paused — agents idling (still online)' : 'fleet resumed — agents acting';
         });
       });
+      const refundBtn = document.querySelector('[data-pg-refund]');
+      if (refundBtn) {
+        refundBtn.addEventListener('click', async () => {
+          result.textContent = 'refunding bankrupt attackers…';
+          const r = await fetch('/api/v1/playground/refund', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          }).catch(() => null);
+          if (!r || !r.ok) { result.textContent = 'refund failed'; return; }
+          result.textContent = 'refund signalled — autoimmune agents top up their budget and resume within a tick';
+        });
+      }
     })();
     </script>
 </section>

@@ -84,9 +84,12 @@ CREATE INDEX fleet_activity_status_idx      ON agent.fleet_activity (status);
 -- ##################################################################################################################
 CREATE TABLE agent.fleet_control
 (
-    id          smallint    PRIMARY KEY DEFAULT 1,
-    paused      boolean     NOT NULL DEFAULT false,
-    updated_at  timestamptz NOT NULL DEFAULT now(),
+    id            smallint    PRIMARY KEY DEFAULT 1,
+    paused        boolean     NOT NULL DEFAULT false,
+    -- Monotonic counter the playground bumps to refund bankrupt autoimmune
+    -- agents; each agent self-mints + re-deposits its budget when it sees a bump.
+    refund_nonce  int         NOT NULL DEFAULT 0,
+    updated_at    timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT fleet_control_singleton CHECK (id = 1)
 );
 

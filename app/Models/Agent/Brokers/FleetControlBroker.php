@@ -24,4 +24,18 @@ class FleetControlBroker extends Broker
             [$paused ? 't' : 'f']
         );
     }
+
+    public function getRefundNonce(): int
+    {
+        return (int) $this->selectValue("SELECT refund_nonce FROM agent.fleet_control WHERE id = 1");
+    }
+
+    /** Bump the refund signal; every bankrupt autoimmune agent self-refunds on the next poll. */
+    public function bumpRefundNonce(): int
+    {
+        return (int) $this->selectValue(
+            "UPDATE agent.fleet_control SET refund_nonce = refund_nonce + 1, updated_at = now()
+              WHERE id = 1 RETURNING refund_nonce"
+        );
+    }
 }

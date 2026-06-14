@@ -91,6 +91,19 @@ final class PlaygroundController extends Controller
         return Response::json(['paused' => $paused], 200);
     }
 
+    /**
+     * Refund the bankrupt autoimmune adversaries (judge control). Bumps the
+     * refund signal the autoimmune agents poll; each one self-mints + re-deposits
+     * its bond budget on the next tick and resumes attacking — so judges can
+     * restart the "griefing always goes bankrupt" demonstration on demand.
+     */
+    #[Post('/playground/refund')]
+    public function refund(): Response
+    {
+        $nonce = (new FleetControlBroker())->bumpRefundNonce();
+        return Response::json(['refund_nonce' => $nonce], 200);
+    }
+
     private function countBlocksSince(string $sinceIso): int
     {
         $byDecision = $this->checkEvents->countByDecisionSince($sinceIso);
