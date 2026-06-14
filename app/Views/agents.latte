@@ -5,10 +5,10 @@
 {block content}
 
 {*
- * /agents — the live fleet roster, fleet-wide stats, the activity feed, and the
- * download. The agentic-first showcase: anyone can run the template agent and
- * appear here. First paint is server-rendered; the page polls
- * /api/v1/agents/feed for live roster + stats + activity.
+ * /agents — the live fleet roster (identity only) and the download. The
+ * agentic-first showcase: anyone can run the template agent and appear here.
+ * The rich, money-bearing activity feed now lives on the /dashboard. First paint
+ * is server-rendered; the page polls /api/v1/agents/feed for live roster + stats.
  *}
 
 {var $roleTones = [
@@ -45,8 +45,8 @@
         </div>
     </div>
 
-    {* ---------------- STAT TILES ---------------- *}
-    <div class="grid grid-cols-2 lg:grid-cols-6 gap-px bg-ink-line/40 border border-ink-line/60 rounded-sm overflow-hidden mb-10">
+    {* ---------------- STAT TILES (online by role) ---------------- *}
+    <div class="grid grid-cols-3 gap-px bg-ink-line/40 border border-ink-line/60 rounded-sm overflow-hidden mb-10">
         {foreach $roleCounts as $role => $count}
             {var $tone = $roleTones[$role] ?? ['text-accent-soft', 'bg-accent-soft']}
             <div class="bg-ink-base px-5 py-4">
@@ -59,27 +59,6 @@
                 <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim mt-1">online</div>
             </div>
         {/foreach}
-        <div class="bg-ink-base px-5 py-4">
-            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Checks</div>
-            <div class="font-display text-[30px] font-light tabular-nums text-fg-primary leading-none">
-                <span id="stat-checks">{$totals['checks']}</span>
-            </div>
-            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim mt-1">screened</div>
-        </div>
-        <div class="bg-ink-base px-5 py-4">
-            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Blocks</div>
-            <div class="font-display text-[30px] font-light tabular-nums text-threat-300 leading-none">
-                <span id="stat-blocks">{$totals['blocks']}</span>
-            </div>
-            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim mt-1">threats stopped</div>
-        </div>
-        <div class="bg-ink-base px-5 py-4">
-            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Publishes</div>
-            <div class="font-display text-[30px] font-light tabular-nums text-accent leading-none">
-                <span id="stat-publishes">{$totals['publishes']}</span>
-            </div>
-            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim mt-1">antibodies + corrobs</div>
-        </div>
     </div>
 
     {* ---------------- ROSTER + RUN-YOUR-OWN ---------------- *}
@@ -97,26 +76,27 @@
                         <tr class="border-b border-ink-line/40">
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 pr-4 py-3">Agent</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-28">Role</th>
-                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3 w-16">Chk</th>
-                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3 w-16">Blk</th>
-                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3 w-16" title="on-chain reputation score">Rep</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-5 py-3 w-24">Seen</th>
                         </tr>
                     </thead>
                     <tbody id="roster-body">
                     {if count($roster) === 0}
                         <tr id="roster-empty">
-                            <td colspan="6" class="px-5 py-12 text-center font-mono text-[12px] text-fg-dim">
+                            <td colspan="3" class="px-5 py-12 text-center font-mono text-[12px] text-fg-dim">
                                 No agents connected yet. Run the template agent below and it appears here within seconds.
                             </td>
                         </tr>
                     {/if}
                     {foreach $roster as $m}
                         {var $tone = $roleTones[$m->role] ?? ['text-accent-soft', 'bg-accent-soft']}
+                        {var $aHex = $m->wallet ? substr($m->wallet, 2) : '000000000000'}
                         <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors">
                             <td class="pl-5 pr-4 py-2.5 align-middle">
                                 <div class="flex items-center gap-2.5 min-w-0">
-                                    <span class="inline-flex h-1.5 w-1.5 rounded-full shrink-0 {if $m->online}bg-immune-500 pulse-soft{else}bg-fg-dim/40{/if}" title="{if $m->online}online{else}offline{/if}"></span>
+                                    <span class="relative shrink-0">
+                                        <span class="block h-6 w-6 rounded-full ring-1 ring-ink-line/50" style="background: linear-gradient(135deg, #{substr($aHex, 0, 6)}, #{substr($aHex, -6)})" aria-hidden="true"></span>
+                                        <span class="absolute -bottom-0.5 -right-0.5 inline-flex h-2 w-2 rounded-full ring-2 ring-ink-base {if $m->online}bg-immune-500 pulse-soft{else}bg-fg-dim/40{/if}" title="{if $m->online}online{else}offline{/if}"></span>
+                                    </span>
                                     <div class="min-w-0">
                                         <div class="flex items-center gap-2 min-w-0">
                                             <span class="text-[12.5px] text-fg-primary truncate">{$m->ens ?? $m->display_name}</span>
@@ -137,9 +117,6 @@
                                     <span class="inline-flex h-1.5 w-1.5 rounded-full {$tone[1]}"></span>{$m->role}
                                 </span>
                             </td>
-                            <td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] text-fg-secondary tabular-nums">{$m->checks}</td>
-                            <td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] tabular-nums {if $m->blocks > 0}text-threat-300{else}text-fg-dim{/if}">{$m->blocks}</td>
-                            <td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] tabular-nums {if $m->reputation > 0}text-immune-500{else}text-fg-dim{/if}">{$m->reputation}</td>
                             <td class="pr-5 py-2.5 align-middle text-right font-mono text-[10px] text-fg-dim tabular-nums whitespace-nowrap">{format('timeago', $m->last_seen)}</td>
                         </tr>
                     {/foreach}
@@ -200,57 +177,6 @@
         </div>
     </div>
 
-    {* ---------------- LIVE ACTIVITY ---------------- *}
-    <div class="mt-12">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="font-mono text-[11px] uppercase tracking-widest2 text-fg-tertiary">Live activity</h2>
-        </div>
-        <div class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 overflow-hidden">
-            <table class="w-full">
-                <tbody id="activity-body">
-                {if count($activity) === 0}
-                    <tr id="activity-empty">
-                        <td colspan="4" class="px-5 py-10 text-center font-mono text-[12px] text-fg-dim">
-                            No activity yet. It streams in as agents check, publish, and challenge.
-                        </td>
-                    </tr>
-                {/if}
-                {foreach $activity as $a}
-                    {var $statusTone = match((string) $a->status) {
-                        'allow' => 'text-immune-500',
-                        'block' => 'text-threat-300',
-                        'novel' => 'text-caution-300',
-                        'error' => 'text-threat-300',
-                        default => 'text-accent-soft',
-                    }}
-                    {var $statusDot = match((string) $a->status) {
-                        'allow' => 'bg-immune-500',
-                        'block' => 'bg-threat-300',
-                        'novel' => 'bg-caution-300',
-                        'error' => 'bg-threat-300',
-                        default => 'bg-accent-soft',
-                    }}
-                    <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors">
-                        <td class="pl-5 pr-4 py-2.5 align-top font-mono text-[10px] text-fg-dim tabular-nums whitespace-nowrap w-24">{format('timeago', $a->occurred_at)}</td>
-                        <td class="pr-4 py-2.5 align-top font-mono text-[11px] text-fg-secondary truncate w-36">{$a->display_name}</td>
-                        <td class="pr-4 py-2.5 align-top w-32">
-                            <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {$statusTone}">
-                                <span class="inline-flex h-1.5 w-1.5 rounded-full {$statusDot}"></span>{$a->action_type}
-                            </span>
-                        </td>
-                        <td class="pr-5 py-2.5 align-top text-[12px] text-fg-secondary leading-snug">
-                            {$a->action_summary}
-                            {if $a->antibody_imm_id}
-                                <a href="/antibody/{$a->antibody_imm_id}" class="font-mono text-[10.5px] text-fg-dim hover:text-accent transition-colors ml-1">{$a->antibody_imm_id}</a>
-                            {/if}
-                        </td>
-                    </tr>
-                {/foreach}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
 </section>
 
 <script>
@@ -268,20 +194,13 @@
     });
   }
 
-  // ---- Live roster + stats + activity ----
+  // ---- Live roster + stats (identity only; activity now lives on /dashboard) ----
   const EXPLORER = {$explorerUrl};
   const ROLE_TONE = {
     publisher:    ['text-accent', 'bg-accent'],
     hunter:       ['text-threat-300', 'bg-threat-300'],
     corroborator: ['text-immune-500', 'bg-immune-500'],
     autoimmune:   ['text-caution-300', 'bg-caution-300'],
-  };
-  const STATUS_TONE = {
-    allow: ['text-immune-500', 'bg-immune-500'],
-    block: ['text-threat-300', 'bg-threat-300'],
-    novel: ['text-caution-300', 'bg-caution-300'],
-    error: ['text-threat-300', 'bg-threat-300'],
-    info:  ['text-accent-soft', 'bg-accent-soft'],
   };
 
   function esc(s) {
@@ -307,6 +226,7 @@
     if (rows.length === 0) return; // keep the server-rendered empty state
     body.innerHTML = rows.map(function (m) {
       const tone = ROLE_TONE[m.role] || ['text-accent-soft', 'bg-accent-soft'];
+      const hex = m.wallet ? m.wallet.slice(2) : '000000000000';
       const dot = m.online ? 'bg-immune-500 pulse-soft' : 'bg-fg-dim/40';
       const wallet = m.wallet
         ? '<a href="' + EXPLORER + '/address/' + esc(m.wallet) + '" rel="noopener" class="font-mono text-[10px] text-fg-dim hover:text-accent transition-colors">' + esc(shortAddr(m.wallet)) + '</a>'
@@ -317,91 +237,46 @@
         : (m.strikes > 0
           ? '<span class="shrink-0 font-mono text-[8.5px] uppercase tracking-widest2 text-caution-300/80" title="false flags slashed">' + m.strikes + '× slashed</span>'
           : '');
+      const avatar =
+        '<span class="relative shrink-0">' +
+          '<span class="block h-6 w-6 rounded-full ring-1 ring-ink-line/50" style="background: linear-gradient(135deg, #' + hex.slice(0, 6) + ', #' + hex.slice(-6) + ')"></span>' +
+          '<span class="absolute -bottom-0.5 -right-0.5 inline-flex h-2 w-2 rounded-full ring-2 ring-ink-base ' + dot + '"></span>' +
+        '</span>';
       return '<tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors">' +
         '<td class="pl-5 pr-4 py-2.5 align-middle"><div class="flex items-center gap-2.5 min-w-0">' +
-          '<span class="inline-flex h-1.5 w-1.5 rounded-full shrink-0 ' + dot + '"></span>' +
+          avatar +
           '<div class="min-w-0"><div class="flex items-center gap-2 min-w-0"><span class="text-[12.5px] text-fg-primary truncate">' + name + '</span>' + badge + '</div>' + wallet + '</div>' +
         '</div></td>' +
         '<td class="pr-4 py-2.5 align-middle"><span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 ' + tone[0] + '">' +
           '<span class="inline-flex h-1.5 w-1.5 rounded-full ' + tone[1] + '"></span>' + esc(m.role) + '</span></td>' +
-        '<td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] text-fg-secondary tabular-nums">' + m.checks + '</td>' +
-        '<td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] tabular-nums ' + (m.blocks > 0 ? 'text-threat-300' : 'text-fg-dim') + '">' + m.blocks + '</td>' +
-        '<td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] tabular-nums ' + (m.reputation > 0 ? 'text-immune-500' : 'text-fg-dim') + '">' + (m.reputation || 0) + '</td>' +
         '<td class="pr-5 py-2.5 align-middle text-right font-mono text-[10px] text-fg-dim tabular-nums whitespace-nowrap">' + ago(m.last_seen) + '</td>' +
       '</tr>';
     }).join('');
   }
 
-  function activityRow(a) {
-    const tone = STATUS_TONE[a.status] || ['text-accent-soft', 'bg-accent-soft'];
-    const ab = a.antibody_imm_id
-      ? '<a href="/antibody/' + esc(a.antibody_imm_id) + '" class="font-mono text-[10.5px] text-fg-dim hover:text-accent transition-colors ml-1">' + esc(a.antibody_imm_id) + '</a>'
-      : '';
-    const tr = document.createElement('tr');
-    tr.className = 'border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors';
-    tr.innerHTML =
-      '<td class="pl-5 pr-4 py-2.5 align-top font-mono text-[10px] text-fg-dim tabular-nums whitespace-nowrap w-24">' + ago(a.occurred_at) + '</td>' +
-      '<td class="pr-4 py-2.5 align-top font-mono text-[11px] text-fg-secondary truncate w-36">' + esc(a.display_name) + '</td>' +
-      '<td class="pr-4 py-2.5 align-top w-32"><span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 ' + tone[0] + '">' +
-        '<span class="inline-flex h-1.5 w-1.5 rounded-full ' + tone[1] + '"></span>' + esc(a.action_type) + '</span></td>' +
-      '<td class="pr-5 py-2.5 align-top text-[12px] text-fg-secondary leading-snug">' + esc(a.action_summary) + ab + '</td>';
-    return tr;
-  }
-
-  // Manual poll loop (not Live.poll, which fixes its URL at call time and so
-  // can't advance a keyset cursor). The feed returns rows with id > cursor; on
-  // the first tick we REPLACE the server-rendered activity from the response so
-  // the cursor and the DOM agree, then prepend only-new rows thereafter.
-  let activitySince = 0;
-  let firstTick = true;
-
   function applyStats(stats) {
     if (!stats) return;
     setText('stat-online', stats.online);
     setText('stat-total', stats.total);
-    setText('stat-checks', stats.checks);
-    setText('stat-blocks', stats.blocks);
-    setText('stat-publishes', stats.publishes);
     const byRole = stats.online_by_role || {};
     document.querySelectorAll('[data-role-online]').forEach(function (el) {
       el.textContent = byRole[el.getAttribute('data-role-online')] || 0;
     });
   }
 
-  function applyActivity(rows) {
-    const body = document.getElementById('activity-body');
-    if (!body || !Array.isArray(rows)) return;
-    if (firstTick) {
-      if (rows.length) {
-        body.innerHTML = '';                       // rows arrive newest-first
-        rows.forEach(function (a) { body.appendChild(activityRow(a)); });
-      }
-      return;
-    }
-    if (!rows.length) return;
-    const empty = document.getElementById('activity-empty');
-    if (empty) empty.remove();
-    rows.slice().reverse().forEach(function (a) {  // prepend so newest ends on top
-      body.insertBefore(activityRow(a), body.firstChild);
-    });
-    while (body.children.length > 120) body.removeChild(body.lastChild);
-  }
-
-  async function tick() {
-    try {
-      const res = await fetch('/api/v1/agents/feed?activity_since=' + activitySince, { headers: { 'Accept': 'application/json' } });
-      if (!res.ok) return;
-      const data = await res.json();
-      applyStats(data.stats);
-      renderRoster(data.roster);
-      applyActivity(data.activity);
-      if (typeof data.next_activity_since === 'number') activitySince = data.next_activity_since;
-      firstTick = false;
-    } catch (e) { /* keep polling */ }
+  function tick() {
+    fetch('/api/v1/agents/feed', { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        applyStats(data.stats);
+        renderRoster(data.roster);
+      })
+      .catch(function () { /* keep polling */ });
   }
 
   tick();
-  setInterval(tick, 4000);
+  setInterval(function () { if (document.visibilityState === 'visible') tick(); }, 4000);
 })();
 </script>
 

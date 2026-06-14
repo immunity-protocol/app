@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Controllers\Web;
 
-use App\Models\Agent\Brokers\FleetActivityBroker;
 use App\Models\Agent\Brokers\FleetMemberBroker;
 use App\Models\Core\NetworkConfig;
 use Zephyrus\Http\Response;
 use Zephyrus\Routing\Attribute\Get;
 
 /**
- * The /agents page: the live fleet roster + fleet stats + activity feed, and
- * the download (run the template agent and join the network yourself). The
- * agentic-first showcase — "an immune system run by agents, for agents".
- * First paint renders server-side; the page stays fresh via the
+ * The /agents page: the live fleet roster (identity only — ENS / avatar / role /
+ * online) and the download (run the template agent and join the network
+ * yourself). The agentic-first showcase — "an immune system run by agents, for
+ * agents". The rich, money-bearing activity feed now lives on the /dashboard.
+ * First paint renders server-side; the roster stays fresh via the
  * /api/v1/agents/feed poller.
  */
 final class AgentsController extends Controller
@@ -26,11 +26,9 @@ final class AgentsController extends Controller
     public function index(): Response
     {
         $members = new FleetMemberBroker();
-        $activityBroker = new FleetActivityBroker();
 
         $roster = $members->listRoster(100);
         $onlineByRole = $members->countOnlineByRole();
-        $totals = $activityBroker->fleetTotals();
         $network = NetworkConfig::baseSepolia();
 
         $roleCounts = [];
@@ -43,8 +41,6 @@ final class AgentsController extends Controller
             'online'      => $members->countOnline(),
             'total'       => $members->countTotal(),
             'roleCounts'  => $roleCounts,
-            'totals'      => $totals,
-            'activity'    => $activityBroker->findRecent(50),
             'explorerUrl' => $network->blockExplorerUrl,
             'image'       => 'ghcr.io/immunity-protocol/agent',
             'repoUrl'     => 'https://github.com/immunity-protocol/agent',

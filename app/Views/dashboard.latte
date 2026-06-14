@@ -5,33 +5,11 @@
 {block content}
 
 {*
-   Each event_name is a "Contract.Event" key mapped to a human label + colour
-   tone; $eventMeta is reused per-row in the feed below. Purely presentational,
-   kept in-template (no new PHP view model).
+   The dashboard leads with the live fleet activity feed — what the agents are
+   actually doing (checks, blocks, publishes, challenges) with value at stake.
+   First paint is server-rendered; the feed stays fresh via /api/v1/agents/feed.
+   The stat tiles ride the existing /api/v1/network/stats poller.
 *}
-{var $eventMeta = [
-    'Registry.Published'                       => ['Published',      'text-accent-soft',  'bg-accent-soft'],
-    'Registry.Matured'                         => ['Matured',        'text-immune-500',   'bg-immune-500'],
-    'Registry.Expired'                         => ['Expired',        'text-fg-tertiary',  'bg-fg-dim'],
-    'Registry.Retired'                         => ['Retired',        'text-fg-tertiary',  'bg-fg-dim'],
-    'Registry.Slashed'                         => ['Slashed',        'text-threat-300',   'bg-threat-300'],
-    'Registry.ChallengeOpened'                 => ['Challenged',     'text-caution-300',  'bg-caution-300'],
-    'ChallengeManager.VerdictRequested'        => ['Challenge open', 'text-caution-300',  'bg-caution-300'],
-    'ChallengeManager.Escalated'               => ['Escalated',      'text-caution-500',  'bg-caution-500'],
-    'ChallengeManager.Resolved'                => ['Resolved',       'text-immune-300',   'bg-immune-300'],
-    'CREVerdictReceiver.VerdictReceived'       => ['Jury verdict',   'text-immune-300',   'bg-immune-300'],
-    'Registry.Matched'                         => ['Check blocked',  'text-threat-300',   'bg-threat-300'],
-    'Registry.Checked'                         => ['Check allowed',  'text-immune-500',   'bg-immune-500'],
-    'NovelVerification.VerificationRequested'  => ['CRE requested',  'text-accent-soft',  'bg-accent-soft'],
-    'NovelVerification.Verified'               => ['CRE verdict',    'text-caution-300',  'bg-caution-300'],
-    'Reputation.Matured'                       => ['Rep +matured',   'text-immune-500',   'bg-immune-500'],
-    'Reputation.ChallengeWon'                  => ['Rep +won',       'text-immune-500',   'bg-immune-500'],
-    'Reputation.Slashed'                       => ['Rep slashed',    'text-threat-300',   'bg-threat-300'],
-    'Reputation.GenesisGranted'                => ['Rep genesis',    'text-accent-soft',  'bg-accent-soft'],
-    'Registry.BondLocked'                      => ['Bond locked',    'text-fg-secondary', 'bg-fg-tertiary'],
-    'Registry.BondReleased'                    => ['Bond released',  'text-fg-secondary', 'bg-fg-tertiary'],
-    'ProtectedSet.ProtectedUpdated'            => ['Protected set',  'text-immune-300',   'bg-immune-300'],
-]}
 
 {var $explorer = $explorerUrl ?? 'https://sepolia.basescan.org'}
 
@@ -49,24 +27,23 @@
                 Network activity
             </h1>
             <p class="text-fg-secondary text-[14px] sm:text-[15px] mt-4 max-w-[640px] leading-[1.6]">
-                Every contract event the indexer reads off-chain &mdash; CRE per-check verifications,
-                jury verdicts, challenges, and antibody lifecycle &mdash; as it lands on Base Sepolia.
+                What the fleet is doing right now &mdash; agents checking traffic, blocking threats,
+                publishing antibodies and challenging the false ones, with bonds at stake &mdash; as it streams in.
             </p>
         </div>
         <div class="md:text-right md:shrink-0 flex flex-col md:items-end gap-2">
-            <a href="/antibodies" class="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-widest2 text-accent-soft hover:text-accent transition-colors">
-                Open explorer
+            <a href="/agents" class="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-widest2 text-accent-soft hover:text-accent transition-colors">
+                The fleet roster
                 <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9L9 3M9 3H4M9 3V8" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
             </a>
-            <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">the canonical registry</span>
+            <span class="font-mono text-[10px] uppercase tracking-widest2 text-fg-dim">who's online</span>
         </div>
     </header>
 </section>
 
 {* ============== STATS BAR ============== *
    Same data source as the nav badge (/api/v1/network/stats) so the existing
-   live poller keeps the values fresh without a page refresh. The demo
-   "agents online" tile is gone; the lead tile is now antibodies active. *}
+   live poller keeps the values fresh without a page refresh. *}
 <section class="relative bg-ink-sunken border-y border-ink-line/60">
     <div class="relative max-w-[1400px] mx-auto px-5 sm:px-7 py-6">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-y-6 md:gap-0">
@@ -102,123 +79,79 @@
 </section>
 
 <section class="max-w-[1400px] mx-auto px-5 sm:px-7 pt-10 pb-16">
-    {* ============== ON-CHAIN EVENT FEED (full-page, single scroll) ============== *}
+    {* ============== LIVE FLEET ACTIVITY FEED ============== *}
     <div>
-            <header class="pb-4 border-b border-ink-line/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
-                    <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">On-chain event log</span>
-                    <span class="font-mono text-[10px] text-fg-dim">live (latest 60)</span>
-                </div>
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-fg-dim">
-                    <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-caution-300"></span>CRE / challenge</span>
-                    <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-300"></span>verdict</span>
-                    <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-threat-300"></span>slash</span>
-                </div>
-            </header>
-
-            <div class="mt-1">
-                <table class="w-full">
-                    <thead class="sticky top-0 bg-ink-base/95 backdrop-blur z-10">
-                        <tr class="border-b border-ink-line/40">
-                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 sm:pl-7 pr-4 py-3 w-24">When</th>
-                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-36">Event</th>
-                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-40">Agent</th>
-                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-5 sm:pr-7 py-3">Detail</th>
-                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-5 sm:pr-7 py-3 w-20">Tx</th>
-                        </tr>
-                    </thead>
-                    <tbody data-event-body>
-                    {if count($events ?? []) === 0}
-                        <tr><td colspan="5" class="px-7 py-10 text-center font-mono text-[11.5px] text-fg-dim" data-event-empty>
-                            No on-chain events ingested yet. Rows appear as the indexer reads Base Sepolia.
-                        </td></tr>
-                    {/if}
-                    {foreach $events ?? [] as $e}
-                        {var $meta = $eventMeta[$e['event_name']] ?? [$e['event_name'], 'text-fg-tertiary', 'bg-fg-dim']}
-                        {var $p = $e['payload']}
-                        <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle"
-                            data-evkey="{$e['block_number']}:{$e['log_index']}:{$e['id']}" data-ts="{$e['occurred_at']}">
-                            <td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap" data-time>{format('timeago', $e['occurred_at'])}</td>
-                            <td class="pr-4 py-2.5">
-                                <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {$meta[1]}">
-                                    <span class="inline-flex h-1.5 w-1.5 rounded-full {$meta[2]}"></span>{$meta[0]}
-                                </span>
-                            </td>
-                            <td class="pr-4 py-2.5">
-                                {if !empty($e['actor_address'])}
-                                    {var $aHex = substr($e['actor_address'], 2)}
-                                    {var $aName = $e['actor_ens'] ?? (substr($e['actor_address'], 0, 6) . '…' . substr($e['actor_address'], -4))}
-                                    <a href="/publisher/{$e['actor_address']}" class="inline-flex items-center gap-2 group" title="{$e['actor_address']}">
-                                        <span class="h-5 w-5 rounded-full shrink-0 ring-1 ring-ink-line/50" style="background: linear-gradient(135deg, #{substr($aHex, 0, 6)}, #{substr($aHex, -6)})" aria-hidden="true"></span>
-                                        <span class="font-mono text-[11px] {$e['actor_ens'] ? 'text-fg-secondary' : 'text-fg-dim'} group-hover:text-accent transition-colors truncate max-w-[110px]">{$aName}</span>
-                                    </a>
-                                {else}
-                                    <span class="font-mono text-[10px] text-fg-dim">—</span>
-                                {/if}
-                            </td>
-                            <td class="pr-5 sm:pr-7 py-2.5 text-[12px] text-fg-secondary leading-snug break-words font-mono">
-                                {var $immId = $e['imm_id'] ?? null}
-                                {var $reason = $e['reasoning'] ?? null}
-                                {var $abRef = $immId
-                                    ? '<a href="/antibody/' . $immId . '" class="text-accent-soft hover:text-accent transition-colors">' . $immId . '</a>'
-                                    : '<span class="text-fg-dim">' . substr((string) ($p['antibodyId'] ?? $p['keccakId'] ?? '0x'), 0, 20) . '&hellip;</span>'}
-                                {if $e['event_name'] === 'NovelVerification.Verified'}
-                                    {var $vTone = match ($p['verdictLabel'] ?? '') {
-                                        'MALICIOUS' => 'text-threat-300', 'SUSPICIOUS' => 'text-caution-300',
-                                        'BENIGN' => 'text-immune-500', default => 'text-fg-secondary',
-                                    }}
-                                    <span class="{$vTone} font-semibold">{$p['verdictLabel'] ?? '?'}</span>
-                                    <span class="text-fg-dim">&middot; confidence {$p['confidence'] ?? 0}% &middot; severity {$p['severity'] ?? 0}</span>
-                                {elseif $e['event_name'] === 'NovelVerification.VerificationRequested'}
-                                    <span class="text-fg-dim">check</span> {substr($p['checkId'] ?? '0x', 0, 22)}&hellip;
-                                {elseif $e['event_name'] === 'CREVerdictReceiver.VerdictReceived'}
-                                    {var $valid = (int) ($p['validVotes'] ?? 0)}{var $invalid = (int) ($p['invalidVotes'] ?? 0)}{var $total = $valid + $invalid}{var $upheld = $valid >= $invalid}
-                                    <span class="{if $upheld}text-immune-300{else}text-threat-300{/if} font-semibold">{if $upheld}{$valid}-of-{$total} VALID{else}{$invalid}-of-{$total} INVALID{/if}</span>
-                                    <span class="text-fg-dim">&middot; </span>{$abRef|noescape}
-                                {elseif $e['event_name'] === 'ChallengeManager.VerdictRequested'}
-                                    <span class="text-fg-dim">challenge opened &middot; </span>{$abRef|noescape}
-                                {elseif $e['event_name'] === 'ChallengeManager.Resolved'}
-                                    {var $inv = !empty($p['invalid'])}
-                                    <span class="{if $inv}text-threat-300{else}text-immune-300{/if} font-semibold">{if $inv}INVALIDATED{else}UPHELD{/if}</span>
-                                    <span class="text-fg-dim">&middot; </span>{$abRef|noescape}
-                                {elseif $e['event_name'] === 'Registry.Matched'}
-                                    <span class="text-threat-300 font-semibold">blocked</span>
-                                    <span class="text-fg-dim">&middot; matched </span>{$abRef|noescape}
-                                    {if $reason}<span class="block text-fg-dim text-[11px] leading-snug mt-1 break-words">{$reason}</span>{/if}
-                                {elseif $e['event_name'] === 'Registry.Checked'}
-                                    <span class="text-immune-500 font-semibold">allowed</span><span class="text-fg-dim"> &middot; no antibody match</span>
-                                {elseif $e['event_name'] === 'Registry.Published'}
-                                    <span class="text-fg-dim">minted </span>{$abRef|noescape}
-                                    {if $reason}<span class="block text-fg-dim text-[11px] leading-snug mt-1 break-words">{$reason}</span>{/if}
-                                {elseif $immId}
-                                    <span class="text-fg-dim">antibody </span>{$abRef|noescape}
-                                {elseif isset($p['publisher'])}
-                                    <span class="text-fg-dim">publisher</span> {substr($p['publisher'], 0, 14)}&hellip;
-                                {else}
-                                    <span class="text-fg-dim">block #{$e['block_number']}</span>
-                                {/if}
-                            </td>
-                            <td class="pr-5 sm:pr-7 py-2.5 text-right whitespace-nowrap">
-                                <a href="{$explorer}/tx/{$e['tx_hash']}" target="_blank" rel="noopener" class="font-mono text-[10.5px] text-accent-soft hover:text-accent transition-colors">
-                                    {substr($e['tx_hash'], 0, 8)}&hellip;
-                                </a>
-                            </td>
-                        </tr>
-                    {/foreach}
-                    </tbody>
-                </table>
-                <div data-load-sentinel class="py-6 text-center font-mono text-[10.5px] uppercase tracking-widest2 text-fg-dim">
-                    <span data-load-label>scroll for older events</span>
-                </div>
+        <header class="pb-4 border-b border-ink-line/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+                <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Live fleet activity</span>
+                <span class="font-mono text-[10px] text-fg-dim">streaming</span>
             </div>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-fg-dim">
+                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500"></span>allow</span>
+                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-threat-300"></span>block</span>
+                <span class="inline-flex items-center gap-1.5"><span class="inline-flex h-1.5 w-1.5 rounded-full bg-caution-300"></span>novel</span>
+            </div>
+        </header>
+
+        <div class="mt-1">
+            <table class="w-full">
+                <thead class="sticky top-0 bg-ink-base/95 backdrop-blur z-10">
+                    <tr class="border-b border-ink-line/40">
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pl-5 sm:pl-7 pr-4 py-3 w-24">When</th>
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-44">Agent</th>
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-32">Action</th>
+                        <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-5 sm:pr-7 py-3">Detail</th>
+                    </tr>
+                </thead>
+                <tbody id="activity-body">
+                {if count($activity ?? []) === 0}
+                    <tr id="activity-empty">
+                        <td colspan="4" class="px-7 py-10 text-center font-mono text-[11.5px] text-fg-dim">
+                            No activity yet. It streams in as agents check, publish, and challenge.
+                        </td>
+                    </tr>
+                {/if}
+                {foreach $activity ?? [] as $a}
+                    {var $statusTone = match((string) $a->status) {
+                        'allow' => 'text-immune-500',
+                        'block' => 'text-threat-300',
+                        'novel' => 'text-caution-300',
+                        'error' => 'text-threat-300',
+                        default => 'text-accent-soft',
+                    }}
+                    {var $statusDot = match((string) $a->status) {
+                        'allow' => 'bg-immune-500',
+                        'block' => 'bg-threat-300',
+                        'novel' => 'bg-caution-300',
+                        'error' => 'bg-threat-300',
+                        default => 'bg-accent-soft',
+                    }}
+                    <tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top">
+                        <td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap">{format('timeago', $a->occurred_at)}</td>
+                        <td class="pr-4 py-2.5 font-mono text-[11px] text-fg-secondary truncate">{$a->display_name}</td>
+                        <td class="pr-4 py-2.5">
+                            <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 {$statusTone}">
+                                <span class="inline-flex h-1.5 w-1.5 rounded-full {$statusDot}"></span>{$a->action_type}
+                            </span>
+                        </td>
+                        <td class="pr-5 sm:pr-7 py-2.5 text-[12px] text-fg-secondary leading-snug">
+                            {$a->action_summary}
+                            {if $a->antibody_imm_id}
+                                <a href="/antibody/{$a->antibody_imm_id}" class="font-mono text-[10.5px] text-fg-dim hover:text-accent transition-colors ml-1">{$a->antibody_imm_id}</a>
+                            {/if}
+                        </td>
+                    </tr>
+                {/foreach}
+                </tbody>
+            </table>
         </div>
     </div>
 </section>
 
-<script src="{asset('/javascripts/live.js')}"></script>
 <script>
 (function () {
+  // ---- Network stat tiles (shared with the nav badge poller) ----
   function fmtNumber(v) {
     if (v === null || v === undefined || v === '') return '-';
     const n = Number(v);
@@ -236,247 +169,134 @@
     const sign = n >= 0 ? '+' : '-';
     return sign + (money ? '$' : '') + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' in 1h';
   }
-  function setText(el, next) { if (el.textContent !== next) el.textContent = next; }
+  function setStat(el, next) { if (el.textContent !== next) el.textContent = next; }
 
-  Live.poll('/api/v1/network/stats', 4000, function (data) {
-    const tiles = data.tiles || {};
-    document.querySelectorAll('[data-stat]').forEach(function (el) {
-      const m = el.getAttribute('data-stat');
-      if (tiles[m]) setText(el, fmtNumber(tiles[m].value));
-    });
-    document.querySelectorAll('[data-stat-money]').forEach(function (el) {
-      const m = el.getAttribute('data-stat-money');
-      if (tiles[m]) setText(el, fmtMoney(tiles[m].value));
-    });
-    document.querySelectorAll('[data-delta]').forEach(function (el) {
-      const m = el.getAttribute('data-delta');
-      if (tiles[m]) setText(el, fmtDelta(tiles[m].delta_1h, false));
-    });
-    document.querySelectorAll('[data-delta-money]').forEach(function (el) {
-      const m = el.getAttribute('data-delta-money');
-      if (tiles[m]) setText(el, fmtDelta(tiles[m].delta_1h, true));
-    });
-    document.querySelectorAll('[data-compute-saved]').forEach(function (el) {
-      const m = el.getAttribute('data-compute-saved');
-      const tile = tiles[m];
-      if (!tile) return;
-      const n = Number(tile.value);
-      if (!Number.isFinite(n) || n <= 0) { setText(el, '≈ $0'); return; }
-      const usd = n * 0.004;
-      if (usd < 0.01) setText(el, '≈ <$0.01');
-      else if (usd < 1) setText(el, '≈ $' + usd.toFixed(2));
-      else setText(el, '≈ $' + usd.toLocaleString('en-US', { maximumFractionDigits: 0 }));
-    });
-  });
+  function pollStats() {
+    fetch('/api/v1/network/stats', { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        const tiles = data.tiles || {};
+        document.querySelectorAll('[data-stat]').forEach(function (el) {
+          const m = el.getAttribute('data-stat');
+          if (tiles[m]) setStat(el, fmtNumber(tiles[m].value));
+        });
+        document.querySelectorAll('[data-stat-money]').forEach(function (el) {
+          const m = el.getAttribute('data-stat-money');
+          if (tiles[m]) setStat(el, fmtMoney(tiles[m].value));
+        });
+        document.querySelectorAll('[data-delta]').forEach(function (el) {
+          const m = el.getAttribute('data-delta');
+          if (tiles[m]) setStat(el, fmtDelta(tiles[m].delta_1h, false));
+        });
+        document.querySelectorAll('[data-delta-money]').forEach(function (el) {
+          const m = el.getAttribute('data-delta-money');
+          if (tiles[m]) setStat(el, fmtDelta(tiles[m].delta_1h, true));
+        });
+        document.querySelectorAll('[data-compute-saved]').forEach(function (el) {
+          const m = el.getAttribute('data-compute-saved');
+          const tile = tiles[m];
+          if (!tile) return;
+          const n = Number(tile.value);
+          if (!Number.isFinite(n) || n <= 0) { setStat(el, '≈ $0'); return; }
+          const usd = n * 0.004;
+          if (usd < 0.01) setStat(el, '≈ <$0.01');
+          else if (usd < 1) setStat(el, '≈ $' + usd.toFixed(2));
+          else setStat(el, '≈ $' + usd.toLocaleString('en-US', { maximumFractionDigits: 0 }));
+        });
+      })
+      .catch(function () { /* next tick retries */ });
+  }
+  pollStats();
+  setInterval(function () { if (document.visibilityState === 'visible') pollStats(); }, 4000);
 })();
 
 // ============================================================================
-// On-chain event feed poll: re-renders the latest contract events every 4s.
-// Static snapshot (no cursor) — cheap at this volume and keeps timestamps fresh.
+// Live fleet activity feed: polls /api/v1/agents/feed with a keyset cursor on
+// the activity id. First tick REPLACES the server-rendered rows from the
+// response so cursor and DOM agree; thereafter prepends only-new rows on top.
 // Pauses when the tab is hidden.
 // ============================================================================
 (function () {
-  const EXPLORER = {$explorer};
-
-  const META = {
-    'Registry.Published':                      ['Published',      'text-accent-soft',  'bg-accent-soft'],
-    'Registry.Matured':                        ['Matured',        'text-immune-500',   'bg-immune-500'],
-    'Registry.Expired':                        ['Expired',        'text-fg-tertiary',  'bg-fg-dim'],
-    'Registry.Retired':                        ['Retired',        'text-fg-tertiary',  'bg-fg-dim'],
-    'Registry.Slashed':                        ['Slashed',        'text-threat-300',   'bg-threat-300'],
-    'Registry.ChallengeOpened':                ['Challenged',     'text-caution-300',  'bg-caution-300'],
-    'ChallengeManager.VerdictRequested':       ['Challenge open', 'text-caution-300',  'bg-caution-300'],
-    'ChallengeManager.Escalated':              ['Escalated',      'text-caution-500',  'bg-caution-500'],
-    'ChallengeManager.Resolved':               ['Resolved',       'text-immune-300',   'bg-immune-300'],
-    'CREVerdictReceiver.VerdictReceived':      ['Jury verdict',   'text-immune-300',   'bg-immune-300'],
-    'Registry.Matched':                        ['Check blocked',  'text-threat-300',   'bg-threat-300'],
-    'Registry.Checked':                        ['Check allowed',  'text-immune-500',   'bg-immune-500'],
-    'NovelVerification.VerificationRequested': ['CRE requested',  'text-accent-soft',  'bg-accent-soft'],
-    'NovelVerification.Verified':              ['CRE verdict',    'text-caution-300',  'bg-caution-300'],
-    'Reputation.Matured':                      ['Rep +matured',   'text-immune-500',   'bg-immune-500'],
-    'Reputation.ChallengeWon':                 ['Rep +won',       'text-immune-500',   'bg-immune-500'],
-    'Reputation.Slashed':                      ['Rep slashed',    'text-threat-300',   'bg-threat-300'],
-    'Reputation.GenesisGranted':               ['Rep genesis',    'text-accent-soft',  'bg-accent-soft'],
-    'Registry.BondLocked':                     ['Bond locked',    'text-fg-secondary', 'bg-fg-tertiary'],
-    'Registry.BondReleased':                   ['Bond released',  'text-fg-secondary', 'bg-fg-tertiary'],
-    'ProtectedSet.ProtectedUpdated':           ['Protected set',  'text-immune-300',   'bg-immune-300'],
+  const STATUS_TONE = {
+    allow: ['text-immune-500', 'bg-immune-500'],
+    block: ['text-threat-300', 'bg-threat-300'],
+    novel: ['text-caution-300', 'bg-caution-300'],
+    error: ['text-threat-300', 'bg-threat-300'],
+    info:  ['text-accent-soft', 'bg-accent-soft'],
   };
 
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function timeAgo(iso) {
-    if (!iso) return '-';
-    // Postgres hands back "2026-06-13 17:45:41.544255+00": space separator,
-    // microseconds, and a colon-less "+00" offset that Date.parse rejects.
-    // Normalise to RFC3339 ("…T17:45:41+00:00") before parsing.
+  function ago(iso) {
+    if (!iso) return '';
+    // Postgres hands back "2026-06-13 17:45:41.544255+00": normalise to RFC3339.
     let s = String(iso).replace(' ', 'T').replace(/\.\d+/, '');
     s = s.replace(/([+-]\d\d)$/, '$1:00').replace(/([+-]\d\d)(\d\d)$/, '$1:$2');
-    const then = Date.parse(s);
-    if (!Number.isFinite(then)) return '-';
-    const sec = Math.max(0, Math.floor((Date.now() - then) / 1000));
-    if (sec < 60)        return sec + 's ago';
-    if (sec < 3600)      return Math.floor(sec / 60) + 'm ago';
-    if (sec < 86400)     return Math.floor(sec / 3600) + 'h ago';
-    if (sec < 86400 * 7) return Math.floor(sec / 86400) + 'd ago';
-    return new Date(then).toISOString().slice(0, 10);
-  }
-  function clip(hex, n) { return hex ? escapeHtml(String(hex).slice(0, n)) + '…' : '?'; }
-
-  function abLink(e) {
-    if (e.imm_id) return '<a href="/antibody/' + escapeHtml(e.imm_id) + '" class="text-accent-soft hover:text-accent transition-colors">' + escapeHtml(e.imm_id) + '</a>';
-    const p = e.payload || {};
-    return '<span class="text-fg-dim">' + clip(p.antibodyId || p.keccakId, 20) + '</span>';
-  }
-  function reasonLine(e) {
-    return e.reasoning ? '<span class="block text-fg-dim text-[11px] leading-snug mt-1 break-words">' + escapeHtml(e.reasoning) + '</span>' : '';
-  }
-  function detail(e) {
-    const name = e.event_name, p = e.payload || {};
-    if (name === 'NovelVerification.Verified') {
-      const tone = { 'MALICIOUS': 'text-threat-300', 'SUSPICIOUS': 'text-caution-300', 'BENIGN': 'text-immune-500' }[p.verdictLabel] || 'text-fg-secondary';
-      return '<span class="' + tone + ' font-semibold">' + escapeHtml(p.verdictLabel || '?') + '</span>' +
-             '<span class="text-fg-dim"> · confidence ' + (p.confidence || 0) + '% · severity ' + (p.severity || 0) + '</span>';
-    }
-    if (name === 'NovelVerification.VerificationRequested') {
-      return '<span class="text-fg-dim">check</span> ' + clip(p.checkId, 14);
-    }
-    if (name === 'CREVerdictReceiver.VerdictReceived') {
-      const valid = Number(p.validVotes || 0), invalid = Number(p.invalidVotes || 0), total = valid + invalid;
-      const upheld = valid >= invalid;
-      const label = upheld ? (valid + '-of-' + total + ' VALID') : (invalid + '-of-' + total + ' INVALID');
-      return '<span class="' + (upheld ? 'text-immune-300' : 'text-threat-300') + ' font-semibold">' + label + '</span><span class="text-fg-dim"> · </span>' + abLink(e);
-    }
-    if (name === 'ChallengeManager.VerdictRequested') {
-      return '<span class="text-fg-dim">challenge opened · </span>' + abLink(e);
-    }
-    if (name === 'ChallengeManager.Resolved') {
-      const inv = !!p.invalid;
-      return '<span class="' + (inv ? 'text-threat-300' : 'text-immune-300') + ' font-semibold">' + (inv ? 'INVALIDATED' : 'UPHELD') + '</span><span class="text-fg-dim"> · </span>' + abLink(e);
-    }
-    if (name === 'Registry.Matched') {
-      return '<span class="text-threat-300 font-semibold">blocked</span><span class="text-fg-dim"> · matched </span>' + abLink(e) + reasonLine(e);
-    }
-    if (name === 'Registry.Checked') {
-      return '<span class="text-immune-500 font-semibold">allowed</span><span class="text-fg-dim"> · no antibody match</span>';
-    }
-    if (name === 'Registry.Published') {
-      return '<span class="text-fg-dim">minted </span>' + abLink(e) + reasonLine(e);
-    }
-    if (e.imm_id)     return '<span class="text-fg-dim">antibody </span>' + abLink(e);
-    if (p.publisher)  return '<span class="text-fg-dim">publisher</span> ' + clip(p.publisher, 14);
-    return '';
+    const t = Date.parse(s);
+    if (!Number.isFinite(t)) return '';
+    const sec = Math.max(0, Math.floor((Date.now() - t) / 1000));
+    if (sec < 60) return sec + 's';
+    if (sec < 3600) return Math.floor(sec / 60) + 'm';
+    if (sec < 86400) return Math.floor(sec / 3600) + 'h';
+    return Math.floor(sec / 86400) + 'd';
   }
 
-  function keyOf(e) { return e.block_number + ':' + e.log_index + ':' + e.id; }
-
-  function agentCell(e) {
-    const a = e.actor_address;
-    if (!a) return '<td class="pr-4 py-2.5"><span class="font-mono text-[10px] text-fg-dim">—</span></td>';
-    const hex = a.slice(2);
-    const name = e.actor_ens || (a.slice(0, 6) + '…' + a.slice(-4));
-    const tone = e.actor_ens ? 'text-fg-secondary' : 'text-fg-dim';
-    return '<td class="pr-4 py-2.5"><a href="/publisher/' + escapeHtml(a) + '" class="inline-flex items-center gap-2 group" title="' + escapeHtml(a) + '">' +
-      '<span class="h-5 w-5 rounded-full shrink-0 ring-1 ring-ink-line/50" style="background: linear-gradient(135deg, #' + hex.slice(0, 6) + ', #' + hex.slice(-6) + ')"></span>' +
-      '<span class="font-mono text-[11px] ' + tone + ' group-hover:text-accent transition-colors truncate max-w-[110px]">' + escapeHtml(name) + '</span></a></td>';
+  function activityRow(a) {
+    const tone = STATUS_TONE[a.status] || ['text-accent-soft', 'bg-accent-soft'];
+    const ab = a.antibody_imm_id
+      ? '<a href="/antibody/' + esc(a.antibody_imm_id) + '" class="font-mono text-[10.5px] text-fg-dim hover:text-accent transition-colors ml-1">' + esc(a.antibody_imm_id) + '</a>'
+      : '';
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-top';
+    tr.innerHTML =
+      '<td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap">' + ago(a.occurred_at) + '</td>' +
+      '<td class="pr-4 py-2.5 font-mono text-[11px] text-fg-secondary truncate">' + esc(a.display_name) + '</td>' +
+      '<td class="pr-4 py-2.5"><span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 ' + tone[0] + '">' +
+        '<span class="inline-flex h-1.5 w-1.5 rounded-full ' + tone[1] + '"></span>' + esc(a.action_type) + '</span></td>' +
+      '<td class="pr-5 sm:pr-7 py-2.5 text-[12px] text-fg-secondary leading-snug">' + esc(a.action_summary) + ab + '</td>';
+    return tr;
   }
 
-  function renderRow(e) {
-    const meta = META[e.event_name] || [e.event_name, 'text-fg-tertiary', 'bg-fg-dim'];
-    const d = detail(e) || '<span class="text-fg-dim">block #' + e.block_number + '</span>';
-    return (
-      '<tr class="border-b border-ink-line/30 last:border-0 hover:bg-ink-elevated/30 transition-colors align-middle" data-evkey="' + keyOf(e) + '" data-ts="' + escapeHtml(e.occurred_at) + '">' +
-        '<td class="pl-5 sm:pl-7 pr-4 py-2.5 font-mono text-[10.5px] text-fg-dim tabular-nums whitespace-nowrap" data-time>' + timeAgo(e.occurred_at) + '</td>' +
-        '<td class="pr-4 py-2.5"><span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest2 ' + meta[1] + '">' +
-          '<span class="inline-flex h-1.5 w-1.5 rounded-full ' + meta[2] + '"></span>' + escapeHtml(meta[0]) + '</span></td>' +
-        agentCell(e) +
-        '<td class="pr-5 sm:pr-7 py-2.5 text-[12px] text-fg-secondary leading-snug break-words font-mono">' + d + '</td>' +
-        '<td class="pr-5 sm:pr-7 py-2.5 text-right whitespace-nowrap">' +
-          '<a href="' + EXPLORER + '/tx/' + escapeHtml(e.tx_hash) + '" target="_blank" rel="noopener" class="font-mono text-[10.5px] text-accent-soft hover:text-accent transition-colors">' +
-          escapeHtml(String(e.tx_hash).slice(0, 8)) + '…</a></td>' +
-      '</tr>'
-    );
-  }
+  let activitySince = 0;
+  let firstTick = true;
 
-  const tbody = document.querySelector('[data-event-body]');
-  function seenKeys() {
-    const s = new Set();
-    if (tbody) tbody.querySelectorAll('tr[data-evkey]').forEach(function (tr) { s.add(tr.getAttribute('data-evkey')); });
-    return s;
-  }
-  function refreshTimes() {
-    if (!tbody) return;
-    tbody.querySelectorAll('tr[data-ts]').forEach(function (tr) {
-      const cell = tr.querySelector('[data-time]');
-      if (cell) cell.textContent = timeAgo(tr.getAttribute('data-ts'));
+  function applyActivity(rows) {
+    const body = document.getElementById('activity-body');
+    if (!body || !Array.isArray(rows)) return;
+    if (firstTick) {
+      if (rows.length) {
+        body.innerHTML = '';                       // rows arrive newest-first
+        rows.forEach(function (a) { body.appendChild(activityRow(a)); });
+      }
+      return;
+    }
+    if (!rows.length) return;
+    const empty = document.getElementById('activity-empty');
+    if (empty) empty.remove();
+    rows.slice().reverse().forEach(function (a) {  // prepend so newest ends on top
+      body.insertBefore(activityRow(a), body.firstChild);
     });
+    while (body.children.length > 120) body.removeChild(body.lastChild);
   }
 
-  // Live poll: PREPEND only events we haven't shown yet (newest on top) so the
-  // older rows the user scrolled back to load are never wiped; refresh the
-  // relative timestamps each tick.
   function tick() {
-    fetch('/api/v1/dashboard/events', { headers: { 'Accept': 'application/json' } })
+    fetch('/api/v1/agents/feed?activity_since=' + activitySince, { headers: { 'Accept': 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
-        if (!data || !Array.isArray(data.events) || !tbody) return;
-        const seen = seenKeys();
-        const fresh = data.events.filter(function (e) { return !seen.has(keyOf(e)); });
-        if (fresh.length) {
-          const empty = tbody.querySelector('[data-event-empty]');
-          if (empty && empty.closest('tr')) empty.closest('tr').remove();
-          tbody.insertAdjacentHTML('afterbegin', fresh.map(renderRow).join(''));
-        }
-        refreshTimes();
+        if (!data) return;
+        applyActivity(data.activity);
+        if (typeof data.next_activity_since === 'number') activitySince = data.next_activity_since;
+        firstTick = false;
       })
-      .catch(function () { /* swallow: next tick retries */ });
+      .catch(function () { /* keep polling */ });
   }
 
-  function loop() {
-    if (document.visibilityState === 'visible') tick();
-    setTimeout(loop, 4000);
-  }
-  setTimeout(loop, 800);
-
-  // Infinite scroll: when the sentinel scrolls into view, fetch the next page
-  // of OLDER events (keyset cursor = the oldest row shown) and append them.
-  (function () {
-    const sentinel = document.querySelector('[data-load-sentinel]');
-    const label = document.querySelector('[data-load-label]');
-    if (!sentinel || !tbody || !('IntersectionObserver' in window)) return;
-    let loading = false, exhausted = false;
-    function loadOlder() {
-      if (loading || exhausted) return;
-      const rows = tbody.querySelectorAll('tr[data-evkey]');
-      if (!rows.length) return;
-      const cur = rows[rows.length - 1].getAttribute('data-evkey').split(':');
-      loading = true;
-      if (label) label.textContent = 'loading…';
-      fetch('/api/v1/dashboard/events?before_block=' + cur[0] + '&before_log=' + cur[1] + '&before_id=' + cur[2],
-            { headers: { 'Accept': 'application/json' } })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (data) {
-          const evs = (data && Array.isArray(data.events)) ? data.events : [];
-          if (evs.length === 0) {
-            exhausted = true;
-            if (label) label.textContent = 'end of log';
-            observer.disconnect();
-            return;
-          }
-          tbody.insertAdjacentHTML('beforeend', evs.map(renderRow).join(''));
-          refreshTimes();
-          if (label) label.textContent = 'scroll for older events';
-        })
-        .catch(function () { if (label) label.textContent = 'scroll for older events'; })
-        .finally(function () { loading = false; });
-    }
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) { if (en.isIntersecting) loadOlder(); });
-    }, { rootMargin: '300px' });
-    observer.observe(sentinel);
-  })();
+  tick();
+  setInterval(function () { if (document.visibilityState === 'visible') tick(); }, 4000);
 })();
 </script>
 
