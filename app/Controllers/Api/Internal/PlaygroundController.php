@@ -99,7 +99,8 @@ final class PlaygroundController extends Controller
 
     private function countActiveAntibodies(): int
     {
-        return (int) $this->entries->countActive();
+        // Threats (distinct matchers), not raw antibody rows — the CVE-style unit.
+        return (int) $this->entries->countActiveThreats();
     }
 
     /**

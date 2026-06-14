@@ -170,6 +170,18 @@ class EntryBroker extends Broker
     }
 
     /**
+     * Active THREATS — distinct matcher hashes with at least one active
+     * antibody. This is the CVE-style unit (one threat, many corroborators),
+     * not the raw antibody-row count. What the playground/dashboard should show.
+     */
+    public function countActiveThreats(): int
+    {
+        return (int) $this->selectValue(
+            "SELECT count(DISTINCT primary_matcher_hash) FROM antibody.entry WHERE status = 'active'"
+        );
+    }
+
+    /**
      * Antibodies created on or after the given ISO timestamp. Drives the
      * "+N in 1h" sub-stat on the landing page tile.
      */

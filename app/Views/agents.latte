@@ -98,13 +98,14 @@
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-left pr-4 py-3 w-28">Role</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3 w-16">Chk</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3 w-16">Blk</th>
+                            <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-4 py-3 w-16" title="on-chain reputation score">Rep</th>
                             <th class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary font-normal text-right pr-5 py-3 w-24">Seen</th>
                         </tr>
                     </thead>
                     <tbody id="roster-body">
                     {if count($roster) === 0}
                         <tr id="roster-empty">
-                            <td colspan="5" class="px-5 py-12 text-center font-mono text-[12px] text-fg-dim">
+                            <td colspan="6" class="px-5 py-12 text-center font-mono text-[12px] text-fg-dim">
                                 No agents connected yet. Run the template agent below and it appears here within seconds.
                             </td>
                         </tr>
@@ -130,6 +131,7 @@
                             </td>
                             <td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] text-fg-secondary tabular-nums">{$m->checks}</td>
                             <td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] tabular-nums {if $m->blocks > 0}text-threat-300{else}text-fg-dim{/if}">{$m->blocks}</td>
+                            <td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] tabular-nums {if $m->reputation > 0}text-immune-500{else}text-fg-dim{/if}">{$m->reputation}</td>
                             <td class="pr-5 py-2.5 align-middle text-right font-mono text-[10px] text-fg-dim tabular-nums whitespace-nowrap">{format('timeago', $m->last_seen)}</td>
                         </tr>
                     {/foreach}
@@ -310,6 +312,7 @@
           '<span class="inline-flex h-1.5 w-1.5 rounded-full ' + tone[1] + '"></span>' + esc(m.role) + '</span></td>' +
         '<td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] text-fg-secondary tabular-nums">' + m.checks + '</td>' +
         '<td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] tabular-nums ' + (m.blocks > 0 ? 'text-threat-300' : 'text-fg-dim') + '">' + m.blocks + '</td>' +
+        '<td class="pr-4 py-2.5 align-middle text-right font-mono text-[11.5px] tabular-nums ' + (m.reputation > 0 ? 'text-immune-500' : 'text-fg-dim') + '">' + (m.reputation || 0) + '</td>' +
         '<td class="pr-5 py-2.5 align-middle text-right font-mono text-[10px] text-fg-dim tabular-nums whitespace-nowrap">' + ago(m.last_seen) + '</td>' +
       '</tr>';
     }).join('');

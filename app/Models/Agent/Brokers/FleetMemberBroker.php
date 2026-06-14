@@ -99,7 +99,8 @@ class FleetMemberBroker extends Broker
                  (m.last_seen >= now() - make_interval(secs => ?)) AS online,
                  coalesce(a.checks, 0)    AS checks,
                  coalesce(a.blocks, 0)    AS blocks,
-                 coalesce(a.publishes, 0) AS publishes
+                 coalesce(a.publishes, 0) AS publishes,
+                 coalesce(p.score, 0)     AS reputation
                FROM agent.fleet_member m
           LEFT JOIN (
                  SELECT agent_id,
@@ -109,6 +110,8 @@ class FleetMemberBroker extends Broker
                    FROM agent.fleet_activity
                GROUP BY agent_id
                ) a ON a.agent_id = m.agent_id
+          LEFT JOIN antibody.publisher p
+                 ON m.wallet IS NOT NULL AND p.address = decode(substr(m.wallet, 3), 'hex')
            ORDER BY online DESC, m.last_seen DESC
               LIMIT ?",
             [self::ONLINE_WINDOW_SECONDS, $limit]

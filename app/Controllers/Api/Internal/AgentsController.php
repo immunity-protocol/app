@@ -70,6 +70,7 @@ final class AgentsController extends Controller
             'checks'       => (int) $r->checks,
             'blocks'       => (int) $r->blocks,
             'publishes'    => (int) $r->publishes,
+            'reputation'   => (int) $r->reputation,
         ];
     }
 
