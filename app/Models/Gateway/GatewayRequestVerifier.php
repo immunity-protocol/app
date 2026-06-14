@@ -22,6 +22,13 @@ final class GatewayRequestVerifier
 {
     public const string SCHEMA = 'immunity/gateway-request/v1';
     public const string ENVELOPE_SCHEMA = 'immunity/antibody-envelope/v1';
+    /** The per-check (Tier-3 CRE novel-verification) request envelope. */
+    public const string PER_CHECK_ENVELOPE_SCHEMA = 'immunity/per-check-request/v1';
+    /** Envelope schemas the gateway will pin (antibody publish + per-check request). */
+    public const array ACCEPTED_ENVELOPE_SCHEMAS = [
+        self::ENVELOPE_SCHEMA,
+        self::PER_CHECK_ENVELOPE_SCHEMA,
+    ];
 
     /** Default ±5 min freshness window (ms). */
     public const int DEFAULT_WINDOW_MS = 5 * 60 * 1000;
@@ -63,7 +70,7 @@ final class GatewayRequestVerifier
         if (!$envelope instanceof stdClass) {
             throw new GatewayException(400, 'payload.envelope must be an object');
         }
-        if (($envelope->schema ?? null) !== self::ENVELOPE_SCHEMA) {
+        if (!in_array($envelope->schema ?? null, self::ACCEPTED_ENVELOPE_SCHEMAS, true)) {
             throw new GatewayException(400, 'unsupported or missing envelope schema');
         }
 
