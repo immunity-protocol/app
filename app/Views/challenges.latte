@@ -1,0 +1,198 @@
+{layout 'layouts/main.latte'}
+
+{block title}Challenges / Immunity network{/block}
+
+{block content}
+
+{*
+ * /challenges — the challenge game. Open + resolved disputes over antibodies.
+ * Hunters challenge flags they judge false; the CRE diverse-model jury rules
+ * invalid (struck) or valid (upheld). Server-rendered first paint, polls
+ * /api/v1/challenges/feed for live updates.
+ *}
+
+{var $labels = [
+    '0xe697ef7724453f239d8c0eb9295d87c344d9ce60' => 'USDC',
+    '0x4200000000000000000000000000000000000006' => 'WETH',
+    '0x2626664c2603336e57b271c5c0b26f421741e481' => 'Uniswap v4 router',
+]}
+
+<section class="max-w-[900px] mx-auto px-5 sm:px-7 pt-20 sm:pt-14 pb-16">
+
+    {* ---------------- HERO ---------------- *}
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+            <span class="font-mono text-[10.5px] uppercase tracking-widest2 text-fg-tertiary">Demo</span>
+            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-immune-500 pulse-soft" aria-hidden="true"></span>
+        </div>
+        <h1 class="font-display text-[42px] sm:text-[56px] font-light tracking-tightest text-fg-primary leading-[1.0]">
+            Challenges
+        </h1>
+        <p class="text-fg-secondary text-[14px] sm:text-[15px] mt-4 max-w-[680px] leading-[1.6]">
+            The immune system fighting in the open. Anyone can <span class="text-caution-300">challenge</span> a
+            flag they judge false, posting a bond. A <span class="text-accent">diverse-model CRE jury</span> —
+            three independent models, DON-attested — rules: <span class="text-threat-300">struck down</span>
+            (false positive → publisher slashed, challenger paid) or <span class="text-immune-500">upheld</span>
+            (real threat → challenger loses their bond). Griefing always loses.
+        </p>
+    </div>
+
+    {* ---------------- STAT TILES ---------------- *}
+    <div class="grid grid-cols-3 gap-px bg-ink-line/40 border border-ink-line/60 rounded-sm overflow-hidden mb-10">
+        <div class="bg-ink-base px-5 py-4">
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Total</div>
+            <div class="font-display text-[30px] font-light tabular-nums text-fg-primary leading-none"><span id="stat-total">{$total}</span></div>
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim mt-1">disputes</div>
+        </div>
+        <div class="bg-ink-base px-5 py-4">
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Open</div>
+            <div class="font-display text-[30px] font-light tabular-nums text-caution-300 leading-none"><span id="stat-open">{$open}</span></div>
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim mt-1">awaiting verdict</div>
+        </div>
+        <div class="bg-ink-base px-5 py-4">
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary mb-2">Struck down</div>
+            <div class="font-display text-[30px] font-light tabular-nums text-threat-300 leading-none"><span id="stat-struck">{$struck}</span></div>
+            <div class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-dim mt-1">false positives caught</div>
+        </div>
+    </div>
+
+    {* ---------------- DISPUTES ---------------- *}
+    <div id="challenges-body" class="space-y-3">
+        {if count($challenges) === 0}
+            <div id="challenges-empty" class="border border-ink-line/60 rounded-sm bg-ink-elevated/20 px-6 py-12 text-center font-mono text-[12px] text-fg-dim">
+                No challenges yet. They appear here as hunters contest false flags and the jury rules.
+            </div>
+        {/if}
+        {foreach $challenges as $c}
+            {include #challengeCard, c => $c, labels => $labels, explorerUrl => $explorerUrl}
+        {/foreach}
+    </div>
+
+</section>
+
+{define challengeCard}
+    {var $addr = strtolower($c['target'] ?? '')}
+    {var $outcome = $c['outcome']}
+    {var $tone = $outcome === 'struck' ? ['struck down', 'text-threat-300', 'border-threat-500/40 bg-threat-500/[0.04]']
+        : ($outcome === 'upheld' ? ['upheld', 'text-immune-500', 'border-immune-500/30 bg-immune-500/[0.04]']
+        : ['pending', 'text-caution-300', 'border-caution-500/30 bg-caution-500/[0.03]'])}
+    {var $targetName = $labels[$addr] ?? ($c['target'] ? (substr($c['target'], 0, 6) . '…' . substr($c['target'], -4)) : 'unknown')}
+    {var $accused = $c['publisher_ens'] ?? ($c['publisher'] ? (substr($c['publisher'], 0, 6) . '…' . substr($c['publisher'], -4)) : 'unknown')}
+    {var $challenger = $c['challenger_ens'] ?? ($c['challenger'] ? (substr($c['challenger'], 0, 6) . '…' . substr($c['challenger'], -4)) : 'unknown')}
+    <article class="border rounded-sm p-4 sm:p-5 {$tone[2]}">
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-mono text-[9px] uppercase tracking-widest2 {$tone[1]} border {if $outcome === 'struck'}border-threat-500/40{elseif $outcome === 'upheld'}border-immune-500/40{else}border-caution-500/40{/if} rounded-sm px-1.5 py-0.5">{$tone[0]}</span>
+                    {if $c['prominence_tier'] >= 1}
+                        <span class="font-mono text-[8.5px] uppercase tracking-widest2 text-caution-300 border border-caution-300/40 rounded-sm px-1.5 py-0.5">protected target</span>
+                    {/if}
+                    {if $c['imm_id']}
+                        <a href="/antibody/{$c['imm_id']}" class="font-mono text-[10.5px] text-fg-dim hover:text-accent transition-colors">{$c['imm_id']}</a>
+                    {/if}
+                </div>
+                <p class="text-[13.5px] text-fg-secondary leading-[1.5] mt-2">
+                    <span class="text-fg-primary">{$accused}</span> flagged
+                    <span class="text-caution-300">{$targetName}</span> —
+                    challenged by <span class="text-fg-primary">{$challenger}</span>
+                </p>
+            </div>
+            <div class="text-right shrink-0 font-mono text-[10px] text-fg-dim tabular-nums">
+                {if $c['bond']}<div>bond ${number_format($c['bond'], 2)}</div>{/if}
+                <div>{format('timeago', $c['resolved_at'] ?? $c['opened_at'])}</div>
+            </div>
+        </div>
+
+        {* jury verdict *}
+        <div class="flex items-center gap-3 mt-3 pt-3 border-t border-ink-line/30">
+            <span class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary">CRE jury</span>
+            <span class="inline-flex items-center gap-1.5 font-mono text-[10px]">
+                <span class="text-threat-300 tabular-nums">{$c['invalid_votes']}</span><span class="text-fg-dim">invalid</span>
+                <span class="text-fg-dim">·</span>
+                <span class="text-immune-500 tabular-nums">{$c['valid_votes']}</span><span class="text-fg-dim">valid</span>
+            </span>
+            {if $outcome === 'struck' && $c['winner_payout']}
+                <span class="font-mono text-[10px] text-immune-500 ml-auto">+${number_format($c['winner_payout'], 2)} → challenger</span>
+            {elseif $outcome === 'pending'}
+                <span class="font-mono text-[10px] text-caution-300 ml-auto">{$c['status']}</span>
+            {/if}
+        </div>
+    </article>
+{/define}
+
+<script n:syntax="off">
+(function () {
+  const LABELS = {
+    '0xe697ef7724453f239d8c0eb9295d87c344d9ce60': 'USDC',
+    '0x4200000000000000000000000000000000000006': 'WETH',
+    '0x2626664c2603336e57b271c5c0b26f421741e481': 'Uniswap v4 router',
+  };
+  const body = document.getElementById('challenges-body');
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function ago(iso) { const t = Date.parse(iso); if (!Number.isFinite(t)) return ''; const s = Math.max(0,(Date.now()-t)/1000); if (s<60) return Math.floor(s)+'s'; if (s<3600) return Math.floor(s/60)+'m'; if (s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; }
+  function short(a) { return a.slice(0,6)+'…'+a.slice(-4); }
+  function money(v) { return Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function setText(id, v) { const el = document.getElementById(id); if (el && el.textContent !== String(v)) el.textContent = v; }
+
+  function toneOf(o) {
+    if (o === 'struck') return ['struck down', 'text-threat-300', 'border-threat-500/40 bg-threat-500/[0.04]', 'border-threat-500/40'];
+    if (o === 'upheld') return ['upheld', 'text-immune-500', 'border-immune-500/30 bg-immune-500/[0.04]', 'border-immune-500/40'];
+    return ['pending', 'text-caution-300', 'border-caution-500/30 bg-caution-500/[0.03]', 'border-caution-500/40'];
+  }
+  function card(c) {
+    const addr = (c.target || '').toLowerCase();
+    const t = toneOf(c.outcome);
+    const targetName = LABELS[addr] || (c.target ? short(c.target) : 'unknown');
+    const accused = c.publisher_ens || (c.publisher ? short(c.publisher) : 'unknown');
+    const challenger = c.challenger_ens || (c.challenger ? short(c.challenger) : 'unknown');
+    const el = document.createElement('article');
+    el.className = 'border rounded-sm p-4 sm:p-5 ' + t[2];
+    const protTag = c.prominence_tier >= 1
+      ? '<span class="font-mono text-[8.5px] uppercase tracking-widest2 text-caution-300 border border-caution-300/40 rounded-sm px-1.5 py-0.5">protected target</span>' : '';
+    const immLink = c.imm_id
+      ? '<a href="/antibody/' + esc(c.imm_id) + '" class="font-mono text-[10.5px] text-fg-dim hover:text-accent transition-colors">' + esc(c.imm_id) + '</a>' : '';
+    const payout = (c.outcome === 'struck' && c.winner_payout)
+      ? '<span class="font-mono text-[10px] text-immune-500 ml-auto">+$' + money(c.winner_payout) + ' → challenger</span>'
+      : (c.outcome === 'pending' ? '<span class="font-mono text-[10px] text-caution-300 ml-auto">' + esc(c.status) + '</span>' : '');
+    const bond = c.bond ? '<div>bond $' + money(c.bond) + '</div>' : '';
+    el.innerHTML =
+      '<div class="flex items-start justify-between gap-3 flex-wrap"><div class="min-w-0">' +
+        '<div class="flex items-center gap-2 flex-wrap">' +
+          '<span class="font-mono text-[9px] uppercase tracking-widest2 ' + t[1] + ' border ' + t[3] + ' rounded-sm px-1.5 py-0.5">' + t[0] + '</span>' +
+          protTag + immLink +
+        '</div>' +
+        '<p class="text-[13.5px] text-fg-secondary leading-[1.5] mt-2"><span class="text-fg-primary">' + esc(accused) + '</span> flagged ' +
+          '<span class="text-caution-300">' + esc(targetName) + '</span> — challenged by <span class="text-fg-primary">' + esc(challenger) + '</span></p>' +
+      '</div>' +
+      '<div class="text-right shrink-0 font-mono text-[10px] text-fg-dim tabular-nums">' + bond +
+        '<div>' + ago(c.resolved_at || c.opened_at) + '</div></div></div>' +
+      '<div class="flex items-center gap-3 mt-3 pt-3 border-t border-ink-line/30">' +
+        '<span class="font-mono text-[9.5px] uppercase tracking-widest2 text-fg-tertiary">CRE jury</span>' +
+        '<span class="inline-flex items-center gap-1.5 font-mono text-[10px]">' +
+          '<span class="text-threat-300 tabular-nums">' + c.invalid_votes + '</span><span class="text-fg-dim">invalid</span>' +
+          '<span class="text-fg-dim">·</span>' +
+          '<span class="text-immune-500 tabular-nums">' + c.valid_votes + '</span><span class="text-fg-dim">valid</span>' +
+        '</span>' + payout +
+      '</div>';
+    return el;
+  }
+
+  async function tick() {
+    try {
+      const r = await fetch('/api/v1/challenges/feed', { headers: { Accept: 'application/json' } });
+      if (!r.ok) return;
+      const data = await r.json();
+      if (data.stats) { setText('stat-total', data.stats.total); setText('stat-open', data.stats.open); setText('stat-struck', data.stats.struck); }
+      const rows = data.challenges || [];
+      if (rows.length) {
+        const empty = document.getElementById('challenges-empty'); if (empty) empty.remove();
+        body.innerHTML = '';
+        rows.forEach(function (c) { body.appendChild(card(c)); });
+      }
+    } catch (e) { /* keep polling */ }
+  }
+  setInterval(tick, 5000);
+})();
+</script>
+
+{/block}
