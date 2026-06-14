@@ -41,6 +41,7 @@ final class AgentsController extends Controller
             'online'      => $members->countOnline(),
             'total'       => $members->countTotal(),
             'roleCounts'  => $roleCounts,
+            'fleetPaused' => (new \App\Models\Agent\Brokers\FleetControlBroker())->isPaused(),
             'explorerUrl' => $network->blockExplorerUrl,
             'image'       => 'ghcr.io/immunity-protocol/agent',
             'repoUrl'     => 'https://github.com/immunity-protocol/agent',

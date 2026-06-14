@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Api\Internal;
 
 use App\Models\Agent\Brokers\FleetActivityBroker;
+use App\Models\Agent\Brokers\FleetControlBroker;
 use App\Models\Agent\Brokers\FleetMemberBroker;
 use Zephyrus\Http\Request;
 use Zephyrus\Http\Response;
@@ -49,6 +50,7 @@ final class AgentsController extends Controller
                 'checks'         => $totals['checks'],
                 'blocks'         => $totals['blocks'],
                 'publishes'      => $totals['publishes'],
+                'paused'         => (new FleetControlBroker())->isPaused(),
             ],
             'roster'              => array_map([$this, 'projectMember'], $roster),
             'activity'            => array_map([$this, 'projectActivity'], $activity),

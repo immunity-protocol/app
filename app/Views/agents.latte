@@ -48,6 +48,9 @@
     </div>
 
     {* ---------------- STAT TILES (online by role) ---------------- *}
+    <div id="paused-banner" n:class="$fleetPaused ? '' : 'hidden', font-mono text-[11px] uppercase tracking-widest2 text-caution-300 border border-caution-500/40 bg-caution-500/[0.06] rounded-sm px-4 py-2.5 mb-4">
+        ⏸ Fleet paused — agents are idle (judge control)
+    </div>
     <div class="grid grid-cols-3 sm:grid-cols-6 gap-px bg-ink-line/40 border border-ink-line/60 rounded-sm overflow-hidden mb-10">
         {foreach $roleCounts as $role => $count}
             {var $tone = $roleTones[$role] ?? ['text-accent-soft', 'bg-accent-soft']}
@@ -266,6 +269,8 @@
     document.querySelectorAll('[data-role-online]').forEach(function (el) {
       el.textContent = byRole[el.getAttribute('data-role-online')] || 0;
     });
+    const banner = document.getElementById('paused-banner');
+    if (banner) banner.classList.toggle('hidden', !stats.paused);
   }
 
   function tick() {
