@@ -44,7 +44,7 @@ class FleetMemberBroker extends Broker
                   budget       = COALESCE(EXCLUDED.budget, agent.fleet_member.budget),
                   bankrupt     = EXCLUDED.bankrupt,
                   last_seen    = now()",
-            [$agentId, $role, $displayName, $wallet, $ens, $version, $budget, $bankrupt]
+            [$agentId, $role, $displayName, $wallet, $ens, $version, $budget, $bankrupt ? 't' : 'f']
         );
     }
 
