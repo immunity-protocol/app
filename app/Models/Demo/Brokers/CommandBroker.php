@@ -39,7 +39,7 @@ class CommandBroker extends Broker
     {
         $row = $this->selectOne(
             "SELECT agent_id
-               FROM demo.agent_heartbeat
+               FROM agent.fleet_member
               WHERE role = 'publisher'
                 AND last_seen >= now() - interval '180 seconds'
               ORDER BY random()

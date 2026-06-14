@@ -13,7 +13,7 @@ use Zephyrus\Routing\Attribute\Post;
  * External threat-feed entry-point. Pipedream (or any cron-token-bearing
  * client) posts a structured threat report; we enqueue an
  * `external_threat_alert` command for an online publisher (picked at
- * random from demo.agent_heartbeat), which publishes an ADDRESS antibody
+ * random from agent.fleet_member), which publishes an ADDRESS antibody
  * on its next dequeue tick. Returns 503 when no publisher is online.
  *
  * Endpoint:

@@ -22,7 +22,7 @@ class HeartbeatBroker extends Broker
     {
         $rows = $this->select(
             "SELECT role, count(*) AS n
-               FROM demo.agent_heartbeat
+               FROM agent.fleet_member
               WHERE last_seen >= now() - make_interval(secs => ?)
               GROUP BY role",
             [self::ONLINE_WINDOW_SECONDS]
@@ -45,7 +45,7 @@ class HeartbeatBroker extends Broker
     {
         return $this->select(
             "SELECT agent_id, display_name, last_seen
-               FROM demo.agent_heartbeat
+               FROM agent.fleet_member
               WHERE role = ?
                 AND last_seen >= now() - make_interval(secs => ?)
            ORDER BY agent_id",
@@ -56,7 +56,7 @@ class HeartbeatBroker extends Broker
     public function countOnline(): int
     {
         return (int) $this->selectValue(
-            "SELECT count(*) FROM demo.agent_heartbeat
+            "SELECT count(*) FROM agent.fleet_member
               WHERE last_seen >= now() - make_interval(secs => ?)",
             [self::ONLINE_WINDOW_SECONDS]
         );
@@ -64,7 +64,7 @@ class HeartbeatBroker extends Broker
 
     public function countTotal(): int
     {
-        return (int) $this->selectValue("SELECT count(*) FROM demo.agent_heartbeat");
+        return (int) $this->selectValue("SELECT count(*) FROM agent.fleet_member");
     }
 
     /**
@@ -73,7 +73,7 @@ class HeartbeatBroker extends Broker
      */
     public function pickRandomOnline(?string $role = null): ?string
     {
-        $sql = "SELECT agent_id FROM demo.agent_heartbeat
+        $sql = "SELECT agent_id FROM agent.fleet_member
                  WHERE last_seen >= now() - make_interval(secs => ?)";
         $params = [self::ONLINE_WINDOW_SECONDS];
         if ($role !== null) {
@@ -104,7 +104,7 @@ class HeartbeatBroker extends Broker
                  (h.last_seen >= now() - make_interval(secs => ?)) AS online,
                  coalesce(c.n, 0) AS checks_24h,
                  coalesce(b.n, 0) AS blocks_24h
-               FROM demo.agent_heartbeat h
+               FROM agent.fleet_member h
           LEFT JOIN (
                  SELECT agent_id, count(*) AS n
                    FROM event.check_event
