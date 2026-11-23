@@ -106,8 +106,7 @@ services:
           && exec php /var/www/html/bin/relayer.php
 
   database:
-    build:
-      context: "./docker/services/postgres"
+    image: "postgres:17"
     container_name: ${DB_HOST}
     restart: 'no'
     ports:
@@ -118,3 +117,6 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=fr-CA"
+      TZ: America/Montreal
+      PGTZ: America/Montreal
